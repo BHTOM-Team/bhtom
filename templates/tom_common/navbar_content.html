@@ -11,13 +11,17 @@ For customization instructions, see tom_common/base.html
     <a class="nav-link dropdown-toggle" data-toggle="dropdown">Targets</a>
     <ul class="dropdown-menu">
         <li class="nav-item {% if request.resolver_match.namespace == 'targets' %}active{% endif %}">
-            <a class="nav-link" href="{% url 'targets:list' %}"><font color="black">Targets</font></a>
+            <a class="nav-link" href="{% url 'bhlist' %}"><font color="black">Targets</font></a>
         </li>
         <li class="nav-item {% if request.resolver_match.namespace == 'targets' %}active{% endif %}">
             <a class="nav-link" href="{% url 'targets:targetgrouping' %}"><font color="black">Target Grouping</font></a>
         </li>
     </ul>
 </li>
+<li class="nav-item {% if request.resolver_match.namespace == 'alerts' %}active{% endif %}">
+    <a class="nav-link" href="{% url 'about' %}">About</a>
+</li>
+
 <!-- <li class="nav-item {% if request.resolver_match.namespace == 'alerts' %}active{% endif %}">
     <a class="nav-link" href="{% url 'alerts:list' %}">Alerts</a>
 </li>

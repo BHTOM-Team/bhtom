@@ -15,6 +15,12 @@ Including another URLconf
 """
 from django.urls import path, include
 
+from django.views.generic import TemplateView
+from .views import BlackHoleListView
+
 urlpatterns = [
     path('', include('tom_common.urls')),
+    path('about/', TemplateView.as_view(template_name='tom_common/about.html'), name='about'),
+    path('bhlist/', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='bhlist'),
+    path('index.html', BlackHoleListView.as_view(template_name='tom_common/index.html'), name='index'),
 ]

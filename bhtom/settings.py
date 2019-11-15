@@ -315,7 +315,18 @@ BROKER_CREDENTIALS = {
 #     {'name': 'eligible', 'type': 'boolean'},
 #     {'name': 'dicovery_date', 'type': 'datetime'}
 # ]
-EXTRA_FIELDS = []
+EXTRA_FIELDS = [
+    {'name': 'gaia_alert_name', 'type': 'string'},
+    {'name': 'calib_server_name', 'type': 'string'},
+    {'name': 'ztf_alert_name', 'type': 'string'},
+    {'name': 'gaiadr2_id', 'type': 'string'},
+    {'name': 'classification', 'type': 'string'},
+    {'name': 'tweet', 'type': 'boolean'},
+    {'name': 'jdlastobs', 'type': 'number'},
+    {'name': 'priority', 'type': 'number'},
+    {'name': 'dicovery_date', 'type': 'datetime'}
+
+]
 
 # Authentication strategy can either be LOCKED (required login for all views)
 # or READ_ONLY (read only access to views)
@@ -330,6 +341,17 @@ HOOKS = {
     'observation_change_state': 'tom_common.hooks.observation_change_state',
     'data_product_post_upload': 'tom_dataproducts.hooks.data_product_post_upload'
 }
+
+#Gaia Alerts added by LW
+#others are copied from default AbstractHarvester
+TOM_HARVESTER_CLASSES = [
+    'bhtom.harvesters.gaia_alerts_harvester.GaiaAlertsHarvester',
+    'tom_catalogs.harvesters.simbad.SimbadHarvester',
+    'tom_catalogs.harvesters.ned.NEDHarvester',
+    'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',
+    'tom_catalogs.harvesters.mpc.MPCHarvester',
+    'tom_catalogs.harvesters.tns.TNSHarvester',
+    ]
 
 AUTO_THUMBNAILS = False
 

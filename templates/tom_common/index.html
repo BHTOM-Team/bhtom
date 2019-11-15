@@ -36,14 +36,13 @@
   <thead>
     <tr>
       <th><input type="checkbox" id="selectPage" onClick="select_page(this, {{ target_count }})" /></th>
-      <th>Name</th>
-      <th>Type</th>
-      {% if request.GET.type == 'SIDEREAL' %}
+      <th>Event Name/Aliases</th>
       <th>RA</th>
       <th>Dec</th>
-      {% endif %}
       <th>Observations</th>
-      <th>Saved Data</th>
+      <th>Last obs. JD</th>
+      <th>Priority</th>
+      <th>Dt</th>
     </tr>
   </thead>
   <tbody>
@@ -53,13 +52,12 @@
       <td>
           <a href="{% url 'targets:detail' target.id %}" title="{{ target.name }}">{{ target.names|join:", " }}</a>
       </td>
-      <td>{{ target.get_type_display }}</td>
-      {% if request.GET.type == 'SIDEREAL' %}
       <td>{{ target.ra }}</td>
       <td>{{ target.dec }}</td>
-      {% endif %}
       <td>{{ target.observationrecord_set.count }}</td>
-      <td>{{ target.dataproduct_set.count }}</td>
+      <td>{{ target|target_extra_field:"jdlastobs" }}</td>
+      <td>{{ target|target_extra_field:"priority" }}</td>
+      <td>{{ target.dt }}</td>
     </tr>
     {% empty %}
     <tr>
@@ -75,6 +73,7 @@
     {% endfor %}
   </tbody>
 </table>
+
 
 
 {% endblock %}
