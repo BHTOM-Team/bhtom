@@ -1,0 +1,80 @@
+{% extends 'tom_common/base.html' %}
+{% load static targets_extras tom_common_extras %}
+{% block title %}Home{% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}"> 
+{% endblock %} 
+{% block content %}
+<!-- <div class="row"> -->
+  <!-- <div class="col-md-8"> -->
+    <h2 class="text-center">Black Hole TOM</h2>
+   <p class="text-center"><img src="https://www.redshift-live.com/binaries/asset/image/22596/image/A_simulated_black_hole_against_the_background_of_the_Milky_Way.jpg" class="img-fluid mx-auto"></p>
+<!---    <p class="text-center"><img src="{% static 'img/BlackHoleImage.png' %}" class="img-fluid max-auto"></p> -->
+    <p class="text-center">(Image courtesy of Ute Kraus.)</p>
+    <p class="text-center"; style="font-size:16px">
+    Welcome to Black Hole TOM, 
+    built using the 
+    <a href="https://tomtoolkit.github.io/">TOM Toolkit</a>.
+    Github 
+    <a href="https://github.com/wyrzykow/bhtom">here</a>.
+    To build your own TOM (Target Observation Manager), check out the 
+    <a href="https://tomtoolkit.github.io/docs/getting_started">getting started guide</a>.
+    </p>
+    <p class="text-center"; style="font-size:16px">
+    The Black Hole TOM 1.0 is an interface for viewing and sharing observational
+    data of microlensing events, and for requesting and managing observations
+    with the 
+    <a href="https://lco.global/">LCO</a> network and OPTICON telescopes.
+    </p>
+  </div>
+</div>
+</div>
+
+<h2 class="text-center">Highest priority targets</h2>
+
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th><input type="checkbox" id="selectPage" onClick="select_page(this, {{ target_count }})" /></th>
+      <th>Name</th>
+      <th>Type</th>
+      {% if request.GET.type == 'SIDEREAL' %}
+      <th>RA</th>
+      <th>Dec</th>
+      {% endif %}
+      <th>Observations</th>
+      <th>Saved Data</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for target in object_list %}
+    <tr>
+      <td><input type="checkbox" name="selected-target" value="{{ target.id }}" onClick="single_select()"/></td>
+      <td>
+          <a href="{% url 'targets:detail' target.id %}" title="{{ target.name }}">{{ target.names|join:", " }}</a>
+      </td>
+      <td>{{ target.get_type_display }}</td>
+      {% if request.GET.type == 'SIDEREAL' %}
+      <td>{{ target.ra }}</td>
+      <td>{{ target.dec }}</td>
+      {% endif %}
+      <td>{{ target.observationrecord_set.count }}</td>
+      <td>{{ target.dataproduct_set.count }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="5">
+        {% if target_count == 0 %}
+        No targets yet. You might want to <a href="{% url 'tom_targets:create' %}">create a target manually</a>
+        or <a href="{% url 'tom_alerts:list' %}">import one from an alert broker</a>.
+        {% else %}
+        No targets match those filters.
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+
+{% endblock %}
