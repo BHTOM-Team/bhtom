@@ -93,6 +93,7 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
+    'myapp'
 ]
 
 SITE_ID = 1
@@ -337,9 +338,11 @@ AUTH_STRATEGY = 'READ_ONLY'
 OPEN_URLS = []
 
 HOOKS = {
-    'target_post_save': 'tom_common.hooks.target_post_save',
+#    'target_post_save': 'tom_common.hooks.target_post_save',
+    'target_post_save': 'myapp.hooks.target_post_save',
     'observation_change_state': 'tom_common.hooks.observation_change_state',
-    'data_product_post_upload': 'tom_dataproducts.hooks.data_product_post_upload'
+    'data_product_post_upload': 'tom_dataproducts.hooks.data_product_post_upload',
+
 }
 
 #Gaia Alerts added by LW

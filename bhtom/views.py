@@ -18,6 +18,8 @@ from tom_targets.templatetags.targets_extras import target_extra_field
 
 from django.db.models import Case, When
 
+from tom_dataproducts.models import ReducedDatum
+
 
 def make_magrecent(all_phot, jd_now):
     all_phot = json.loads(all_phot)
@@ -33,9 +35,12 @@ def make_magrecent(all_phot, jd_now):
         time = diff)
     return mag_recent
 
+# def computePriority():
+
+
 class BlackHoleListView(FilterView):
     template_name = 'tom_common/bhlist.html'
-    paginate_by = 10
+    paginate_by = 25
     strict = False
     model = Target
     filterset_class = TargetFilter
@@ -51,8 +56,12 @@ class BlackHoleListView(FilterView):
 
         jd_now = Time(datetime.utcnow()).jd
         for target in context['object_list']:
-            last = float(target_extra_field(target=target, name='jdlastobs'))
-            target.dt = (jd_now - last)
+            try:
+                #if empty
+                last = float(target_extra_field(target=target, name='jdlastobs'))
+                target.dt = (jd_now - last)
+            except:
+                target.dt = -1.
         #     target.mag_recent = make_magrecent(target.all_phot, jd_now)
         return context
 

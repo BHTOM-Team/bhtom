@@ -19,41 +19,36 @@ base_url = 'http://gsaweb.ast.cam.ac.uk/alerts'
 def get(term):
     alertindex_url = f'{base_url}/alerts.csv'
 
+
     gaiaresponse = requests.get(alertindex_url)
     gaiadata = gaiaresponse._content.decode('utf-8').split('\n')[1:-1]
 
+    catalog_data = {"gaia_name":"",
+                    "ra":0.,
+                    "dec":0.,
+                    "disc":"",
+                    "classif":""
+                    }
+
     for alert in gaiadata:
         gaia_name = alert.split(',')[0]
-        ra = Decimal(alert.split(',')[2])
-        dec = Decimal(alert.split(',')[3])
-        disc = alert.split(',')[1]
-        classif = alert.split(',')[7]
 
         if (term.lower() in gaia_name.lower()): #case insensitive
-            ##alert found, now getting the light curve
+            ##alert found, now getting its params
+            ra = Decimal(alert.split(',')[2])
+            dec = Decimal(alert.split(',')[3])
+            disc = alert.split(',')[1]
+            classif = alert.split(',')[7]
 
-            #creating a target object
-            target = Target()
-            target.type = 'SIDEREAL'
+            catalog_data["gaia_name"] = gaia_name
+            catalog_data["ra"] = ra
+            catalog_data["dec"] = dec
+            catalog_data["disc"] = disc
+            catalog_data["classif"] = classif
+#            print("DEBUG: found: "+catalog_data["gaia_name"]+" "+catalog_data["disc"])
+            break #in case of multiple entries, it will return only the first one
 
-            target.name = gaia_name
-            target.ra = ra
-            target.dec = dec
-            target.epoch = 2000
-
-            #extra fields:
-#            target_extra_field(target=target, name='gaia_name')
-            # TargetExtra.objects.filter(target=target, key='gaia_name')[0].value = gaia_name
-            # TargetExtra.objects.filter(target=target, key='gaia_name')[0].save()
-        
-            target.gaia_name = gaia_name 
-            target.discovery_date = disc#Time(disc, format='iso', scale='utc')
-            target.classification = classif
-            
-
-            print("SUCCESSFULL created ",gaia_name)
-            return target
-
+    return catalog_data            
 
 class GaiaAlertsHarvester(AbstractHarvester):
     name = 'Gaia Alerts'
@@ -62,8 +57,60 @@ class GaiaAlertsHarvester(AbstractHarvester):
         self.catalog_data = get(term)
 
     def to_target(self):
-        target = self.catalog_data
+        #catalog_data contains now all fields needed to create a target
+        target = super().to_target()
+
+        gaia_name = self.catalog_data["gaia_name"]
+        ra = self.catalog_data["ra"]
+        dec = self.catalog_data["dec"]
+        disc = self.catalog_data["disc"]
+        classif = self.catalog_data["classif"]
+        
+        #checking if already in our DB
+        try:
+            t0 = Target.objects.get(name=gaia_name)                
+            print("Target "+gaia_name+" already in the db.")
+            return t0
+        except:
+            pass
+
+        try:
+            #creating a target object
+            target.type = 'SIDEREAL'
+            target.name = gaia_name
+            target.ra = ra
+            target.dec = dec
+            target.epoch = 2000
+
+            #extra fields:        
+#            t1 = Target.objects.get(name=gaia_name)
+            target.gaia_alert_name=gaia_name
+#            target.save(extras={'gaia_alert_name':gaia_name})
+            target.jdlastobs = 0.
+            target.priority = 0.
+            target.classification=classif
+            target.discovery_date = disc
+            target.ztf_alert_name=''
+            target.calib_server_name=''
+            
+            target.save()
+            # target.save(extras={'discovery_date':disc}) #Time(disc, format='iso', scale='utc')
+            # target.save(extras={'classification':classif})            
+            # #filling other extra fields with empty values
+            # target.save(extras={'ztf_alert_name':''})
+            # target.save(extras={'calib_server_name':''})
+            # target.save(extras={'jdlastobs':0})
+            # target.save(extras={'priority':0})
+
+            print("SUCCESSFULL created ",gaia_name)
+        except:
+            print("ERROR while creating ",gaia_name)
+
+        #now updating the light curve
+        update_gaia_lc(target, gaia_name)
+
         return target
+
 
 
 #reads light curve from Gaia Alerts - NOT USED YET
@@ -105,18 +152,29 @@ def update_gaia_lc(target, gaia_name):
 
         #Updating/storing the last JD
         jdlast = jdmax
-        
-        previousjd_object = TargetExtra.objects.filter(target=target, key='jdlastobs')
+        previousjd=0
 
-        if (len(previousjd_object)>0):
-            pp = previousjd_object[0]
-            jj = float(pp.value)
-            print("DEBUG-Gaia prev= ", jj, " this= ",jdlast)
-            if (jj<jdlast) :
-                print("DEBUG saving new jdlast.")
-                try:
-                    pp.value = jdlast
-                    pp.save()
-                except:
-                    print("FAILED save jdlastobs (Gaia)")
+        try:        
+            previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
+#            previousjd = target.jdlastobs
+            print("DEBUG-Gaia prev= ", previousjd, " this= ",jdlast)
+        except:
+            pass
+        if (jdlast > previousjd) : 
+            target.save(extras={'jdlastobs':jdlast})
+            print("DEBUG saving new jdlast ",jdlast)
+
+        # previousjd_object = TargetExtra.objects.filter(target=target, key='jdlastobs')
+
+        # if (len(previousjd_object)>0):
+        #     pp = previousjd_object[0]
+        #     jj = float(pp.value)
+        #     print("DEBUG-Gaia prev= ", jj, " this= ",jdlast)
+        #     if (jj<jdlast) :
+        #         print("DEBUG saving new jdlast.")
+        #         try:
+        #             pp.value = jdlast
+        #             pp.save()
+        #         except:
+        #             print("FAILED save jdlastobs (Gaia)")
 
