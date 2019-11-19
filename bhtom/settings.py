@@ -65,7 +65,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'u&amp;!)0%2f^l3n#g+#7ldg7xf)&amp;#eg79n+0gf0c@_v&amp;8wc9vp-3f'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -209,6 +209,9 @@ STATIC_URL = os.path.join(BASE_DIR, 'static').replace('\\','')+'/'
 STATIC_ROOT = os.path.join(BASE_DIR, '_static')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
+#STATIC_ROOT = '/Users/wyrzykow/bhtom/_static'
+#STATICFILES_DIRS = ['static']
+#MEDIA_ROOT = '/Users/wyrzykow/bhtom/data'
 MEDIA_URL = '/data/'
 
 LOGGING = {
