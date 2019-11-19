@@ -92,8 +92,9 @@ class GaiaAlertsHarvester(AbstractHarvester):
             target.discovery_date = disc
             target.ztf_alert_name=''
             target.calib_server_name=''
+            target.cadence = 1.
             
-            target.save()
+#            target.save()
             # target.save(extras={'discovery_date':disc}) #Time(disc, format='iso', scale='utc')
             # target.save(extras={'classification':classif})            
             # #filling other extra fields with empty values
@@ -107,7 +108,7 @@ class GaiaAlertsHarvester(AbstractHarvester):
             print("ERROR while creating ",gaia_name)
 
         #now updating the light curve
-        update_gaia_lc(target, gaia_name)
+#        update_gaia_lc(target, gaia_name)
 
         return target
 

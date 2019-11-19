@@ -4,10 +4,10 @@ The following nav-item list elements (li) are included in the tom_common/base.ht
 For customization instructions, see tom_common/base.html
 {% endcomment %}
 
-<li class="nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+<!-- <li class="nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
     <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
-</li>
-<li class="nav-item dropdown">
+</li> -->
+<!-- <li class="nav-item dropdown">
     <a class="nav-link dropdown-toggle" data-toggle="dropdown">Targets</a>
     <ul class="dropdown-menu">
         <li class="nav-item {% if request.resolver_match.namespace == 'targets' %}active{% endif %}">
@@ -17,8 +17,17 @@ For customization instructions, see tom_common/base.html
             <a class="nav-link" href="{% url 'targets:targetgrouping' %}"><font color="black">Target Grouping</font></a>
         </li>
     </ul>
+</li> -->
+
+<li class="nav-item {% if request.resolver_match.namespace == 'targets' %}active{% endif %}">
+        <a class="nav-link" href="{% url 'bhlist' %}"><font color="white">Targets</font></a>
 </li>
-<li class="nav-item {% if request.resolver_match.namespace == 'alerts' %}active{% endif %}">
+
+<li class="nav-item {% if request.resolver_match.namespace == 'targets' %}active{% endif %}">
+        <a class="nav-link" href="{% url 'targets:targetgrouping' %}">Target Grouping</a>
+</li>
+
+<li class="nav-item {% if request.resolver_match.namespace == 'about' %}active{% endif %}">
     <a class="nav-link" href="{% url 'about' %}">About</a>
 </li>
 

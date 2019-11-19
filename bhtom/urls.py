@@ -18,9 +18,26 @@ from django.urls import path, include
 from django.views.generic import TemplateView
 from .views import BlackHoleListView
 
+from django.contrib import admin
+from django.urls import path
+from django.urls import include
+from django.views.generic import TemplateView
+from django.contrib.auth.views import LoginView, LogoutView
+from django.conf import settings
+from django.conf.urls.static import static
+
+from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
+from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView
+
+
 urlpatterns = [
     path('', include('tom_common.urls')),
     path('about/', TemplateView.as_view(template_name='tom_common/about.html'), name='about'),
     path('bhlist/', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='bhlist'),
-    path('index.html', BlackHoleListView.as_view(template_name='tom_common/index.html'), name='index'),
-]
+    path('targets/', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='targets'),
+    path('', BlackHoleListView.as_view(template_name='tom_common/index.html'), name='index'),
+    # The static helper below only works in development see
+    # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
+ ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+

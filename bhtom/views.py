@@ -20,6 +20,7 @@ from django.db.models import Case, When
 
 from tom_dataproducts.models import ReducedDatum
 
+import numpy as np
 
 def make_magrecent(all_phot, jd_now):
     all_phot = json.loads(all_phot)
@@ -35,11 +36,21 @@ def make_magrecent(all_phot, jd_now):
         time = diff)
     return mag_recent
 
-# def computePriority():
+#computes priority based on dt and expected cadence
+#if observed within the cadence, then returns just the pure target priority
+#if not, then priority increases
+def computePriority(dt, priority, cadence):
+    ret = 0
+    if (dt<cadence): ret = 1 #ok
+    else:
+        if (cadence!=0 and dt/cadence>1 and dt/cadence<2): ret = 2
+        if (cadence!=0 and dt/cadence>2): ret = 3
+
+    return ret*priority
 
 
 class BlackHoleListView(FilterView):
-    template_name = 'tom_common/bhlist.html'
+#    template_name = 'tom_common/bhlist.html'
     paginate_by = 25
     strict = False
     model = Target
@@ -55,16 +66,36 @@ class BlackHoleListView(FilterView):
         context['query_string'] = self.request.META['QUERY_STRING']
 
         jd_now = Time(datetime.utcnow()).jd
+        prioritylist = []
+
         for target in context['object_list']:
             try:
                 #if empty
                 last = float(target_extra_field(target=target, name='jdlastobs'))
+                #TODO: this could be replaced by quering the data and finding the last data point
                 target.dt = (jd_now - last)
+                dt = (jd_now - last)
             except:
+                dt = 10
                 target.dt = -1.
-        #     target.mag_recent = make_magrecent(target.all_phot, jd_now)
-        return context
 
-    # def get_queryset(self):
-    #         qs = super().get_queryset()
-    #         return qs.annotate(jdlastobs=Case(When(targetextra__key__icontains='jdlastobs', then='targetextra__value'))).order_by('-jdlastobs')
+            try:
+                priority = float(target_extra_field(target=target, name='priority'))
+                cadence = float(target_extra_field(target=target, name='cadence'))
+            except:
+                priority = 1
+                cadence = 1 
+            target.cadencepriority = computePriority(dt, priority, cadence)
+            prioritylist.append(target.cadencepriority)
+        
+        prioritylist = np.array(prioritylist)
+        idxs = prioritylist.argsort()
+        oldlist = list(copy.copy(context['object_list']))
+        newlist = []
+        for i in idxs[::-1]:
+            t = oldlist[i]
+            newlist.append(t)
+
+        context['object_list'] = tuple(newlist)
+
+        return context

@@ -156,27 +156,23 @@ def target_post_save(target, created):
                     target=target)
                 rd.save()
             except:
-                print("FAILED save lc Gaia")
+                pass
 
         #Updating/storing the last JD
         jdlast = np.max(np.array(jd).astype(np.float))
         
-        #problems during Create - this object is empty...
-        previousjd_object = TargetExtra.objects.filter(target=target, key='jdlastobs')
+        #Updating/storing the last JD
+        previousjd=0
 
-        #this is a list, with one element if ok
-        #FIXME: this works only for update, but not for creation
-        if (len(previousjd_object)>0):
-            pp = previousjd_object[0]
-            jj = float(pp.value)
-            print("DEBUG-Gaia prev= ", jj, " this= ",jdlast)
-        if (jj<jdlast) :
-            print("DEBUG saving new jdlast.")
-            try:
-                pp.value = jdlast
-                pp.save()
-            except:
-                print("FAILED save jdlastobs (Gaia)")
+        try:        
+            previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
+#            previousjd = target.jdlastobs
+            print("DEBUG-Gaia prev= ", previousjd, " this= ",jdlast)
+        except:
+            pass
+        if (jdlast > previousjd) : 
+            target.save(extras={'jdlastobs':jdlast})
+            print("DEBUG saving new jdlast ",jdlast)
 
     ############## CPCS follow-up server
     cpcs_name=''  ###WORKAROUND of an error in creation of targets  
@@ -228,6 +224,7 @@ def target_post_save(target, created):
                     datum_jd = Time(float(jd[i]), format='jd', scale='utc')
                     datum_f = filter[i]
                     datum_err = float(magerr[i])
+                    datum_source = obs[i]
                     value = {
                         'magnitude': datum_mag,
                         'filter': datum_f,
@@ -236,7 +233,7 @@ def target_post_save(target, created):
                     rd, created = ReducedDatum.objects.get_or_create(
                         timestamp=datum_jd.to_datetime(timezone=TimezoneInfo()),
                         value=json.dumps(value),
-                        source_name=target.name,
+                        source_name=datum_source,
                         source_location=page,
                         data_type='photometry',
                         target=target)
@@ -245,23 +242,19 @@ def target_post_save(target, created):
                     print("FAILED save jdlastobs (CPCS)")
             
             #Updating the last observation JD
-            jdlast = np.max(jd)
+            jdlast = np.max(np.array(jd).astype(np.float))
 
-            #problems during Create - this object is empty...
-            previousjd_object = TargetExtra.objects.filter(target=target, key='jdlastobs')
+            #Updating/storing the last JD
+            previousjd=0
 
-            #this is a list, with one element if ok
-            #FIXME: this works only for update, but not for creation
-            if (len(previousjd_object)>0):
-                pp = previousjd_object[0]
-                jj = float(pp.value)
-                print("DEBUG-CPCS prev= ", jj, " this= ",jdlast)
-                if (jj<jdlast) :
-                    print("DEBUG saving new jdlast.")
-                try:
-                    pp.value = jdlast
-                    pp.save()
-                except:
-                    print("FAILED save jdlastobs (CPCS)")
+            try:        
+                previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
+    #            previousjd = target.jdlastobs
+                print("DEBUG-CPCS prev= ", previousjd, " this= ",jdlast)
+            except:
+                pass
+            if (jdlast > previousjd) : 
+                target.save(extras={'jdlastobs':jdlast})
+                print("DEBUG saving new jdlast ",jdlast)
         except:
             print("target ",cpcs_name, " not on CPCS")
