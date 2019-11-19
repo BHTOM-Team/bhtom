@@ -204,11 +204,14 @@ DATE_FORMAT = 'Y-m-d'
 
 #STATIC_URL = '/static/'
 #LW: new from stackoverflow:
-STATIC_URL = os.path.join(BASE_DIR, 'static').replace('\\','')+'/'
+STATIC_URL = os.path.join(BASE_DIR, '_static').replace('\\','')+'/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, '_static')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'bhtom/')]
 MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
+#STATIC_ROOT = '/Users/wyrzykow/bhtom/_static'
+#STATICFILES_DIRS = ['static']
+#MEDIA_ROOT = '/Users/wyrzykow/bhtom/data'
 MEDIA_URL = '/data/'
 
 LOGGING = {
