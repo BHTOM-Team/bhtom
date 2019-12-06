@@ -357,7 +357,7 @@ HOOKS = {
 #Gaia Alerts added by LW
 #others are copied from default AbstractHarvester
 TOM_HARVESTER_CLASSES = [
-    'bhtom.harvesters.gaia_alerts_harvester.GaiaAlertsHarvester',
+    'myapp.harvesters.gaia_alerts_harvester.GaiaAlertsHarvester',
     'tom_catalogs.harvesters.simbad.SimbadHarvester',
     'tom_catalogs.harvesters.ned.NEDHarvester',
     'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',

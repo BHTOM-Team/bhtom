@@ -34,4 +34,4 @@ class Command(BaseCommand):
                     gaia_alerts_harvester.update_gaia_lc(t, gaia)
                 except:
                     print("target ",t,' not updated, probably no gaia_alert_name given.')  
-        return 'Finished updating Gaia Alerts light curve'
+        return 'Finished updating the light curve'

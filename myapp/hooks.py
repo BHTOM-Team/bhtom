@@ -84,14 +84,26 @@ def target_post_save(target, created):
         filters = {1: 'g_ZTF', 2: 'r_ZTF', 3: 'i_ZTF'}
         jdarr = []
         for alert in alerts:
-            if all([key in alert['candidate'] for key in ['jd', 'magpsf', 'fid', 'sigmapsf']]):
+            if all([key in alert['candidate'] for key in ['jd', 'magpsf', 'fid', 'sigmapsf', 'magnr', 'sigmagnr']]):
                 jd = Time(alert['candidate']['jd'], format='jd', scale='utc')
                 jdarr.append(jd.jd)
                 jd.to_datetime(timezone=TimezoneInfo())
+
+                #adding reference flux to the difference psf flux
+                zp=30.0
+                m=alert['candidate']['magpsf']
+                r=alert['candidate']['magnr']
+                f=10**(-0.4*(m-zp))+10**(-0.4*(r-zp))
+                mag = zp-2.5*np.log10(f)
+
+                er=alert['candidate']['sigmagnr']
+                em=alert['candidate']['sigmapsf']
+                emag=np.sqrt(er**2+em**2)
+
                 value = {
-                    'magnitude': alert['candidate']['magpsf'],
+                    'magnitude': mag,
                     'filter': filters[alert['candidate']['fid']],
-                    'error': alert['candidate']['sigmapsf']
+                    'error': emag
                 }
                 rd, created = ReducedDatum.objects.get_or_create(
                     timestamp=jd.to_datetime(timezone=TimezoneInfo()),
@@ -105,22 +117,17 @@ def target_post_save(target, created):
         jdlast = np.array(jdarr).max()
 
         #modifying jd of last obs 
-        #problems during Create - this object is empty...
-        previousjd_object = TargetExtra.objects.filter(target=target, key='jdlastobs')
 
-        #this is a list, with one element if ok
-        #FIXME: this works only for update, but not for creation
-        if (len(previousjd_object)>0):
-            pp = previousjd_object[0]
-            jj = float(pp.value)
-            print("DEBUG-ZTF prev= ", jj, " this= ",jdlast)
-        if (jj<jdlast) :
-            print("DEBUG saving new jdlast.")
-            try:
-                pp.value = jdlast
-                pp.save()
-            except:
-                print("FAILED save jdlastobs (ZTF)")
+        previousjd=0
+
+        try:        
+            previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
+            print("DEBUG-ZTF prev= ", previousjd, " this= ",jdlast)
+        except:
+            pass
+        if (jdlast > previousjd) : 
+            target.save(extras={'jdlastobs':jdlast})
+            print("DEBUG saving new jdlast from ZTF: ",jdlast)
 
 
     gaia_name=''  ###WORKAROUND of an error in creation of targets  
@@ -172,7 +179,7 @@ def target_post_save(target, created):
             pass
         if (jdlast > previousjd) : 
             target.save(extras={'jdlastobs':jdlast})
-            print("DEBUG saving new jdlast ",jdlast)
+            print("DEBUG saving new jdlast from Gaia: ",jdlast)
 
     ############## CPCS follow-up server
     cpcs_name=''  ###WORKAROUND of an error in creation of targets  
@@ -239,7 +246,7 @@ def target_post_save(target, created):
                         target=target)
                     rd.save()
                 except:
-                    print("FAILED save jdlastobs (CPCS)")
+                    print("FAILED storing (CPCS)")
             
             #Updating the last observation JD
             jdlast = np.max(np.array(jd).astype(np.float))
@@ -255,6 +262,6 @@ def target_post_save(target, created):
                 pass
             if (jdlast > previousjd) : 
                 target.save(extras={'jdlastobs':jdlast})
-                print("DEBUG saving new jdlast ",jdlast)
+                print("DEBUG saving new jdlast from CPCS: ",jdlast)
         except:
             print("target ",cpcs_name, " not on CPCS")
