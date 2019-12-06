@@ -1,4 +1,0 @@
-name,Gaia alert name,Calib server name,Gaiadr2 id,ra,dec,type,Classification,Priority,Cadence,Tweet,Jdlastobs
-Gaia16aua,Gaia16aua,ivo://Gaia16aua,5867019781264970496,213.194935025,-59.561199219,SIDERAL,Microlensing,0,100,false,0
-Gaia16bnn,Gaia16bnn,ivo://Gaia16bnn,6733269879761239168,277.675880959,-37.0713734522,SIDERAL,Microlensing,0,100,false,0
-Gaia17ahl,Gaia17ahl,ivo://Gaia17ahl,5953319864813459200,260.052988867,-43.9005412345,SIDERAL,Microlensing,0,100,false,0
