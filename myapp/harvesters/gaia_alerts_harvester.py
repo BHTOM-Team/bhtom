@@ -149,12 +149,15 @@ def update_gaia_lc(target, gaia_name):
         print("DEBUG UPDATE GAIA LC:", gaia_name)
 
         jdmax = 0
+        maglast = 0
         for obs in data:
  #           print(obs.split(','))
             try: #try avoids 'nulls' and 'untrusted' in mag
                 jdstr = (obs.split(',')[1])
                 magstr = obs.split(',')[2]
-                if (float(jdstr)>jdmax): jdmax = float(jdstr)
+                if (float(jdstr)>jdmax): 
+                    jdmax = float(jdstr)
+                    maglast = float(magstr)
                 # datum_mag = Decimal(magstr)
                 # datum_jd = Time(Decimal(jdstr), format='jd', scale='utc')
 
@@ -186,11 +189,16 @@ def update_gaia_lc(target, gaia_name):
             previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
 #            previousjd = target.jdlastobs
             print("DEBUG-Gaia prev= ", previousjd, " this= ",jdlast)
+            target.save(extras={'maglast':maglast})
+            print("DEBUG saving maglast ",maglast)
+
         except:
             pass
         if (jdlast > previousjd) : 
             target.save(extras={'jdlastobs':jdlast})
             print("DEBUG saving new jdlast ",jdlast)
+            target.save(extras={'maglast':maglast})
+            print("DEBUG saving new maglast ",maglast)
 
         # previousjd_object = TargetExtra.objects.filter(target=target, key='jdlastobs')
 

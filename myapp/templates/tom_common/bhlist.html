@@ -53,6 +53,7 @@
             <th>RA</th>
             <th>Dec</th>
             <th>Observations</th>
+            <th>Last Gmag</th>
             <th>Priority</th>
             <th>Dt</th>
             <th>Cadence Priority</th>
@@ -68,6 +69,7 @@
             <td>{{ target.ra }}</td>
             <td>{{ target.dec }}</td>
             <td>{{ target.reduceddatum_set.count }}</td>
+            <td>{{ target|target_extra_field:"maglast" }}</td>
             <td>{{ target|target_extra_field:"priority" }}</td>
             <td>{{ target.dt|floatformat:1 }}</td>
             <td>{{ target.cadencepriority|floatformat:1}}</td>

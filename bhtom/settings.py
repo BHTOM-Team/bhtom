@@ -334,6 +334,7 @@ EXTRA_FIELDS = [
     {'name': 'classification', 'type': 'string'},
     {'name': 'tweet', 'type': 'boolean'},
     {'name': 'jdlastobs', 'type': 'number'},
+    {'name': 'maglast', 'type': 'number'},
     {'name': 'priority', 'type': 'number'},
     {'name': 'dicovery_date', 'type': 'datetime'},
     {'name': 'cadence', 'type': 'number'}
