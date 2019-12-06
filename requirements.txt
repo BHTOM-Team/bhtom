@@ -93,4 +93,5 @@ traitlets==4.3.3
 urllib3==1.25.7
 wcwidth==0.1.7
 webencodings==0.5.1
+whitenoise==4.1.4
 zipp==0.6.0
