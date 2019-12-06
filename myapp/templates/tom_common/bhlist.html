@@ -74,7 +74,7 @@
             <td>{{ target|target_extra_field:"priority" }}</td>
             <td>{{ target.dt|floatformat:1 }}</td>
             <td>{{ target.cadencepriority|floatformat:1}}</td>
-            <td>{{ target.cadence|floatformat:1}}</td>
+            <td>{{ target|target_extra_field:"cadence"|floatformat:1}}</td>
           </tr>
           {% empty %}
           <tr>
