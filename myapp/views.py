@@ -50,7 +50,6 @@ def computePriority(dt, priority, cadence):
 
 
 class BlackHoleListView(FilterView):
-#    template_name = 'tom_common/bhlist.html'
     paginate_by = 25
     strict = False
     model = Target

@@ -32,11 +32,13 @@ from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView
 
 urlpatterns = [
     path('', include('tom_common.urls')),
+    path('datatools/', include('datatools.urls')),
     path('about/', TemplateView.as_view(template_name='tom_common/about.html'), name='about'),
     path('bhlist/', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='bhlist'),
     path('targets/', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='targets'),
+    path('targets/list', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='targets'),
     # The static helper below only works in development see
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
- ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+ ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 

@@ -119,7 +119,7 @@ def update_gaia_lc(target, gaia_name):
         lightcurve_url = f'{base_url}/alert/{gaia_name}/lightcurve.csv'
         response = requests.get(lightcurve_url)
         data = response._content.decode('utf-8').split('\n')[2:-2]
-#        print("DEBUG UPDATE GAIA LC:", gaia_name, data)
+        print("DEBUG UPDATE GAIA LC:", gaia_name)
 
         jdmax = 0
         for obs in data:

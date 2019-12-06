@@ -1,9 +1,8 @@
 {% extends 'tom_common/base.html' %}
-{% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras static cache %}
-{% load bhtom_tags %}
+{% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras static cache bhtom_tags %}
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
-<link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
+<link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
 {% endblock %}
 {% block content %}
 <div class="row">

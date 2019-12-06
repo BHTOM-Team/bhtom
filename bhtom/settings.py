@@ -65,7 +65,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'u&amp;!)0%2f^l3n#g+#7ldg7xf)&amp;#eg79n+0gf0c@_v&amp;8wc9vp-3f'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -93,7 +93,8 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
-    'myapp'
+    'myapp',
+    'datatools',
 ]
 
 SITE_ID = 1
@@ -109,12 +110,12 @@ MIDDLEWARE = [
     'tom_common.middleware.ExternalServiceMiddleware',
 ]
 
-ROOT_URLCONF = 'bhtom.urls'
+ROOT_URLCONF = 'myapp.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'myapp/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -202,14 +203,21 @@ DATE_FORMAT = 'Y-m-d'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
-#STATIC_URL = '/static/'
-#LW: new from stackoverflow:
-STATIC_URL = os.path.join(BASE_DIR, 'static').replace('\\','')+'/'
+# #STATIC_URL = '/static/'
+# #LW: new from stackoverflow:
+#STATIC_URL = os.path.join(BASE_DIR, 'static').replace('\\','')+'/'
+STATIC_URL = '/Users/wyrzykow/bhtom/myapp/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, '_static')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+#STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATICFILES_DIRS  = ['/Users/wyrzykow/bhtom/myapp/static/']
+
 MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = '/data/'
+
+# STATIC_URL = '/static/'
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
+# MEDIA_URL = '/data/'
 
 LOGGING = {
     'version': 1,

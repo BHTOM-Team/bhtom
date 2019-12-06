@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
+from myapp.harvesters import gaia_alerts_harvester
 
 class Command(BaseCommand):
 
@@ -13,13 +14,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options['target_id']:
-#            call_command('updatereduceddata', target_id=target_id, stdout=out)
+            target_id = options['target_id']
             print("updating single ",target_id)
             try:
                 target_object = Target.objects.get(pk=target_id)
                 gaia = target_object.targetextra_set.get(key='gaia_alert_name').value
-                bhtom.harvesters.gaia_alerts_harvester.update_gaia_lc(target_object, gaia)
-                print("UPDATED lc of ",target, gaia)
+                gaia_alerts_harvester.update_gaia_lc(target_object, gaia)
+                print("UPDATED lc of ",gaia)
             except:
                 print("target ",target_id,' not updated, probably no gaia_alert_name provided for this target')  
         else:
@@ -30,7 +31,7 @@ class Command(BaseCommand):
                 try:
                     gaia = t.targetextra_set.get(key='gaia_alert_name').value
                     print("UPDATING all: ",t, gaia)
-                    bhtom.harvesters.gaia_alerts_harvester.update_gaia_lc(t, gaia)
+                    gaia_alerts_harvester.update_gaia_lc(t, gaia)
                 except:
                     print("target ",t,' not updated, probably no gaia_alert_name given.')  
         return 'Finished updating Gaia Alerts light curve'

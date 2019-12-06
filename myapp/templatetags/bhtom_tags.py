@@ -98,8 +98,8 @@ def get_24hr_airmass(target, interval, airmass_limit):
 
     for observing_facility in facility.get_service_classes():
 
-#        if observing_facility != 'LCO':
-#            continue
+        #        if observing_facility != 'LCO':
+        #            continue
 
         observing_facility_class = facility.get_service_class(observing_facility)
         sites = observing_facility_class().get_observing_sites()

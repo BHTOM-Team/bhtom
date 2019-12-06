@@ -1,6 +1,9 @@
 {% extends 'tom_common/base.html' %}
 {% load bootstrap4 targets_extras staticfiles %}
 {% block title %}Black Hole list{% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
+{% endblock %}
 {% block content %}
 <div class="row">
   <div class="col-md-10">
@@ -16,7 +19,7 @@
           <a class="dropdown-item" href="{% url 'targets:import' %}" title="Import Targets">Import Targets</a>
           <a class="dropdown-item" href="{% url 'tom_catalogs:query' %}" title="Catalog Search">Catalog Search</a>
         </div>
-        <a href="{% url 'dataproducts:update-reduced-data' %}" class="btn btn-primary" title="Update Targets">Update Targets</a>
+        <a href="{% url 'datatools:update-reduced-data-gaia' %}" class="btn btn-primary" title="Update All Targets">Update All Targets</a>
         <button onclick="document.getElementById('invisible-export-button').click()" class="btn btn-primary">Export Filtered Targets</button>
          <!-- use an invisible button, because the key "Enter" event will triggered the first submit button and we want the default action to be applying filter -->
       </span>
@@ -41,7 +44,7 @@
         <button type="submit" class="btn btn-outline-primary ml-1" name="add">Add</button>
         <button type="submit" class="btn btn-outline-danger ml-1" name="remove">Remove</button>
       </div>
-      <script type="text/javascript" src="{% static 'bhtom/sorttable.js' %}"></script>
+      <script type="text/javascript" src="{% static 'myapp/sorttable.js' %}"></script>
       <table class="table table-hover sortable">
         <thead>
           <tr>
@@ -94,7 +97,7 @@
         <button type="submit" class="btn btn-primary">
           Filter
         </button>
-        <a href="{% url 'targets:list' %}" class="btn btn-secondary" title="Reset">Reset</a>
+        <a href="{% url 'targets' %}" class="btn btn-secondary" title="Reset">Reset</a>
         <button type="submit" formaction="{% url 'targets:export' %}" id="invisible-export-button" style="display:none"></button>
       {% endbuttons %}
     </form>

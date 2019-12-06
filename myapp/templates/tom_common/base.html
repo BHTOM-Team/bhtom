@@ -8,10 +8,9 @@
 
     <!-- Bootstrap CSS -->
     {% bootstrap_css %}
-    <link rel="stylesheet" href="{% static 'bhtom/css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
     {% block additional_css %}
     {% endblock %}
-    <link rel="icon" type="image/x-icon" href="{% static 'tom_common/img/favicon-32.ico' %}" sizes="32x32" />
     <link rel="icon" type="image/x-icon" href="{% static 'tom_common/img/favicon-16.ico' %}" sizes="16x16" />
 
     {% bootstrap_javascript jquery='True' %}
@@ -20,7 +19,7 @@
   </head>
   <body>
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-      <a class="navbar-brand" href="/"><img src="{% static 'tom_common/img/icon.png' %}" class="img-fluid"> BHTOM</a>
+      <a class="navbar-brand" href="/"><img src="{% static 'tom_common/img/icon.png' %}" class="img-fluid">BHTOM</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
