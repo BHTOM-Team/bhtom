@@ -286,3 +286,66 @@ def spectra_plot(target, dataproduct=None):
 @register.inclusion_tag('bhtom/aladin_collapse.html')
 def aladin_collapse(target):
     return {'target': target}
+
+#edited by LW
+@register.inclusion_tag('tom_targets/partials/target_distribution.html')
+def bh_target_distribution(targets):
+    """
+    Displays a plot showing on a map the locations of all sidereal targets in the TOM.
+    """
+    locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
+    data = [
+        dict(
+            lon=[l[0] for l in locations],
+            lat=[l[1] for l in locations],
+            text=[l[2] for l in locations],
+            hoverinfo='text',
+            mode='markers',
+            marker=dict(size=10,
+                                    color='red'),
+            type='scattergeo'
+        ),
+        dict(
+            lon=list(range(0, 360, 60))+[180]*4,
+            lat=[0]*6+[-60, -30, 30, 60],
+            text=list(range(0, 360, 60))+[-60, -30, 30, 60],
+            hoverinfo='none',
+            mode='text',
+            type='scattergeo'
+        )
+    ]
+    layout = {
+        'title': 'Target Map (equatorial)',
+        'hovermode': 'closest',
+        'showlegend': False,
+        'paper_bgcolor': 'black',
+        'plot_bgcolor' : 'black',
+        'margin' : {
+            "l":0,
+            "r":0,
+            "t":30,
+            "b":0
+        },
+        'geo': {
+            'projection': {
+                'type': 'mollweide',
+            },
+            'showlakes' : False,
+            'showcoastlines': False,
+            'showland': False,
+            'bgcolor' : 'black',
+            'lonaxis': {
+                'showgrid': True,
+                'range': [0, 360],
+                'gridcolor' : 'white',
+            },
+            'lataxis': {
+                'showgrid': True,
+                'range': [-90, 90],
+                'gridcolor' : 'white',
+            },
+        }
+    }
+    figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
+    return {'figure': figure}
+

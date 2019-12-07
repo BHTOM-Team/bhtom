@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load bootstrap4 targets_extras staticfiles %}
+{% load bootstrap4 targets_extras staticfiles bhtom_tags %}
 {% block title %}Black Hole list{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
@@ -26,7 +26,7 @@
       </div>
     </div>
     {% select_target_js %}
-    {% target_distribution filter.qs %}
+    {% bh_target_distribution filter.qs %}
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
     <label id="displaySelected"></label>
     <button id="optionSelectAll" type="button" class="btn btn-link" onClick="select_all({{ target_count }})"></button>
@@ -73,7 +73,11 @@
             <td>{{ target|target_extra_field:"maglast" }}</td>
             <td>{{ target|target_extra_field:"priority" }}</td>
             <td>{{ target.dt|floatformat:1 }}</td>
-            <td>{{ target.cadencepriority|floatformat:1}}</td>
+            {# <td>{{ target.cadencepriority|floatformat:1}}</td> #}
+    {% if target.cadencepriority >= 10 %}<td class="red">
+    {% else %}<td>{% endif %}
+            {{ target.cadencepriority|floatformat:1 }}
+</td>
             <td>{{ target|target_extra_field:"cadence"|floatformat:1}}</td>
           </tr>
           {% empty %}
