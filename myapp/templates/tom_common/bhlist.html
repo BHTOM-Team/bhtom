@@ -34,8 +34,21 @@
     <label id="displaySelected"></label>
     <button id="optionSelectAll" type="button" class="btn btn-link" onClick="select_all({{ target_count }})"></button>
     <form id="grouping-form" action="{% url 'targets:add-remove-grouping' %}" method="POST">
-      {% csrf_token %}
-      
+        {% csrf_token %}
+  
+  <div class="form-group d-flex justify-content-end align-items-baseline">
+      <label>Add/Remove from grouping</label>
+      <select name="grouping" class="form-control w-25 ml-1">
+        {% for grouping in groupings %}
+        <option value="{{ grouping.id }}">{{ grouping.name }}</option>
+        {% endfor %}
+      </select>
+      <input type="hidden" value="{{ query_string }}" name="query_string">
+      <input type="hidden" value="False" id="isSelectAll" name="isSelectAll">
+      <button type="submit" class="btn btn-outline-primary ml-1" name="add">Add</button>
+      <button type="submit" class="btn btn-outline-danger ml-1" name="remove">Remove</button>
+    </div>
+
       <script type="text/javascript" src="{% static 'myapp/sorttable.js' %}"></script>
       <table class="table table-hover sortable">
         <thead>
@@ -89,20 +102,6 @@
     </form>
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
   </div>
-  <div class="col-md-12"> 
-  <div class="form-group d-flex justify-content-end align-items-baseline">
-      <label>Add/Remove from grouping</label>
-      <select name="grouping" class="form-control w-25 ml-1">
-        {% for grouping in groupings %}
-        <option value="{{ grouping.id }}">{{ grouping.name }}</option>
-        {% endfor %}
-      </select>
-      <input type="hidden" value="{{ query_string }}" name="query_string">
-      <input type="hidden" value="False" id="isSelectAll" name="isSelectAll">
-      <button type="submit" class="btn btn-outline-primary ml-1" name="add">Add</button>
-      <button type="submit" class="btn btn-outline-danger ml-1" name="remove">Remove</button>
-    </div>
-    </div>
 
     <div class="col-md-12">
         <hr style="height:1px;background-color:red;border:none;" noshade />
