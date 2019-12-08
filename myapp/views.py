@@ -46,6 +46,9 @@ def computePriority(dt, priority, cadence):
         if (cadence!=0 and dt/cadence>1 and dt/cadence<2): ret = 2
         if (cadence!=0 and dt/cadence>2): ret = 3
 
+    #alternative - linear scale
+    if (cadence!=0):
+        ret = dt/cadence
     return ret*priority
 
 
