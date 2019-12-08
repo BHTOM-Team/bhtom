@@ -6,7 +6,7 @@
 {% endblock %}
 {% block content %}
 <div class="row">
-  <div class="col-md-10">
+  <div class="col-md-12">
     <div class="row">
       <div class="col-md-12">
         <span class="float-right">
@@ -25,25 +25,17 @@
       </span>
       </div>
     </div>
+    <!-- display map of targets -->
+    <div class="container text-center">
     {% select_target_js %}
     {% bh_target_distribution filter.qs %}
-    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+    </div>
+<!-- display events-->
     <label id="displaySelected"></label>
     <button id="optionSelectAll" type="button" class="btn btn-link" onClick="select_all({{ target_count }})"></button>
     <form id="grouping-form" action="{% url 'targets:add-remove-grouping' %}" method="POST">
       {% csrf_token %}
-      <div class="form-group d-flex justify-content-end align-items-baseline">
-        <label>Add/Remove from grouping</label>
-        <select name="grouping" class="form-control w-25 ml-1">
-          {% for grouping in groupings %}
-          <option value="{{ grouping.id }}">{{ grouping.name }}</option>
-          {% endfor %}
-        </select>
-        <input type="hidden" value="{{ query_string }}" name="query_string">
-        <input type="hidden" value="False" id="isSelectAll" name="isSelectAll">
-        <button type="submit" class="btn btn-outline-primary ml-1" name="add">Add</button>
-        <button type="submit" class="btn btn-outline-danger ml-1" name="remove">Remove</button>
-      </div>
+      
       <script type="text/javascript" src="{% static 'myapp/sorttable.js' %}"></script>
       <table class="table table-hover sortable">
         <thead>
@@ -52,12 +44,12 @@
             <th>Event Name/Aliases</th>
             <th>RA</th>
             <th>Dec</th>
-            <th>Observations</th>
-            <th>Last Gmag</th>
-            <th>Priority</th>
-            <th>Dt</th>
-            <th>Cadence Priority</th>
-            <th>Optimal cadence</th>
+            <th>Number of Observations</th>
+            <th>Last Gaia [mag]</th>
+            <th>Target Importance</th>
+            <th>Time from last obs [days]</th>
+            <th>Required Cadence [days]</th>
+            <th>Observing Priority</th>
           </tr>
         </thead>
         <tbody>
@@ -73,12 +65,12 @@
             <td>{{ target|target_extra_field:"maglast" }}</td>
             <td>{{ target|target_extra_field:"priority" }}</td>
             <td>{{ target.dt|floatformat:1 }}</td>
+            <td>{{ target|target_extra_field:"cadence"|floatformat:1}}</td>
             {# <td>{{ target.cadencepriority|floatformat:1}}</td> #}
     {% if target.cadencepriority >= 10 %}<td class="red">
     {% else %}<td>{% endif %}
             {{ target.cadencepriority|floatformat:1 }}
 </td>
-            <td>{{ target|target_extra_field:"cadence"|floatformat:1}}</td>
           </tr>
           {% empty %}
           <tr>
@@ -97,8 +89,28 @@
     </form>
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
   </div>
+  <div class="col-md-12"> 
+  <div class="form-group d-flex justify-content-end align-items-baseline">
+      <label>Add/Remove from grouping</label>
+      <select name="grouping" class="form-control w-25 ml-1">
+        {% for grouping in groupings %}
+        <option value="{{ grouping.id }}">{{ grouping.name }}</option>
+        {% endfor %}
+      </select>
+      <input type="hidden" value="{{ query_string }}" name="query_string">
+      <input type="hidden" value="False" id="isSelectAll" name="isSelectAll">
+      <button type="submit" class="btn btn-outline-primary ml-1" name="add">Add</button>
+      <button type="submit" class="btn btn-outline-danger ml-1" name="remove">Remove</button>
+    </div>
+    </div>
+
+    <div class="col-md-12">
+        <hr style="height:2px;background-color:red;border:none;" noshade />
+    </div>
+
+    <div class="col-md-6">
+   <h3>Filter targets</h3>
   {{ filter.fields }}
-  <div class="col-md-2">
     <form action="" method="get" class="form">
       {% bootstrap_form filter.form %}
       {% buttons %}
@@ -110,5 +122,5 @@
       {% endbuttons %}
     </form>
   </div>
-</div>
+
 {% endblock %}
