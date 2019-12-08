@@ -137,18 +137,20 @@ def get_24hr_airmass(target, interval, airmass_limit):
 @register.inclusion_tag('bhtom/lightcurve.html')
 def lightcurve(target):
     def get_color(filter_name):
-        filter_translate = {'U': 'U', 'B': 'B', 'V': 'V',
+        filter_translate = {'U': 'U', 'B': 'B', 'V': 'V','I':'I', 'G':'G',
             'g': 'g', 'gp': 'g', 'r': 'r', 'rp': 'r', 'i': 'i', 'ip': 'i',
             'g_ZTF': 'g_ZTF', 'r_ZTF': 'r_ZTF', 'i_ZTF': 'i_ZTF'}
         colors = {'U': 'rgb(59,0,113)',
             'B': 'rgb(0,87,255)',
-            'V': 'rgb(120,255,0)',
-            'g': 'rgb(0,204,255)',
+            'V': 'rgb(20,255,150)',
+            'I': 'rgb(200,0,10)',
+            'G': 'rgb(0,30,100)',
+            'g': 'rgb(0,204,155)',
             'r': 'rgb(255,124,0)',
-            'i': 'rgb(144,0,43)',
-            'g_ZTF': 'rgb(0,204,255)',
+            'i': 'rgb(254,0,43)',
+            'g_ZTF': 'rgb(0,204,155)',
             'r_ZTF': 'rgb(255,124,0)',
-            'i_ZTF': 'rgb(144,0,43)',
+            'i_ZTF': 'rgb(254,0,43)',
             'other': 'rgb(0,0,0)'}
         try: color = colors[filter_translate[filter_name]]
         except: color = colors['other']
