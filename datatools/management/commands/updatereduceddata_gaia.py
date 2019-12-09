@@ -20,11 +20,13 @@ class Command(BaseCommand):
                 target_object = Target.objects.get(pk=target_id)
                 gaia = target_object.targetextra_set.get(key='gaia_alert_name').value
                 gaia_alerts_harvester.update_gaia_lc(target_object, gaia)
-                updateme = (target_object.targetextra_set.get(key='update_me').value)
-                if (updateme=="False"): 
-                    return ('Light curve of %s not updated because of update_me flag')%(gaia)
-                else:
-                    return ('Light curve of %s updated')%(gaia)
+                return ('Light curve of %s updated')%(gaia)
+                # dontupdateme = (target_object.targetextra_set.get(key='dont_update_me').value)
+                # if (dontupdateme=="True"): 
+                #     return ('Light curve of %s not updated because of dont_update_me flag')%(gaia)
+                # else:
+#                    return ('Light curve of %s updated')%(gaia)
+
                 print("UPDATED lc of ",gaia)
             except Exception as e:
                print("target ",target_id,' not updated, probably no gaia_alert_name provided for this target')  
@@ -38,7 +40,13 @@ class Command(BaseCommand):
                 try:
                     gaia = t.targetextra_set.get(key='gaia_alert_name').value
                     print("UPDATING all: ",t, gaia)
-                    gaia_alerts_harvester.update_gaia_lc(t, gaia)
+                    gaia_alerts_harvester.update_gaia_lc(t, gaia) #this updates SUN separation and checks the flag updateme again
+                    dontupdateme = (target_object.targetextra_set.get(key='dont_update_me').value)
+                    if (dontupdateme=="True"): 
+                        print ('Update-many: Light curve of %s not updated because of dont_update_me flag')%(gaia)
+                    else:
+                        print ('Update-many: Light curve of %s updated')%(gaia)
+
                 except:
-                    print("target ",t,' not updated, probably no gaia_alert_name given.')  
+                    print("target ",t,' not updated, probably no gaia_alert_name given.')                     
             return 'Finished updating all light curves'

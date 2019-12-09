@@ -157,9 +157,13 @@ def update_gaia_lc(target, gaia_name):
         print("DEBUG: new Sun separation: ",Sun_sep)
         
         ##deciding whether to update the light curves or not
-        updateme = (target.targetextra_set.get(key='update_me').value)
-        if (updateme=='False'): 
-            print("DEBUG: target ",target,' not updated because of updateme = false')
+        dontupdateme="None"
+        try:
+            dontupdateme = (target.targetextra_set.get(key='dont_update_me').value)
+        except:
+            pass
+        if (dontupdateme=='True'): 
+            print("DEBUG: target ",target,' not updated because of dont_update_me = true')
             return 
 
         ##GAIA LC update
@@ -168,7 +172,7 @@ def update_gaia_lc(target, gaia_name):
             gaia_name_name = target.targetextra_set.get(key='gaia_alert_name').value
         except:
             pass
-        print(gaia_name_name)
+
         if (gaia_name_name!=''):
 
             lightcurve_url = f'{base_url}/alert/{gaia_name_name}/lightcurve.csv'

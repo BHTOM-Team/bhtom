@@ -339,7 +339,7 @@ EXTRA_FIELDS = [
     {'name': 'dicovery_date', 'type': 'datetime'},
     {'name': 'cadence', 'type': 'number'},
     {'name': 'Sun_separation', 'type': 'number'},
-    {'name': 'update_me', 'type':'boolean'}
+    {'name': 'dont_update_me', 'type':'boolean'}
 ]
 
 # Authentication strategy can either be LOCKED (required login for all views)
