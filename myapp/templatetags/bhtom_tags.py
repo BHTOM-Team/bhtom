@@ -11,7 +11,6 @@ from astroplan import Observer, FixedTarget, AtNightConstraint, time_grid_from_r
 import datetime
 import json
 from astropy.time import Time
-from datetime import datetime
 from datetime import timedelta
 
 
@@ -300,10 +299,10 @@ def bh_target_distribution(targets):
     Displays a plot showing on a map the locations of all sidereal targets in the TOM.
     """
     from astropy.time import Time
-    jd_now = Time(datetime.utcnow()).jd
+    jd_now = Time(datetime.datetime.utcnow()).jd
 
     alpha_sun, delta_sun = get_sun_ra_dec()
-    moon_pos = get_moon(Time(datetime.utcnow()))
+    moon_pos = get_moon(Time(datetime.datetime.utcnow()))
     alpha_moon = moon_pos.ra.deg
     delta_moon = moon_pos.dec.deg
 
@@ -385,7 +384,7 @@ def bh_target_distribution(targets):
 
 def get_sun_ra_dec():
         #computing Sun's position, https://en.wikipedia.org/wiki/Position_of_the_Sun
-    jd_now = Time(datetime.utcnow()).jd
+    jd_now = Time(datetime.datetime.utcnow()).jd
     n = jd_now - 2451545.0
     L = 280.460 + 0.9856474*n #mean longitude of the Sun, in deg
     g = 357.528 + 0.9856003*n #mean anomaly
