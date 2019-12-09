@@ -300,9 +300,12 @@ def bh_target_distribution(targets):
     Displays a plot showing on a map the locations of all sidereal targets in the TOM.
     """
     from astropy.time import Time
+    jd_now = Time(datetime.utcnow()).jd
 
     alpha_sun, delta_sun = get_sun_ra_dec()
-    #angular distance of targets from the sun
+    moon_pos = get_moon(Time(datetime.utcnow()))
+    alpha_moon = moon_pos.ra.deg
+    delta_moon = moon_pos.dec.deg
 
     ###
     locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
@@ -335,7 +338,14 @@ def bh_target_distribution(targets):
             lon=[alpha_sun], lat=[delta_sun], text=['SUN'], hoverinfo='text', mode='markers',
             marker=dict(size=50, color='yellow', opacity=0.5),
             type='scattergeo'
+        ),
+        #moon
+        dict(
+            lon=[alpha_moon], lat=[delta_moon], text=['Moon'], hoverinfo='text', mode='markers',
+            marker=dict(size=50, color='grey', opacity=0.5),
+            type='scattergeo'
         )
+
     ]
     layout = {
         'title': 'Target Map (equatorial)',
