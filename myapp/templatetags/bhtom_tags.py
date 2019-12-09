@@ -11,10 +11,14 @@ from astroplan import Observer, FixedTarget, AtNightConstraint, time_grid_from_r
 import datetime
 import json
 from astropy.time import Time
+from datetime import datetime
+from datetime import timedelta
+
+
 from astropy import units as u
 from astropy.coordinates import get_moon, get_sun, SkyCoord, AltAz
 import numpy as np
-import time
+import time, math
 
 register = template.Library()
 
@@ -295,8 +299,18 @@ def bh_target_distribution(targets):
     """
     Displays a plot showing on a map the locations of all sidereal targets in the TOM.
     """
+    from astropy.time import Time
+
+    alpha_sun, delta_sun = get_sun_ra_dec()
+    #angular distance of targets from the sun
+
+    ###
     locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
+    # for ra,dec,name in locations:
+    #     print(name,get_angular_dist_from_the_sun(ra,dec,alpha_sun, delta_sun),' deg from Sun')
+    #TODO: add field per target to allow sorting by the Sun distance
     data = [
+        #targets
         dict(
             lon=[l[0] for l in locations],
             lat=[l[1] for l in locations],
@@ -307,12 +321,19 @@ def bh_target_distribution(targets):
                                     color='red'),
             type='scattergeo'
         ),
+        #grid
         dict(
             lon=list(range(0, 360, 60))+[180]*4,
             lat=[0]*6+[-60, -30, 30, 60],
             text=list(range(0, 360, 60))+[-60, -30, 30, 60],
             hoverinfo='none',
             mode='text',
+            type='scattergeo'
+        ),
+        #sun
+        dict(
+            lon=[alpha_sun], lat=[delta_sun], text=['SUN'], hoverinfo='text', mode='markers',
+            marker=dict(size=50, color='yellow', opacity=0.5),
             type='scattergeo'
         )
     ]
@@ -351,3 +372,38 @@ def bh_target_distribution(targets):
     figure = offline.plot(go.Figure(data=data, layout=layout), output_type='div', show_link=False)
     return {'figure': figure}
 
+
+def get_sun_ra_dec():
+        #computing Sun's position, https://en.wikipedia.org/wiki/Position_of_the_Sun
+    jd_now = Time(datetime.utcnow()).jd
+    n = jd_now - 2451545.0
+    L = 280.460 + 0.9856474*n #mean longitude of the Sun, in deg
+    g = 357.528 + 0.9856003*n #mean anomaly
+    while (L>360 and L>0): L-=360.
+    while (L<0 and L<360): L+=360. 
+    lam = L + 1.915*np.sin(np.deg2rad(g)) + 0.020*np.sin(np.deg2rad(2*g))
+    bet = 0.0
+    eps = 23.439-0.0000004*n
+    alpha_sun_rad = np.arctan2(np.cos(np.deg2rad(eps))*np.sin(np.deg2rad(lam)), np.cos(np.deg2rad(lam)))
+    delta_sun_rad = np.arcsin(np.sin(np.deg2rad(eps))*np.sin(np.deg2rad(lam)))
+    alpha_sun = np.rad2deg(alpha_sun_rad)
+    delta_sun = np.rad2deg(delta_sun_rad)
+    return alpha_sun, delta_sun
+
+#computes the angular separation in degrees from the SUN
+#returns truncated string
+#after https://www.skythisweek.info/angsep.pdf
+def get_angular_dist_from_the_sun(ra, dec, alpha_sun, delta_sun):
+    a1=np.deg2rad(ra)
+    d1=np.deg2rad(dec)
+    a2=np.deg2rad(alpha_sun)
+    d2=np.deg2rad(delta_sun)
+
+    licz=np.sqrt(np.cos(d2)*np.cos(d2)*np.sin(a2-a1)*np.sin(a2-a1) +
+    (np.cos(d1)*np.sin(d2) - np.sin(d1)*np.cos(d2)*np.cos(a2-a1))**2)
+    mian = np.sin(d1)*np.sin(d2) + np.cos(d1)*np.cos(d2)*np.cos(a2-a1)
+
+    sep_rad = math.atan(licz/mian)
+    sep = np.rad2deg(sep_rad)
+    sep_str = "{:.0f}".format(sep)
+    return sep_str
