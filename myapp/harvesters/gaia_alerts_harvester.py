@@ -12,6 +12,10 @@ from tom_targets.models import Target, TargetExtra
 
 from decimal import Decimal
 from astropy.time import Time, TimezoneInfo
+from astropy.coordinates import get_moon, get_sun, SkyCoord, AltAz
+from astropy import units as u
+from datetime import datetime
+
 from tom_dataproducts.models import ReducedDatum
 
 import mechanize
@@ -107,7 +111,7 @@ class GaiaAlertsHarvester(AbstractHarvester):
             target.dec = dec
             target.epoch = 2000
 
-            #extra fields:        
+            #extra fields:  DOES NOT WORK      
 #            t1 = Target.objects.get(name=gaia_name)
             target.gaia_alert_name=gaia_name
 #            target.save(extras={'gaia_alert_name':gaia_name})
@@ -141,64 +145,90 @@ class GaiaAlertsHarvester(AbstractHarvester):
 
 #reads light curve from Gaia Alerts - used in updatereduceddata_gaia
 #also reads CPCS and ZTF data here - FIXME: move some day to separate method?
+#this also updates the SUN separation
+#if update_me == false, only the SUN position gets updated, not the LC
 
 def update_gaia_lc(target, gaia_name):
-        lightcurve_url = f'{base_url}/alert/{gaia_name}/lightcurve.csv'
-        response = requests.get(lightcurve_url)
-        data = response._content.decode('utf-8').split('\n')[2:-2]
-        print("DEBUG UPDATE GAIA LC:", gaia_name)
+        ## updating SUN separation
+        sun_pos = get_sun(Time(datetime.utcnow()))
+        obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg)
+        Sun_sep = sun_pos.separation(obj_pos).deg
+        target.save(extras={'Sun_separation':Sun_sep})
+        print("DEBUG: new Sun separation: ",Sun_sep)
+        
+        ##deciding whether to update the light curves or not
+        updateme = (target.targetextra_set.get(key='update_me').value)
+        if (updateme=='False'): 
+            print("DEBUG: target ",target,' not updated because of updateme = false')
+            return 
 
-        jdmax = 0
-        maglast = 0
-        for obs in data:
- #           print(obs.split(','))
-            try: #try avoids 'nulls' and 'untrusted' in mag
-                jdstr = (obs.split(',')[1])
-                magstr = obs.split(',')[2]
-                if (float(jdstr)>jdmax): 
-                    jdmax = float(jdstr)
-                    maglast = float(magstr)
-                # datum_mag = Decimal(magstr)
-                # datum_jd = Time(Decimal(jdstr), format='jd', scale='utc')
-
-                datum_mag = float(Decimal(magstr))
-                datum_jd = Time((jdstr), scale='utc')
-                value = {
-                'magnitude': datum_mag,
-                'filter': 'G_Gaia',
-                'error': 0 # for now
-                }
-
-                rd, created = ReducedDatum.objects.get_or_create(
-                timestamp=datum_jd.to_datetime(timezone=TimezoneInfo()),
-                value=json.dumps(value),
-                source_name=target.name,
-                source_location=lightcurve_url,
-                data_type='photometry',
-                target=target)
-                rd.save()
-            except:
-                pass
-        print("finished updating "+gaia_name)
-
-        #Updating/storing the last JD
-        jdlast = jdmax
-        previousjd=0
-
-        try:        
-            previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
-#            previousjd = target.jdlastobs
-            print("DEBUG-Gaia prev= ", previousjd, " this= ",jdlast)
-            target.save(extras={'maglast':maglast})
-            print("DEBUG saving maglast ",maglast)
-
+        ##GAIA LC update
+        gaia_name_name=''  ###WORKAROUND of an error in creation of targets  
+        try: 
+            gaia_name_name = target.targetextra_set.get(key='gaia_alert_name').value
         except:
             pass
-        if (jdlast > previousjd) : 
-            target.save(extras={'jdlastobs':jdlast})
-            print("DEBUG saving new jdlast ",jdlast)
-            target.save(extras={'maglast':maglast})
-            print("DEBUG saving new maglast ",maglast)
+        print(gaia_name_name)
+        if (gaia_name_name!=''):
+
+            lightcurve_url = f'{base_url}/alert/{gaia_name_name}/lightcurve.csv'
+            response = requests.get(lightcurve_url)
+            data = response._content.decode('utf-8').split('\n')[2:-2]
+            print("DEBUG gaia harvester - UPDATE GAIA LC:", gaia_name_name)
+
+            jdmax = 0
+            maglast = 0
+
+            for obs in data:
+                #print(obs.split(','))
+                try: #try avoids 'nulls' and 'untrusted' in mag
+                    jdstr = (obs.split(',')[1])
+                    magstr = obs.split(',')[2]
+                    if (magstr=="null" or magstr=="untrusted"): continue
+                    if (float(jdstr)>jdmax): 
+                        jdmax = float(jdstr)
+                        maglast = float(magstr)
+                    # datum_mag = Decimal(magstr)
+                    # datum_jd = Time(Decimal(jdstr), format='jd', scale='utc')
+
+                    datum_mag = float(Decimal(magstr))
+                    datum_jd = Time(float(jdstr), format='jd', scale='utc')
+                    value = {
+                    'magnitude': datum_mag,
+                    'filter': 'G_Gaia',
+                    'error': 0 # for now
+                    }
+
+                    rd, created = ReducedDatum.objects.get_or_create(
+                    timestamp=datum_jd.to_datetime(timezone=TimezoneInfo()),
+                    value=json.dumps(value),
+                    source_name=target.name,
+                    source_location=lightcurve_url,
+                    data_type='photometry',
+                    target=target)
+                    rd.save()
+                except:
+                     pass
+            print("finished updating "+gaia_name_name)
+
+            #Updating/storing the last JD
+            jdlast = jdmax
+            previousjd=0
+
+            try:        
+                previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
+    #            previousjd = target.jdlastobs
+                print("DEBUG-Gaia prev= ", previousjd, " this= ",jdlast)
+                target.save(extras={'maglast':maglast})
+                print("DEBUG saving maglast ",maglast)
+
+            except:
+                pass
+            if (jdlast > previousjd) : 
+                target.save(extras={'jdlastobs':jdlast})
+                print("DEBUG saving new jdlast ",jdlast)
+                target.save(extras={'maglast':maglast})
+                print("DEBUG saving new maglast ",maglast)
 
         # previousjd_object = TargetExtra.objects.filter(target=target, key='jdlastobs')
 
@@ -358,6 +388,8 @@ def update_gaia_lc(target, gaia_name):
             if (jdlast > previousjd) : 
                 target.save(extras={'jdlastobs':jdlast})
                 print("DEBUG saving new jdlast from ZTF: ",jdlast)
+        ####
+
 
 def getmars(objectId):  #gets mars data for ZTF objects
     url = 'https://mars.lco.global/'

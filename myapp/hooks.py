@@ -72,196 +72,196 @@ def target_post_save(target, created):
         # }
 
         # response = requests.post(twitter_url, params=status, auth=auth)
-    ztf_name=''  ###WORKAROUND of an error in creation of targets  
-    try: 
-        ztf_name = target.targetextra_set.get(key='ztf_alert_name').value
-    except:
-        pass
+#     ztf_name=''  ###WORKAROUND of an error in creation of targets  
+#     try: 
+#         ztf_name = target.targetextra_set.get(key='ztf_alert_name').value
+#     except:
+#         pass
 
-    if (ztf_name!=''):
-        alerts = get(ztf_name)
+#     if (ztf_name!=''):
+#         alerts = get(ztf_name)
         
-        filters = {1: 'g_ZTF', 2: 'r_ZTF', 3: 'i_ZTF'}
-        jdarr = []
-        for alert in alerts:
-            if all([key in alert['candidate'] for key in ['jd', 'magpsf', 'fid', 'sigmapsf', 'magnr', 'sigmagnr']]):
-                jd = Time(alert['candidate']['jd'], format='jd', scale='utc')
-                jdarr.append(jd.jd)
-                jd.to_datetime(timezone=TimezoneInfo())
+#         filters = {1: 'g_ZTF', 2: 'r_ZTF', 3: 'i_ZTF'}
+#         jdarr = []
+#         for alert in alerts:
+#             if all([key in alert['candidate'] for key in ['jd', 'magpsf', 'fid', 'sigmapsf', 'magnr', 'sigmagnr']]):
+#                 jd = Time(alert['candidate']['jd'], format='jd', scale='utc')
+#                 jdarr.append(jd.jd)
+#                 jd.to_datetime(timezone=TimezoneInfo())
 
-                #adding reference flux to the difference psf flux
-                zp=30.0
-                m=alert['candidate']['magpsf']
-                r=alert['candidate']['magnr']
-                f=10**(-0.4*(m-zp))+10**(-0.4*(r-zp))
-                mag = zp-2.5*np.log10(f)
+#                 #adding reference flux to the difference psf flux
+#                 zp=30.0
+#                 m=alert['candidate']['magpsf']
+#                 r=alert['candidate']['magnr']
+#                 f=10**(-0.4*(m-zp))+10**(-0.4*(r-zp))
+#                 mag = zp-2.5*np.log10(f)
 
-                er=alert['candidate']['sigmagnr']
-                em=alert['candidate']['sigmapsf']
-                emag=np.sqrt(er**2+em**2)
+#                 er=alert['candidate']['sigmagnr']
+#                 em=alert['candidate']['sigmapsf']
+#                 emag=np.sqrt(er**2+em**2)
 
-                value = {
-                    'magnitude': mag,
-                    'filter': filters[alert['candidate']['fid']],
-                    'error': emag
-                }
-                rd, created = ReducedDatum.objects.get_or_create(
-                    timestamp=jd.to_datetime(timezone=TimezoneInfo()),
-                    value=json.dumps(value),
-                    source_name=target.name,
-                    source_location=alert['lco_id'],
-                    data_type='photometry',
-                    target=target)
-                rd.save()
+#                 value = {
+#                     'magnitude': mag,
+#                     'filter': filters[alert['candidate']['fid']],
+#                     'error': emag
+#                 }
+#                 rd, created = ReducedDatum.objects.get_or_create(
+#                     timestamp=jd.to_datetime(timezone=TimezoneInfo()),
+#                     value=json.dumps(value),
+#                     source_name=target.name,
+#                     source_location=alert['lco_id'],
+#                     data_type='photometry',
+#                     target=target)
+#                 rd.save()
 
-        jdlast = np.array(jdarr).max()
+#         jdlast = np.array(jdarr).max()
 
-        #modifying jd of last obs 
+#         #modifying jd of last obs 
 
-        previousjd=0
+#         previousjd=0
 
-        try:        
-            previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
-            print("DEBUG-ZTF prev= ", previousjd, " this= ",jdlast)
-        except:
-            pass
-        if (jdlast > previousjd) : 
-            target.save(extras={'jdlastobs':jdlast})
-            print("DEBUG saving new jdlast from ZTF: ",jdlast)
+#         try:        
+#             previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
+#             print("DEBUG-ZTF prev= ", previousjd, " this= ",jdlast)
+#         except:
+#             pass
+#         if (jdlast > previousjd) : 
+#             target.save(extras={'jdlastobs':jdlast})
+#             print("DEBUG saving new jdlast from ZTF: ",jdlast)
 
 
-    gaia_name=''  ###WORKAROUND of an error in creation of targets  
-    try: 
-        gaia_name = target.targetextra_set.get(key='gaia_alert_name').value
-    except:
-        pass
-    if (gaia_name!=''):
-        base_url = 'http://gsaweb.ast.cam.ac.uk/alerts/alert'
-        lightcurve_url = f'{base_url}/{gaia_name}/lightcurve.csv'
+#     gaia_name=''  ###WORKAROUND of an error in creation of targets  
+#     try: 
+#         gaia_name = target.targetextra_set.get(key='gaia_alert_name').value
+#     except:
+#         pass
+#     if (gaia_name!=''):
+#         base_url = 'http://gsaweb.ast.cam.ac.uk/alerts/alert'
+#         lightcurve_url = f'{base_url}/{gaia_name}/lightcurve.csv'
 
-        response = requests.get(lightcurve_url)
-        data = response._content.decode('utf-8').split('\n')[2:-2]
+#         response = requests.get(lightcurve_url)
+#         data = response._content.decode('utf-8').split('\n')[2:-2]
 
-        jd = [x.split(',')[1] for x in data]
-        mag = [x.split(',')[2] for x in data]
+        # jd = [x.split(',')[1] for x in data]
+        # mag = [x.split(',')[2] for x in data]
 
-        for i in reversed(range(len(mag))):
-            try:
-                datum_mag = float(mag[i])
-                datum_jd = Time(float(jd[i]), format='jd', scale='utc')
-                value = {
-                    'magnitude': datum_mag,
-                    'filter': 'G_Gaia',
-                    'error': 0 # for now
-                }
-                rd, created = ReducedDatum.objects.get_or_create(
-                    timestamp=datum_jd.to_datetime(timezone=TimezoneInfo()),
-                    value=json.dumps(value),
-                    source_name=target.name,
-                    source_location=lightcurve_url,
-                    data_type='photometry',
-                    target=target)
-                rd.save()
-            except:
-                pass
+        # for i in reversed(range(len(mag))):
+        #     try:
+        #         datum_mag = float(mag[i])
+        #         datum_jd = Time(float(jd[i]), format='jd', scale='utc')
+        #         value = {
+        #             'magnitude': datum_mag,
+        #             'filter': 'G_Gaia',
+        #             'error': 0 # for now
+        #         }
+        #         rd, created = ReducedDatum.objects.get_or_create(
+        #             timestamp=datum_jd.to_datetime(timezone=TimezoneInfo()),
+        #             value=json.dumps(value),
+        #             source_name=target.name,
+        #             source_location=lightcurve_url,
+        #             data_type='photometry',
+        #             target=target)
+        #         rd.save()
+        #     except:
+        #         pass
 
-        #Updating/storing the last JD
-        jdlast = np.max(np.array(jd).astype(np.float))
+#         #Updating/storing the last JD
+#         jdlast = np.max(np.array(jd).astype(np.float))
         
-        #Updating/storing the last JD
-        previousjd=0
+#         #Updating/storing the last JD
+#         previousjd=0
 
-        try:        
-            previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
-#            previousjd = target.jdlastobs
-            print("DEBUG-Gaia prev= ", previousjd, " this= ",jdlast)
-        except:
-            pass
-        if (jdlast > previousjd) : 
-            target.save(extras={'jdlastobs':jdlast})
-            print("DEBUG saving new jdlast from Gaia: ",jdlast)
+#         try:        
+#             previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
+# #            previousjd = target.jdlastobs
+#             print("DEBUG-Gaia prev= ", previousjd, " this= ",jdlast)
+#         except:
+#             pass
+#         if (jdlast > previousjd) : 
+#             target.save(extras={'jdlastobs':jdlast})
+#             print("DEBUG saving new jdlast from Gaia: ",jdlast)
 
-    ############## CPCS follow-up server
-    cpcs_name=''  ###WORKAROUND of an error in creation of targets  
-    try: 
-        cpcs_name = target.targetextra_set.get(key='calib_server_name').value
-    except:
-        pass
-    if (cpcs_name!=''):
-        nam = cpcs_name[6:] #removing ivo://
-        br = mechanize.Browser()
-        followuppage=br.open('http://gsaweb.ast.cam.ac.uk/followup/')
-        req=br.click_link(text='Login')
-        br.open(req)
-        br.select_form(nr=0)
-        br.form['hashtag']=CPCS_DATA_ACCESS_HASHTAG
-        br.submit()
+#     ############## CPCS follow-up server
+#     cpcs_name=''  ###WORKAROUND of an error in creation of targets  
+#     try: 
+#         cpcs_name = target.targetextra_set.get(key='calib_server_name').value
+#     except:
+#         pass
+#     if (cpcs_name!=''):
+#         nam = cpcs_name[6:] #removing ivo://
+#         br = mechanize.Browser()
+#         followuppage=br.open('http://gsaweb.ast.cam.ac.uk/followup/')
+#         req=br.click_link(text='Login')
+#         br.open(req)
+#         br.select_form(nr=0)
+#         br.form['hashtag']=CPCS_DATA_ACCESS_HASHTAG
+#         br.submit()
 
-        try:
-            page=br.open('http://gsaweb.ast.cam.ac.uk/followup/get_alert_lc_data?alert_name=ivo:%%2F%%2F%s'%nam)
-            pagetext=page.read()
-            data1=json.loads(pagetext)
-            if len(set(data1["filter"]) & set(['u','B','g','V','B2pg','r','R','R1pg','i','I','Ipg','z']))>0:
-                fup=[data1["mjd"],data1["mag"],data1["magerr"],data1["filter"],data1["observatory"]] 
-                logger.info('%s: follow-up data on CPCS found', target)
-            else:
-                logger.info('DEBUG: no CPCS follow-up for %s', target)
+#         try:
+#             page=br.open('http://gsaweb.ast.cam.ac.uk/followup/get_alert_lc_data?alert_name=ivo:%%2F%%2F%s'%nam)
+#             pagetext=page.read()
+#             data1=json.loads(pagetext)
+#             if len(set(data1["filter"]) & set(['u','B','g','V','B2pg','r','R','R1pg','i','I','Ipg','z']))>0:
+#                 fup=[data1["mjd"],data1["mag"],data1["magerr"],data1["filter"],data1["observatory"]] 
+#                 logger.info('%s: follow-up data on CPCS found', target)
+#             else:
+#                 logger.info('DEBUG: no CPCS follow-up for %s', target)
 
 
-            ## ascii for single filter:
-            datajson = data1
+#             ## ascii for single filter:
+#             datajson = data1
 
-            mjd0=np.array(datajson['mjd'])
-            mag0=np.array(datajson['mag'])
-            magerr0=np.array(datajson['magerr'])
-            filter0=np.array(datajson['filter'])
-            caliberr0=np.array(datajson['caliberr'])
-            obs0 = np.array(datajson['observatory'])
-            w=np.where((magerr0 != -1))
+#             mjd0=np.array(datajson['mjd'])
+#             mag0=np.array(datajson['mag'])
+#             magerr0=np.array(datajson['magerr'])
+#             filter0=np.array(datajson['filter'])
+#             caliberr0=np.array(datajson['caliberr'])
+#             obs0 = np.array(datajson['observatory'])
+#             w=np.where((magerr0 != -1))
 
-            jd=mjd0[w]+2400000.5
-            mag=mag0[w]
-            magerr=np.sqrt(magerr0[w]*magerr0[w] + caliberr0[w]*caliberr0[w]) #adding calibration err in quad
-            filter=filter0[w]
-            obs=obs0[w]
+#             jd=mjd0[w]+2400000.5
+#             mag=mag0[w]
+#             magerr=np.sqrt(magerr0[w]*magerr0[w] + caliberr0[w]*caliberr0[w]) #adding calibration err in quad
+#             filter=filter0[w]
+#             obs=obs0[w]
 
-            for i in reversed(range(len(mag))):
-                try:
-                    datum_mag = float(mag[i])
-                    datum_jd = Time(float(jd[i]), format='jd', scale='utc')
-                    datum_f = filter[i]
-                    datum_err = float(magerr[i])
-                    datum_source = obs[i]
-                    value = {
-                        'magnitude': datum_mag,
-                        'filter': datum_f,
-                        'error': datum_err
-                    }
-                    rd, created = ReducedDatum.objects.get_or_create(
-                        timestamp=datum_jd.to_datetime(timezone=TimezoneInfo()),
-                        value=json.dumps(value),
-                        source_name=datum_source,
-                        source_location=page,
-                        data_type='photometry',
-                        target=target)
-                    rd.save()
-                except:
-                    print("FAILED storing (CPCS)")
+#             for i in reversed(range(len(mag))):
+#                 try:
+#                     datum_mag = float(mag[i])
+#                     datum_jd = Time(float(jd[i]), format='jd', scale='utc')
+#                     datum_f = filter[i]
+#                     datum_err = float(magerr[i])
+#                     datum_source = obs[i]
+#                     value = {
+#                         'magnitude': datum_mag,
+#                         'filter': datum_f,
+#                         'error': datum_err
+#                     }
+#                     rd, created = ReducedDatum.objects.get_or_create(
+#                         timestamp=datum_jd.to_datetime(timezone=TimezoneInfo()),
+#                         value=json.dumps(value),
+#                         source_name=datum_source,
+#                         source_location=page,
+#                         data_type='photometry',
+#                         target=target)
+#                     rd.save()
+#                 except:
+#                     print("FAILED storing (CPCS)")
             
-            #Updating the last observation JD
-            jdlast = np.max(np.array(jd).astype(np.float))
+#             #Updating the last observation JD
+#             jdlast = np.max(np.array(jd).astype(np.float))
 
-            #Updating/storing the last JD
-            previousjd=0
+#             #Updating/storing the last JD
+#             previousjd=0
 
-            try:        
-                previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
-    #            previousjd = target.jdlastobs
-                print("DEBUG-CPCS prev= ", previousjd, " this= ",jdlast)
-            except:
-                pass
-            if (jdlast > previousjd) : 
-                target.save(extras={'jdlastobs':jdlast})
-                print("DEBUG saving new jdlast from CPCS: ",jdlast)
-        except:
-            print("target ",cpcs_name, " not on CPCS")
+#             try:        
+#                 previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
+#     #            previousjd = target.jdlastobs
+#                 print("DEBUG-CPCS prev= ", previousjd, " this= ",jdlast)
+#             except:
+#                 pass
+#             if (jdlast > previousjd) : 
+#                 target.save(extras={'jdlastobs':jdlast})
+#                 print("DEBUG saving new jdlast from CPCS: ",jdlast)
+#         except:
+#             print("target ",cpcs_name, " not on CPCS")

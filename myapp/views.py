@@ -69,7 +69,7 @@ class BlackHoleListView(FilterView):
     
         jd_now = Time(datetime.utcnow()).jd
     
-        sun_pos = get_sun(Time(datetime.utcnow()))
+#        sun_pos = get_sun(Time(datetime.utcnow()))
 
         prioritylist = []
 
@@ -84,11 +84,11 @@ class BlackHoleListView(FilterView):
                 dt = 10
                 target.dt = -1.
 
-            try:
-                obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg)
-                Sun_sep = sun_pos.separation(obj_pos).deg
-            except:
-                Sun_sep = 0
+            # try:
+            #     obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg)
+            #     Sun_sep = sun_pos.separation(obj_pos).deg
+            # except:
+            #     Sun_sep = 0
 
 
             try:
@@ -101,7 +101,9 @@ class BlackHoleListView(FilterView):
             target.cadencepriority = computePriority(dt, priority, cadence)
             prioritylist.append(target.cadencepriority)
 
-            target.Sun_separation = Sun_sep
+#updating the Sun Sep everytime this page is opened -does it work? - NO
+#            target.save(extras={'Sun_separation':Sun_sep})
+#            target.Sun_separation = Sun_sep
         
         prioritylist = np.array(prioritylist)
         idxs = prioritylist.argsort()

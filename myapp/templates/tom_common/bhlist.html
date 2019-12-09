@@ -85,7 +85,7 @@
     {% else %}<td>{% endif %}
             {{ target.cadencepriority|floatformat:1 }}
 </td>
-            <td>{{ target.Sun_separation|floatformat:0 }}</td>
+            <td>{{ target|target_extra_field:"Sun_separation"|floatformat:0}}</td>
           </tr>
           {% empty %}
           <tr>

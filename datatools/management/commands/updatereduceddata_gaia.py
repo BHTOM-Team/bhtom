@@ -20,9 +20,16 @@ class Command(BaseCommand):
                 target_object = Target.objects.get(pk=target_id)
                 gaia = target_object.targetextra_set.get(key='gaia_alert_name').value
                 gaia_alerts_harvester.update_gaia_lc(target_object, gaia)
+                updateme = (target_object.targetextra_set.get(key='update_me').value)
+                if (updateme=="False"): 
+                    return ('Light curve of %s not updated because of update_me flag')%(gaia)
+                else:
+                    return ('Light curve of %s updated')%(gaia)
                 print("UPDATED lc of ",gaia)
-            except:
-                print("target ",target_id,' not updated, probably no gaia_alert_name provided for this target')  
+            except Exception as e:
+               print("target ",target_id,' not updated, probably no gaia_alert_name provided for this target')  
+               print(e)
+               return ('Problems updating %s')%(target_id)
         else:
             # call_command('updatereduceddata', stdout=out)
             print("updating many ")
@@ -34,4 +41,4 @@ class Command(BaseCommand):
                     gaia_alerts_harvester.update_gaia_lc(t, gaia)
                 except:
                     print("target ",t,' not updated, probably no gaia_alert_name given.')  
-        return 'Finished updating the light curve'
+            return 'Finished updating all light curves'
