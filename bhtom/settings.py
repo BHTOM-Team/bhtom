@@ -337,8 +337,7 @@ EXTRA_FIELDS = [
     {'name': 'maglast', 'type': 'number'},
     {'name': 'priority', 'type': 'number'},
     {'name': 'dicovery_date', 'type': 'datetime'},
-    {'name': 'cadence', 'type': 'number'}
-
+    {'name': 'cadence', 'type': 'number'},
 ]
 
 # Authentication strategy can either be LOCKED (required login for all views)

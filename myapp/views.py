@@ -1,7 +1,7 @@
 from django_filters.views import FilterView
 
 
-from astropy.coordinates import SkyCoord
+from astropy.coordinates import get_moon, get_sun, SkyCoord, AltAz
 from astropy import units as u
 from astropy.time import Time
 from datetime import datetime
@@ -66,8 +66,11 @@ class BlackHoleListView(FilterView):
                                 if self.request.user.is_authenticated
                                 else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
-
+    
         jd_now = Time(datetime.utcnow()).jd
+    
+        sun_pos = get_sun(Time(datetime.utcnow()))
+
         prioritylist = []
 
         for target in context['object_list']:
@@ -82,13 +85,23 @@ class BlackHoleListView(FilterView):
                 target.dt = -1.
 
             try:
+                obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg)
+                Sun_sep = sun_pos.separation(obj_pos).deg
+            except:
+                Sun_sep = 0
+
+
+            try:
                 priority = float(target_extra_field(target=target, name='priority'))
                 cadence = float(target_extra_field(target=target, name='cadence'))
             except:
                 priority = 1
                 cadence = 1 
+
             target.cadencepriority = computePriority(dt, priority, cadence)
             prioritylist.append(target.cadencepriority)
+
+            target.Sun_separation = Sun_sep
         
         prioritylist = np.array(prioritylist)
         idxs = prioritylist.argsort()
