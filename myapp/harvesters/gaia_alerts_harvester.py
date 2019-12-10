@@ -222,17 +222,14 @@ def update_gaia_lc(target, gaia_name):
             try:        
                 previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
     #            previousjd = target.jdlastobs
-                print("DEBUG-Gaia prev= ", previousjd, " this= ",jdlast)
+#                print("DEBUG-Gaia prev= ", previousjd, " this= ",jdlast)
                 target.save(extras={'maglast':maglast})
-                print("DEBUG saving maglast ",maglast)
-
+#                print("DEBUG saving maglast ",maglast)
             except:
                 pass
             if (jdlast > previousjd) : 
                 target.save(extras={'jdlastobs':jdlast})
                 print("DEBUG saving new jdlast ",jdlast)
-                target.save(extras={'maglast':maglast})
-                print("DEBUG saving new maglast ",maglast)
 
         # previousjd_object = TargetExtra.objects.filter(target=target, key='jdlastobs')
 

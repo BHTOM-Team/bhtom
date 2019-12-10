@@ -218,7 +218,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = '/data/'
 
 # STATIC_URL = '/static/'
-# MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
 # MEDIA_URL = '/data/'
 
 LOGGING = {
