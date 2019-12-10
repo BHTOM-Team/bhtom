@@ -254,9 +254,16 @@ def spectra_plot(target, dataproduct=None):
         wavelength = []
         flux = []
         name = str(spectrum.timestamp).split(' ')[0]
-        for key, value in datum.items():
-            wavelength.append(value['wavelength'])
-            flux.append(float(value['flux']))
+        #modification by LW: not flux but photon_flux!!
+        wav=np.array(datum['wavelength'])
+        flu=np.array(datum['photon_flux'])
+        for i in range(len(wav)):
+            wavelength.append(float(wav[i]))
+            flux.append(float(flu[i]))
+        # for key, value in datum.items():
+        #     print("SPEC: ",float(value['wavelength']))
+        #     wavelength.append(float(value['wavelength']))
+        #     flux.append(float(value['flux']))
         spectra.append((wavelength, flux, name))
     plot_data = [
         go.Scatter(
