@@ -98,7 +98,7 @@ INSTALLED_APPS = [
     'datatools',
 ]
 
-SITE_ID = 1
+SITE_ID = 0
 
 MIDDLEWARE = [
 #    'django.middleware.security.SecurityMiddleware',
