@@ -92,8 +92,8 @@ class BlackHoleListView(FilterView):
         idxs = list(prioritylist.argsort())
         sorted_pklist = np.array(pklist)[idxs]
     
-        clauses = ' '.join(['WHEN id=%s THEN %s' % (pk, i) for i, pk in enumerate(sorted_pklist)])
-        ordering = 'CASE %s END' % clauses
+        clauses = ' '.join(['WHEN tom_targets_target.id=%s THEN %s' % (pk, i) for i, pk in enumerate(sorted_pklist)])
+        ordering = '(CASE %s END)' % clauses
         qsnew= qs.extra(
             select={'ordering': ordering}, order_by=('-ordering',))
 
