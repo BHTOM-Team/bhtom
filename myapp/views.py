@@ -41,10 +41,10 @@ def make_magrecent(all_phot, jd_now):
 #if not, then priority increases
 def computePriority(dt, priority, cadence):
     ret = 0
-    if (dt<cadence): ret = 1 #ok
-    else:
-        if (cadence!=0 and dt/cadence>1 and dt/cadence<2): ret = 2
-        if (cadence!=0 and dt/cadence>2): ret = 3
+    # if (dt<cadence): ret = 1 #ok
+    # else:
+    #     if (cadence!=0 and dt/cadence>1 and dt/cadence<2): ret = 2
+    #     if (cadence!=0 and dt/cadence>2): ret = 3
 
     #alternative - linear scale
     if (cadence!=0):
@@ -53,12 +53,12 @@ def computePriority(dt, priority, cadence):
 
 
 class BlackHoleListView(FilterView):
-    paginate_by = 30
+    paginate_by = 40
     strict = False
     model = Target
     filterset_class = TargetFilter
     permission_required = 'tom_targets.view_target' #or remove if want it freely visible
-
+            
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['target_count'] = context['paginator'].count
