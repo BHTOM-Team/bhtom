@@ -53,7 +53,7 @@ def computePriority(dt, priority, cadence):
 
 
 class BlackHoleListView(FilterView):
-    paginate_by = 40
+    paginate_by = 50
     strict = False
     model = Target
     filterset_class = TargetFilter
