@@ -109,3 +109,5 @@ secret_stuff.txt
 bhtom/local_settings.py
 
 runtime.txt
+
+gunicorn-access.log
