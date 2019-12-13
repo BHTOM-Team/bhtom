@@ -53,43 +53,29 @@ def computePriority(dt, priority, cadence):
 
 
 class BlackHoleListView(FilterView):
-    paginate_by = 50
+    paginate_by = 20
     strict = False
     model = Target
     filterset_class = TargetFilter
     permission_required = 'tom_targets.view_target' #or remove if want it freely visible
             
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
-        context['target_count'] = context['paginator'].count
-        context['groupings'] = (TargetList.objects.all()
-                                if self.request.user.is_authenticated
-                                else TargetList.objects.none())
-        context['query_string'] = self.request.META['QUERY_STRING']
-    
+    def get_queryset(self, *args, **kwargs):
+        qs = super().get_queryset(*args, **kwargs)
+
         jd_now = Time(datetime.utcnow()).jd
-    
-#        sun_pos = get_sun(Time(datetime.utcnow()))
 
         prioritylist = []
+        pklist = []
 
-        for target in context['object_list']:
+        for target in qs:
             try:
                 #if empty
                 last = float(target_extra_field(target=target, name='jdlastobs'))
-                #TODO: this could be replaced by quering the data and finding the last data point
                 target.dt = (jd_now - last)
                 dt = (jd_now - last)
             except:
                 dt = 10
                 target.dt = -1.
-
-            # try:
-            #     obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg)
-            #     Sun_sep = sun_pos.separation(obj_pos).deg
-            # except:
-            #     Sun_sep = 0
-
 
             try:
                 priority = float(target_extra_field(target=target, name='priority'))
@@ -100,19 +86,50 @@ class BlackHoleListView(FilterView):
 
             target.cadencepriority = computePriority(dt, priority, cadence)
             prioritylist.append(target.cadencepriority)
-
-#updating the Sun Sep everytime this page is opened -does it work? - NO
-#            target.save(extras={'Sun_separation':Sun_sep})
-#            target.Sun_separation = Sun_sep
+            pklist.append(target.pk)
         
         prioritylist = np.array(prioritylist)
-        idxs = prioritylist.argsort()
-        oldlist = list(copy.copy(context['object_list']))
-        newlist = []
-        for i in idxs[::-1]:
-            t = oldlist[i]
-            newlist.append(t)
+        idxs = list(prioritylist.argsort())
+        sorted_pklist = np.array(pklist)[idxs]
+    
+        clauses = ' '.join(['WHEN id=%s THEN %s' % (pk, i) for i, pk in enumerate(sorted_pklist)])
+        ordering = 'CASE %s END' % clauses
+        qsnew= qs.extra(
+            select={'ordering': ordering}, order_by=('-ordering',))
 
-        context['object_list'] = tuple(newlist)
+        return qsnew
+
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['target_count'] = context['paginator'].count
+        context['groupings'] = (TargetList.objects.all()
+                                if self.request.user.is_authenticated
+                                else TargetList.objects.none())
+        context['query_string'] = self.request.META['QUERY_STRING']
+    
+        jd_now = Time(datetime.utcnow()).jd
+
+        prioritylist = []
+
+        for target in context['object_list']:
+            try:
+                #if empty
+                last = float(target_extra_field(target=target, name='jdlastobs'))
+                target.dt = (jd_now - last)
+                dt = (jd_now - last)
+            except:
+                dt = 10
+                target.dt = -1.
+
+            try:
+                priority = float(target_extra_field(target=target, name='priority'))
+                cadence = float(target_extra_field(target=target, name='cadence'))
+            except:
+                priority = 1
+                cadence = 1 
+
+            target.cadencepriority = computePriority(dt, priority, cadence)
+            prioritylist.append(target.cadencepriority)
 
         return context
