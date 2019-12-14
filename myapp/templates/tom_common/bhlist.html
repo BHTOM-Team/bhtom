@@ -113,7 +113,7 @@
    <h3>Filter targets</h3>
   {{ filter.fields }}
     <form action="" method="get" class="form">
-      {% bootstrap_form filter.form %}
+      {% bootstrap_form filter.form exclude='tweet,epoch,pm_ra,pm_dec,galactic_lng,galactic_lat,distance,distance_err' %}
       {% buttons %}
         <button type="submit" class="btn btn-primary">
           Filter
