@@ -259,16 +259,16 @@ FACILITIES = {
             'GN': 'https://128.171.88.221:8443',
         },
         'api_key': {
-            'GS': '',
-            'GN': '',
+            'GS': 'ZVBRH',
+            'GN': 'XKLCT',
         },
-        'user_email': '',
+        'user_email': 'markus.hundertmark@uni-heidelberg.de',
         'programs': {
-            'GS-YYYYS-T-NNN': {
+            'GS-2020A-DD-104': {
                 'MM': 'Std: Some descriptive text',
                 'NN': 'Rap: Some descriptive text'
             },
-            'GN-YYYYS-T-NNN': {
+            'GN-2020A-DD-104': {
                 'QQ': 'Std: Some descriptive text',
                 'PP': 'Rap: Some descriptive text',
             },
