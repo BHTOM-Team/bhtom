@@ -265,11 +265,11 @@ FACILITIES = {
         'user_email': 'markus.hundertmark@uni-heidelberg.de',
         'programs': {
             'GS-2020A-DD-104': {
-                'MM': 'Std: Some descriptive text',
+                'MM': 'Std: Std GS',
                 'NN': 'Rap: Some descriptive text'
             },
             'GN-2020A-DD-104': {
-                'QQ': 'Std: Some descriptive text',
+                'QQ': 'Std: Std GN',
                 'PP': 'Rap: Some descriptive text',
             },
         },
