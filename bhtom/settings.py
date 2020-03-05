@@ -262,22 +262,22 @@ FACILITIES = {
     },
     'GEM': {
         'portal_url': {
-            'GS': 'https://139.229.34.15:8443',
-            'GN': 'https://128.171.88.221:8443',
+            'GS': 'https://gsodb.gemini.edu:8443',
+            'GN': 'https://gnodb.gemini.edu:8443',
         },
         'api_key': {
-            'GS': 'ZVBRH',
-            'GN': 'XKLCT',
+            'GS': '038988',
+            'GN': '154362',
         },
         'user_email': 'markus.hundertmark@uni-heidelberg.de',
         'programs': {
             'GS-2020A-DD-104': {
-                'MM': 'Std: Std GS',
-                'NN': 'Rap: Some descriptive text'
+                '1': 'Std: Std GS',
+                '2': 'Rap: Rapid'
             },
             'GN-2020A-DD-104': {
-                'QQ': 'Std: Std GN',
-                'PP': 'Rap: Some descriptive text',
+                '3': 'Std: Std GN',
+                '4': 'Rap: Rapid',
             },
         },
     },
