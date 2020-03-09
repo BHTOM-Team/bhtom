@@ -269,7 +269,7 @@ FACILITIES = {
             'GS': '784830',
             'GN': '217643',
         },
-        'user_email': 'kruszynskakat@gmail.com,
+        'user_email': 'kruszynskakat@gmail.com',
         'programs': {
             'GS-2020A-DD-104': {
                 '8':  'GMOS Aquisiton 0.75arcsec',
