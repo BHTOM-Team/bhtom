@@ -274,7 +274,7 @@ FACILITIES = {
             'GS-2020A-DD-104': {
                 '8':  'GMOS Aquisiton 0.75arcsec',
                 '9':  'Std: R400 LongSlit 0.75arcsec for Blue Objects',
-                '12': 'Std: R600 LongSlit 0.75arcsec for Red Objects',
+                '12': 'Std: B600 LongSlit 0.75arcsec for Red Objects',
             },
             'GN-2020A-DD-104': {
                 '8': 'GMOS Aquisiton 0.75arcsec',
