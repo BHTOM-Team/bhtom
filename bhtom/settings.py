@@ -266,10 +266,10 @@ FACILITIES = {
             'GN': 'https://gnodb.gemini.edu:8443',
         },
         'api_key': {
-            'GS': '038988',
-            'GN': '154362',
+            'GS': '784830',
+            'GN': '217643',
         },
-        'user_email': 'markus.hundertmark@uni-heidelberg.de',
+        'user_email': 'kruszynskakat@gmail.com,
         'programs': {
             'GS-2020A-DD-104': {
                 '8':  'GMOS Aquisiton 0.75arcsec',
