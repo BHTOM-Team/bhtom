@@ -1,0 +1,30 @@
+{% extends 'tom_common/base.html' %}
+{% block title %}Observatory list {% endblock %}
+{% block content %}
+
+<div class="row">
+  <div class="col-md-12">
+
+    <a href="{% url 'observatory_create' %}" title="Observatory Create" class="btn btn-outline-primary">Add Observatory</a>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>Allow Upload</th><th>Activation</th>
+
+        </tr>
+      </thead>
+      <tbody>
+        {% for cpcs_user in object_list %}
+        <tr>
+          <td>{{ cpcs_user.obsName }}</td>
+          <td>{{ cpcs_user.lon }}</td>
+          <td>{{ cpcs_user.lat }}</td>
+          <td>{% if cpcs_user.allow_upload %} True {%else%} False{% endif %}</td>
+          <td>{% if cpcs_user.user_activation %} True {%else%} False{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
