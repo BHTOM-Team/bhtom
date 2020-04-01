@@ -89,7 +89,7 @@ class BlackHoleListView(FilterView):
     model = Target
     filterset_class = TargetFilter
     permission_required = 'tom_targets.view_target' #or remove if want it freely visible
-            
+
     def get_queryset(self, *args, **kwargs):
         qs = super().get_queryset(*args, **kwargs)
 
@@ -113,16 +113,16 @@ class BlackHoleListView(FilterView):
                 cadence = float(target_extra_field(target=target, name='cadence'))
             except:
                 priority = 1
-                cadence = 1 
+                cadence = 1
 
             target.cadencepriority = computePriority(dt, priority, cadence)
             prioritylist.append(target.cadencepriority)
             pklist.append(target.pk)
-        
+
         prioritylist = np.array(prioritylist)
         idxs = list(prioritylist.argsort())
         sorted_pklist = np.array(pklist)[idxs]
-    
+
         clauses = ' '.join(['WHEN tom_targets_target.id=%s THEN %s' % (pk, i) for i, pk in enumerate(sorted_pklist)])
         ordering = '(CASE %s END)' % clauses
         qsnew= qs.extra(
@@ -138,7 +138,7 @@ class BlackHoleListView(FilterView):
                                 if self.request.user.is_authenticated
                                 else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
-    
+
         jd_now = Time(datetime.utcnow()).jd
 
         prioritylist = []
@@ -158,7 +158,7 @@ class BlackHoleListView(FilterView):
                 cadence = float(target_extra_field(target=target, name='cadence'))
             except:
                 priority = 1
-                cadence = 1 
+                cadence = 1
 
             target.cadencepriority = computePriority(dt, priority, cadence)
             prioritylist.append(target.cadencepriority)
@@ -351,7 +351,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
 
 class TargetDetailView(PermissionRequiredMixin, DetailView):
 
-    permission_required = 'tom_targets.view_target'
+    permission_required = 'tom_targets.view_target' 
     model = Target
 
     def get_context_data(self, *args, **kwargs):
@@ -434,4 +434,3 @@ class ObservatoryList(LoginRequiredMixin, ListView):
     def get_queryset(self, *args, **kwargs):
 
         return Cpcs_user.objects.filter(user=self.request.user)
-

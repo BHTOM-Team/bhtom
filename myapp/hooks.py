@@ -87,7 +87,7 @@ def target_post_save(target, created):
 
         # response = requests.post(twitter_url, params=status, auth=auth)
 #     ztf_name=''  ###WORKAROUND of an error in creation of targets
-#     try: 
+#     try:
 #         ztf_name = target.targetextra_set.get(key='ztf_alert_name').value
 #     except:
 #         pass
@@ -130,22 +130,22 @@ def target_post_save(target, created):
 
 #         jdlast = np.array(jdarr).max()
 
-#         #modifying jd of last obs 
+#         #modifying jd of last obs
 
 #         previousjd=0
 
-#         try:        
+#         try:
 #             previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
 #             print("DEBUG-ZTF prev= ", previousjd, " this= ",jdlast)
 #         except:
 #             pass
-#         if (jdlast > previousjd) : 
+#         if (jdlast > previousjd) :
 #             target.save(extras={'jdlastobs':jdlast})
 #             print("DEBUG saving new jdlast from ZTF: ",jdlast)
 
 
-#     gaia_name=''  ###WORKAROUND of an error in creation of targets  
-#     try: 
+#     gaia_name=''  ###WORKAROUND of an error in creation of targets
+#     try:
 #         gaia_name = target.targetextra_set.get(key='gaia_alert_name').value
 #     except:
 #         pass
@@ -185,19 +185,19 @@ def target_post_save(target, created):
 #         #Updating/storing the last JD
 #         previousjd=0
 
-#         try:        
+#         try:
 #             previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
 # #            previousjd = target.jdlastobs
 #             print("DEBUG-Gaia prev= ", previousjd, " this= ",jdlast)
 #         except:
 #             pass
-#         if (jdlast > previousjd) : 
+#         if (jdlast > previousjd) :
 #             target.save(extras={'jdlastobs':jdlast})
 #             print("DEBUG saving new jdlast from Gaia: ",jdlast)
 
 #     ############## CPCS follow-up server
-#     cpcs_name=''  ###WORKAROUND of an error in creation of targets  
-#     try: 
+#     cpcs_name=''  ###WORKAROUND of an error in creation of targets
+#     try:
 #         cpcs_name = target.targetextra_set.get(key='calib_server_name').value
 #     except:
 #         pass
@@ -216,7 +216,7 @@ def target_post_save(target, created):
 #             pagetext=page.read()
 #             data1=json.loads(pagetext)
 #             if len(set(data1["filter"]) & set(['u','B','g','V','B2pg','r','R','R1pg','i','I','Ipg','z']))>0:
-#                 fup=[data1["mjd"],data1["mag"],data1["magerr"],data1["filter"],data1["observatory"]] 
+#                 fup=[data1["mjd"],data1["mag"],data1["magerr"],data1["filter"],data1["observatory"]]
 #                 logger.info('%s: follow-up data on CPCS found', target)
 #             else:
 #                 logger.info('DEBUG: no CPCS follow-up for %s', target)
@@ -268,13 +268,13 @@ def target_post_save(target, created):
 #             #Updating/storing the last JD
 #             previousjd=0
 
-#             try:        
+#             try:
 #                 previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
 #     #            previousjd = target.jdlastobs
 #                 print("DEBUG-CPCS prev= ", previousjd, " this= ",jdlast)
 #             except:
 #                 pass
-#             if (jdlast > previousjd) : 
+#             if (jdlast > previousjd) :
 #                 target.save(extras={'jdlastobs':jdlast})
 #                 print("DEBUG saving new jdlast from CPCS: ",jdlast)
 #         except:
@@ -306,7 +306,7 @@ def send_to_cpcs(result, fits, eventID):
 
 
     url_cpcs = secret.CPCS_URL + 'upload'
-    logger.info('Send file to cpcs')
+    logger.info('Send file to cpcs') 
 
     try:
         with open(format(result), 'rb') as file:
