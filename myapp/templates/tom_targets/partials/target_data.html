@@ -1,0 +1,42 @@
+{% load tom_common_extras targets_extras %}
+<a href="{% url 'tom_targets:update' pk=target.id %}" title="Update target" class="btn  btn-primary">Update Target</a>
+<a href="{% url 'tom_targets:delete' pk=target.id %}" title="Delete target" class="btn  btn-warning">Delete Target</a>
+<dl class="row">
+  {% for target_name in target.names %}
+    {% if forloop.first %}
+      <dt class="col-sm-6">Names</dt>
+    {% else %}
+      <dt class="col-sm-6">&nbsp;</dt>
+    {% endif %}
+    <dd class="col-sm-6">{{ target_name }}</dd>
+  {% endfor %}
+  {% for key, value in target.as_dict.items %}
+  {% if value and key != 'name' %}
+  <dt class="col-sm-6">{% verbose_name target key %}</dt>
+  <dd class="col-sm-6">{{ value }}</dd>
+  {% endif %}
+  {% if key == 'ra' %}
+    <dt class="col-sm-6">&nbsp;</dt>
+    <dd class="col-sm-6">{{ value|deg_to_sexigesimal:"hms" }}</dd>
+  {% endif%}
+  {% if key == 'dec' %}
+    <dt class="col-sm-6">&nbsp;</dt>
+    <dd class="col-sm-6">{{ value|deg_to_sexigesimal:"dms" }}</dd>
+  {% endif%}
+  {% endfor %}
+</dl>
+<dl class="row">
+{% for key, value in target.extra_fields.items %}
+  {% if key in display_extras %}
+    <dt class="col-sm-6">{{ key }}</dt>
+    <dd class="col-sm-6">{{ value }}</dd>
+  {% endif %}
+{% endfor %}
+</dl>
+<h4>Tags</h4>
+<dl class="row">
+{% for key, value in target.tags.items %}
+  <dt class="col-sm-6">{{ key }}</dt>
+  <dd class="col-sm-6">{{ value }}</dd>
+{% endfor %}
+</dl>

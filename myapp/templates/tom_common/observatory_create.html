@@ -1,0 +1,23 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 %}
+{% block title %}Create observatory{% endblock %}
+{% block content %}
+{% if object %}
+<form action="{% url 'observatory-update' object.id %}" method="POST">
+{% else %}
+  <p> Create your observatory. After creation, wait for activate by the Administrator. </p>
+<form action="{% url 'observatory_create' %}" enctype="multipart/form-data" method="POST">
+{% endif %}
+{% csrf_token %}
+{% bootstrap_form form %}
+{% buttons %}
+  <button type="submit" class="btn btn-primary">
+    {% if object %}
+    Update
+    {% else %}
+    Create Observatory
+    {% endif %}
+  </button>
+{% endbuttons %}
+</form>
+{% endblock %}
