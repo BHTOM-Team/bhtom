@@ -351,7 +351,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
 
 class TargetDetailView(PermissionRequiredMixin, DetailView):
 
-    permission_required = 'tom_targets.view_target' 
+    permission_required = 'tom_targets.view_target'
     model = Target
 
     def get_context_data(self, *args, **kwargs):

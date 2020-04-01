@@ -4,7 +4,7 @@ from django.contrib.postgres.fields import ArrayField
 
 
 class BHEvent(models.Model):
-    
+
     name = models.CharField(
         max_length=100, default='', verbose_name='Name', help_text='The name of the target, e.g. Gaia17bts or ASASSN-16oe'
     )
@@ -32,7 +32,7 @@ class BHEvent(models.Model):
         max_length=100, default='', verbose_name='Target classification', help_text='The classification of this target, e.g. Ulens, Be, FUORI',
         blank=True, null=True
     )
-    
+
     all_phot = models.TextField(
         verbose_name='All photometry', help_text='All photometry',
         null=True, blank=True
@@ -89,5 +89,3 @@ class Catalogs(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.TextField(blank=False, editable=False)
     filters = ArrayField(models.CharField(max_length=10))
-
-

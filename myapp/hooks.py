@@ -288,9 +288,9 @@ def data_product_post_upload(dp, observation_instrument, observation_filter):
         with open(url, 'rb') as file:
             fits_id = uuid.uuid4().hex
             try:
-                response = requests.post(secret.CCDPHOTD_URL, {'job_id': fits_id}, files={'fits_file': file})
+                response = requests.post(secret.CCDPHOTD_URL,  {'job_id': fits_id}, files={'fits_file': file})
                 if response.status_code == 201:
-
+                    logger.info('Fits send to ccdphotd')
                     BHTomFits.objects.create(fits_id=fits_id, status='S', user_id=observation_instrument, dataproduct_id=dp.id,
                                                  status_message='Fits send to ccdphotd', filter=observation_filter)
 
