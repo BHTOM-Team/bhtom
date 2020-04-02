@@ -7,9 +7,9 @@
 <p>
   To properly process FITS, you need to choice an observation instrument and filter. You can add a new instrument <a href="{% url 'observatory_create' %}">here.</a>
 </p>
-<form method="POST" action="{% url 'upload' %}" enctype="multipart/form-data">
+<form method="POST" action="{% url 'data_upload' %}" enctype="multipart/form-data">
   {% csrf_token %}
-  {% bootstrap_form data_product_with_user_form %}
+  {% bootstrap_form data_product_form_from_user %}
   {% buttons %}
   <input type="submit" class="btn btn-primary" value="Upload" name="data_product_form_from_user">
   {% endbuttons %}

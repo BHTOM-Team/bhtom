@@ -6,25 +6,13 @@ from .models import BHTomFits, Cpcs_user
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
+# from django.core.mail import send_mail
+# from bhtom import settings
+
 try:
     from bhtom import local_settings as secret
 except ImportError:
     pass
-
-from django.core.files.uploadedfile import SimpleUploadedFile
-from rest_framework.test import APIRequestFactory, APITestCase, APIClient
-from django.http import HttpResponse, HttpResponseNotFound
-from astropy.time import Time, TimezoneInfo
-from tom_dataproducts.models import ReducedDatum
-import json
-from tom_targets.templatetags.targets_extras import target_extra_field
-from requests_oauthlib import OAuth1
-from astropy.coordinates import SkyCoord
-from astropy import units as u
-import mechanize
-import numpy as np
-from tom_targets.models import Target, TargetExtra
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -288,6 +276,7 @@ def data_product_post_upload(dp, observation_instrument, observation_filter):
         with open(url, 'rb') as file:
             fits_id = uuid.uuid4().hex
             try:
+
                 response = requests.post(secret.CCDPHOTD_URL,  {'job_id': fits_id}, files={'fits_file': file})
                 if response.status_code == 201:
                     logger.info('Fits send to ccdphotd')
@@ -304,16 +293,14 @@ def data_product_post_upload(dp, observation_instrument, observation_filter):
 
 def send_to_cpcs(result, fits, eventID):
 
-
     url_cpcs = secret.CPCS_URL + 'upload'
-    logger.info('Send file to cpcs') 
+    logger.info('Send file to cpcs')
 
     try:
         with open(format(result), 'rb') as file:
-
             response = requests.post(url_cpcs, {'MJD': fits.mjd, 'EventID': eventID, 'expTime':  fits.expTime,
-                                            'matchDist': fits.user_id.matchDist, 'dryRun': int(fits.user_id.allow_upload),
-                                            'forceFilter': fits.filter, 'hashtag': fits.user_id.cpcs_hashtag}, files={'sexCat': file})
+                                          'matchDist': fits.user_id.matchDist, 'dryRun': int(fits.user_id.allow_upload),
+                                          'forceFilter': fits.filter, 'hashtag': fits.user_id.cpcs_hashtag}, files={'sexCat': file})
 
         logger.info(response.content)
 
@@ -337,13 +324,10 @@ def send_to_cpcs(result, fits, eventID):
 @receiver(pre_save, sender=Cpcs_user)
 def create_cpcs_user_profile(sender, instance, **kwargs):
 
-    #from django.core.mail import send_mail
-    #from bhtom import settings
-
-    #send_mail('TEST',
-     #         'TEST', settings.EMAIL_HOST_USER, ['arturkrawczyk19@gmail.com'], fail_silently=False)
     logger.info('Create_cpcs_user')
     url_cpcs = secret.CPCS_URL + 'newuser'
+
+    #send_mail('TEST', 'TEST', settings.EMAIL_HOST_USER, ['arturkrawczyk19@gmail.com'], fail_silently=False)
 
     if instance.cpcs_hashtag == None:
         try:
@@ -358,5 +342,5 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
                 raise Exception(response.content.decode('utf-8')) from None
 
         except Exception as e:
-             #logger.error('error: ' + str(e))
+             logger.error('error: ' + str(e))
              raise Exception(str(e)) from None

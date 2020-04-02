@@ -6,7 +6,8 @@ from tom_observations.models import ObservationRecord
 from myapp.models import Cpcs_user, Catalogs
 from django.contrib.auth.models import User
 from django.contrib.postgres.forms import SimpleArrayField
-
+import logging
+logger = logging.getLogger(__name__)
 class InstrumentChoiceField(forms.ModelChoiceField):
 
     def label_from_instance(self, obj):
@@ -24,7 +25,7 @@ class FilterChoiceField(forms.ModelChoiceField):
 
         return hash
 
-class DataProductUploadFromUserForm(forms.Form):
+class DataProductUploadForm(forms.Form):
 
     observation_record = forms.ModelChoiceField(
         ObservationRecord.objects.all(),
@@ -63,7 +64,7 @@ class DataProductUploadFromUserForm(forms.Form):
             for i, f in enumerate(filters):
                 filter[curname + '/' + f] = curname + '/' + f
 
-        super(DataProductUploadFromUserForm, self).__init__(*args, **kwargs)
+        super(DataProductUploadForm, self).__init__(*args, **kwargs)
 
         self.fields['instrument']=InstrumentChoiceField(
                 queryset=Cpcs_user.objects.filter(user=user, user_activation=True),

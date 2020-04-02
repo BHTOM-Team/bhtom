@@ -31,7 +31,7 @@ from myapp.views import DataProductUploadView, TargetDetailView, CreateObservato
 from myapp.views import TargetCreateView, TargetUpdateView, TargetDeleteView
 
 router = routers.DefaultRouter()
-#router.register('Upload', views.fits_upload)
+router.register('upload', views.fits_upload)
 router.register('result', views.result_fits)
 router.register('status', views.status_fits)
 
@@ -45,10 +45,9 @@ urlpatterns = [
     path('bhlist/<pk>/update/', TargetUpdateView.as_view(), name='bhlist_update'),
     path('bhlist/<pk>/delete/', TargetDeleteView.as_view(), name='bhlist_delete'),
     path('bhlist/<pk>/', TargetDetailView.as_view(), name='bhlist_detail'),
-    path('targets/list/', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='targets'),
     path('', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('upload/', DataProductUploadView.as_view(), name='upload'),
+    path('dataUpload/', DataProductUploadView.as_view(), name='data_upload'),
     path('observatory/create/', CreateObservatory.as_view(), name='observatory_create'),
     path('observatory/list/', ObservatoryList.as_view(), name='observatory'),
 

@@ -67,8 +67,8 @@ SECRET_KEY = 'u&amp;!)0%2f^l3n#g+#7ldg7xf)&amp;#eg79n+0gf0c@_v&amp;8wc9vp-3f'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST_USER = TOMEMAIL
+EMAIL_HOST_PASSWORD = TOMEMAILPASSWORD
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
