@@ -24,7 +24,7 @@ class FilterChoiceField(forms.ModelChoiceField):
 
         return hash
 
-class DataProductUploadForm(forms.Form):
+class DataProductUploadFromUserForm(forms.Form):
 
     observation_record = forms.ModelChoiceField(
         ObservationRecord.objects.all(),
@@ -63,7 +63,7 @@ class DataProductUploadForm(forms.Form):
             for i, f in enumerate(filters):
                 filter[curname + '/' + f] = curname + '/' + f
 
-        super(DataProductUploadForm, self).__init__(*args, **kwargs)
+        super(DataProductUploadFromUserForm, self).__init__(*args, **kwargs)
 
         self.fields['instrument']=InstrumentChoiceField(
                 queryset=Cpcs_user.objects.filter(user=user, user_activation=True),

@@ -9,7 +9,7 @@
 </p>
 <form method="POST" action="{% url 'upload' %}" enctype="multipart/form-data">
   {% csrf_token %}
-  {% bootstrap_form data_product_form_from_user %}
+  {% bootstrap_form data_product_with_user_form %}
   {% buttons %}
   <input type="submit" class="btn btn-primary" value="Upload" name="data_product_form_from_user">
   {% endbuttons %}
