@@ -438,8 +438,12 @@ def detail_fits_upload(target, user):
     user = Cpcs_user.objects.filter(user=user).values_list('id')
     fits = BHTomFits.objects.filter(user_id__in=user)
     tabFits=[]
+
     for fit in fits:
-        tabFits.append([fit.status, fit.status_message, DataProduct.objects.get(id=fit.dataproduct_id).data])
+        try:
+            tabFits.append([fit.status, fit.status_message, DataProduct.objects.get(id=fit.dataproduct_id).data])
+        except Exception as e:
+            logger.error('error: ' + str(e))
 
     return {
         'fits': tabFits,
