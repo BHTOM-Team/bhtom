@@ -22,6 +22,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'bhtom.settings')
 # else:
 #     application = get_wsgi_application()
 
+BASE_DIR = os.path.join(settings.BASE_DIR, 'myapp/static')
+
 application = get_wsgi_application()
-application = WhiteNoise(application, root='/Users/wyrzykow/bhtom/myapp/static')
+application = WhiteNoise(application, root=BASE_DIR)
 #application.add_files('/path/to/more/static/files', prefix='more-files/')

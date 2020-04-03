@@ -25,20 +25,32 @@ from django.views.generic import TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.conf import settings
 from django.conf.urls.static import static
+from rest_framework import routers, permissions
+from myapp import views
+from myapp.views import DataProductUploadView, TargetDetailView, CreateObservatory, ObservatoryList
+from myapp.views import TargetCreateView, TargetUpdateView, TargetDeleteView
 
-from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
-from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView
-
+router = routers.DefaultRouter()
+router.register('upload', views.fits_upload)
+router.register('result', views.result_fits)
+router.register('status', views.status_fits)
 
 urlpatterns = [
     path('', include('tom_common.urls')),
     path('datatools/', include('datatools.urls')),
     path('about/', TemplateView.as_view(template_name='tom_common/about.html'), name='about'),
     path('bhlist/', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='bhlist'),
-    path('targets/', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='targets'),
-    path('targets/list', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='targets'),
+    path('bhlist/', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='targets'),
+    path('bhlist/create/', TargetCreateView.as_view(), name='bhlist_create'),
+    path('bhlist/<pk>/update/', TargetUpdateView.as_view(), name='bhlist_update'),
+    path('bhlist/<pk>/delete/', TargetDeleteView.as_view(), name='bhlist_delete'),
+    path('bhlist/<pk>/', TargetDetailView.as_view(), name='bhlist_detail'),
+    path('', include(router.urls)),
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path('dataUpload/', DataProductUploadView.as_view(), name='data_upload'),
+    path('observatory/create/', CreateObservatory.as_view(), name='observatory_create'),
+    path('observatory/list/', ObservatoryList.as_view(), name='observatory'),
+
     # The static helper below only works in development see
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
  ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-
-

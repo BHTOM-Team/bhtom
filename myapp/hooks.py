@@ -1,16 +1,18 @@
 import os
 import requests
 import logging
-from astropy.time import Time, TimezoneInfo
-from tom_dataproducts.models import ReducedDatum
-import json
-from tom_targets.templatetags.targets_extras import target_extra_field
-from requests_oauthlib import OAuth1
-from astropy.coordinates import SkyCoord
-from astropy import units as u
-import mechanize
-import numpy as np
-from tom_targets.models import Target, TargetExtra
+import uuid
+from .models import BHTomFits, Cpcs_user
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
+
+# from django.core.mail import send_mail
+# from bhtom import settings
+
+try:
+    from bhtom import local_settings as secret
+except ImportError:
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -22,14 +24,12 @@ def target_post_save(target, created):
             {'objectId': objectId}
         ]
         }
-    
         try:
             r = requests.post(url, json=request)
             results = r.json()['results'][0]['results']
             return results
         except Exception as e:
             return [None,'Error message : \n'+str(e)]
-    
     logger.info('Target post save hook: %s created: %s', target, created)
   ### how to pass those variables from settings?
     try:
@@ -72,15 +72,14 @@ def target_post_save(target, created):
         # }
 
         # response = requests.post(twitter_url, params=status, auth=auth)
-#     ztf_name=''  ###WORKAROUND of an error in creation of targets  
-#     try: 
+#     ztf_name=''  ###WORKAROUND of an error in creation of targets
+#     try:
 #         ztf_name = target.targetextra_set.get(key='ztf_alert_name').value
 #     except:
 #         pass
 
 #     if (ztf_name!=''):
 #         alerts = get(ztf_name)
-        
 #         filters = {1: 'g_ZTF', 2: 'r_ZTF', 3: 'i_ZTF'}
 #         jdarr = []
 #         for alert in alerts:
@@ -116,22 +115,22 @@ def target_post_save(target, created):
 
 #         jdlast = np.array(jdarr).max()
 
-#         #modifying jd of last obs 
+#         #modifying jd of last obs
 
 #         previousjd=0
 
-#         try:        
+#         try:
 #             previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
 #             print("DEBUG-ZTF prev= ", previousjd, " this= ",jdlast)
 #         except:
 #             pass
-#         if (jdlast > previousjd) : 
+#         if (jdlast > previousjd) :
 #             target.save(extras={'jdlastobs':jdlast})
 #             print("DEBUG saving new jdlast from ZTF: ",jdlast)
 
 
-#     gaia_name=''  ###WORKAROUND of an error in creation of targets  
-#     try: 
+#     gaia_name=''  ###WORKAROUND of an error in creation of targets
+#     try:
 #         gaia_name = target.targetextra_set.get(key='gaia_alert_name').value
 #     except:
 #         pass
@@ -167,23 +166,23 @@ def target_post_save(target, created):
 
 #         #Updating/storing the last JD
 #         jdlast = np.max(np.array(jd).astype(np.float))
-        
+
 #         #Updating/storing the last JD
 #         previousjd=0
 
-#         try:        
+#         try:
 #             previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
 # #            previousjd = target.jdlastobs
 #             print("DEBUG-Gaia prev= ", previousjd, " this= ",jdlast)
 #         except:
 #             pass
-#         if (jdlast > previousjd) : 
+#         if (jdlast > previousjd) :
 #             target.save(extras={'jdlastobs':jdlast})
 #             print("DEBUG saving new jdlast from Gaia: ",jdlast)
 
 #     ############## CPCS follow-up server
-#     cpcs_name=''  ###WORKAROUND of an error in creation of targets  
-#     try: 
+#     cpcs_name=''  ###WORKAROUND of an error in creation of targets
+#     try:
 #         cpcs_name = target.targetextra_set.get(key='calib_server_name').value
 #     except:
 #         pass
@@ -202,7 +201,7 @@ def target_post_save(target, created):
 #             pagetext=page.read()
 #             data1=json.loads(pagetext)
 #             if len(set(data1["filter"]) & set(['u','B','g','V','B2pg','r','R','R1pg','i','I','Ipg','z']))>0:
-#                 fup=[data1["mjd"],data1["mag"],data1["magerr"],data1["filter"],data1["observatory"]] 
+#                 fup=[data1["mjd"],data1["mag"],data1["magerr"],data1["filter"],data1["observatory"]]
 #                 logger.info('%s: follow-up data on CPCS found', target)
 #             else:
 #                 logger.info('DEBUG: no CPCS follow-up for %s', target)
@@ -247,21 +246,97 @@ def target_post_save(target, created):
 #                     rd.save()
 #                 except:
 #                     print("FAILED storing (CPCS)")
-            
 #             #Updating the last observation JD
 #             jdlast = np.max(np.array(jd).astype(np.float))
 
 #             #Updating/storing the last JD
 #             previousjd=0
 
-#             try:        
+#             try:
 #                 previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
 #     #            previousjd = target.jdlastobs
 #                 print("DEBUG-CPCS prev= ", previousjd, " this= ",jdlast)
 #             except:
 #                 pass
-#             if (jdlast > previousjd) : 
+#             if (jdlast > previousjd) :
 #                 target.save(extras={'jdlastobs':jdlast})
 #                 print("DEBUG saving new jdlast from CPCS: ",jdlast)
 #         except:
 #             print("target ",cpcs_name, " not on CPCS")
+def data_product_post_upload(dp, observation_instrument, observation_filter):
+
+    url = 'data/' + format(dp)
+    logger.info('Running post upload hook for DataProduct: {}'.format(url))
+
+    if dp.data_product_type == 'fits_file' and observation_instrument != None:
+        with open(url, 'rb') as file:
+            fits_id = uuid.uuid4().hex
+            try:
+
+                response = requests.post(secret.CCDPHOTD_URL,  {'job_id': fits_id}, files={'fits_file': file})
+                if response.status_code == 201:
+                    logger.info('Fits send to ccdphotd')
+                    BHTomFits.objects.create(fits_id=fits_id, status='S', user_id=observation_instrument, dataproduct_id=dp.id,
+                                                 status_message='Fits send to ccdphotd', filter=observation_filter)
+
+                else:
+                    error_message = 'Error  code: %s' % response.status_code
+                    logger.info(error_message)
+                    BHTomFits.objects.create(fits_id=fits_id, status='E', user_id=observation_instrument, dataproduct_id=dp.id, fits_file=url, status_message=error_message, filter=observation_filter)
+            except Exception as e:
+                logger.error('error: ' + str(e))
+                raise Exception(response.content.decode('utf-8')) from None
+
+def send_to_cpcs(result, fits, eventID):
+
+    url_cpcs = secret.CPCS_URL + 'upload'
+    logger.info('Send file to cpcs')
+
+    try:
+        with open(format(result), 'rb') as file:
+            response = requests.post(url_cpcs, {'MJD': fits.mjd, 'EventID': eventID, 'expTime':  fits.expTime,
+                                          'matchDist': fits.user_id.matchDist, 'dryRun': int(fits.user_id.allow_upload),
+                                          'forceFilter': fits.filter, 'hashtag': fits.user_id.cpcs_hashtag}, files={'sexCat': file})
+
+        logger.info(response.content)
+
+        if response.status_code == 201:
+
+            fits.status='F'
+            fits.status_message='Finished'
+            fits.save()
+        else:
+            error_message = 'Error: %s' % response.content
+
+            fits.status='E'
+            fits.status_message = error_message
+            fits.save()
+
+    except Exception as e:
+        logger.error('error: ' + str(e))
+
+
+
+@receiver(pre_save, sender=Cpcs_user)
+def create_cpcs_user_profile(sender, instance, **kwargs):
+
+    logger.info('Create_cpcs_user')
+    url_cpcs = secret.CPCS_URL + 'newuser'
+
+    #send_mail('TEST', 'TEST', settings.EMAIL_HOST_USER, ['arturkrawczyk19@gmail.com'], fail_silently=False)
+
+    if instance.cpcs_hashtag == None:
+        try:
+            response = requests.post(url_cpcs,
+                                       {'obsName': instance.obsName, 'lon': instance.lon, 'lat': instance.lat,
+                                        'allow_upload': int(instance.allow_upload),
+                                        'prefix': instance.prefix, 'hashtag': secret.CPCD_Admin_Hashtag})
+
+            if response.status_code == 200:
+                instance.cpcs_hashtag = response.content.decode('utf-8').split(': ')[1]
+            else:
+                raise Exception(response.content.decode('utf-8')) from None
+
+        except Exception as e:
+             logger.error('error: ' + str(e))
+             raise Exception(str(e)) from None

@@ -12,13 +12,22 @@ import datetime
 import json
 from astropy.time import Time
 from datetime import timedelta
+<<<<<<< HEAD
 
+=======
+from myapp.models import BHTomFits, Cpcs_user
+>>>>>>> 302b25a3e8cc54ecff18b8335f1724c4fb9130c9
 
 from astropy import units as u
 from astropy.coordinates import get_moon, get_sun, SkyCoord, AltAz
 import numpy as np
 import time, math
+<<<<<<< HEAD
 
+=======
+import logging
+logger = logging.getLogger(__name__)
+>>>>>>> 302b25a3e8cc54ecff18b8335f1724c4fb9130c9
 register = template.Library()
 
 @register.inclusion_tag('bhtom/airmass_collapse.html')
@@ -422,4 +431,27 @@ def get_angular_dist_from_the_sun(ra, dec, alpha_sun, delta_sun):
     sep_rad = math.atan(licz/mian)
     sep = np.rad2deg(sep_rad)
     sep_str = "{:.0f}".format(sep)
+<<<<<<< HEAD
     return sep_str
+=======
+    return sep_str
+
+
+@register.inclusion_tag('tom_targets/partials/detail_fits_upload.html')
+def detail_fits_upload(target, user):
+    """
+    Given a ``Target``, returns a list of ``Upload Fits``
+    """
+    user = Cpcs_user.objects.filter(user=user).values_list('id')
+    fits = BHTomFits.objects.filter(user_id__in=user)
+    tabFits=[]
+    for fit in fits:
+        tabFits.append([fit.status, fit.status_message, DataProduct.objects.get(id=fit.dataproduct_id).data])
+
+    return {
+        'fits': tabFits,
+        'target': target
+
+    }
+
+>>>>>>> 302b25a3e8cc54ecff18b8335f1724c4fb9130c9

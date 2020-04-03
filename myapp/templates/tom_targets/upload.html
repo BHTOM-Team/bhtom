@@ -1,0 +1,17 @@
+{% load bootstrap4 static %}
+{% if user.is_authenticated %}
+<h4>Upload a data product</h4>
+<p>
+  For example CSVs, see the <a href="{% static 'tom_dataproducts/photometry_sample.csv' %}">photometry</a> and <a href="{% static 'tom_dataproducts/spectrum_sample.csv' %}">spectroscopy</a> sample files. FITS is supported for spectra.
+</p>
+<p>
+  To properly process FITS, you need to choice an observation instrument and filter. You can add a new instrument <a href="{% url 'observatory_create' %}">here.</a>
+</p>
+<form method="POST" action="{% url 'data_upload' %}" enctype="multipart/form-data">
+  {% csrf_token %}
+  {% bootstrap_form data_product_form_from_user %}
+  {% buttons %}
+  <input type="submit" class="btn btn-primary" value="Upload" name="data_product_form_from_user">
+  {% endbuttons %}
+</form>
+{% endif %}

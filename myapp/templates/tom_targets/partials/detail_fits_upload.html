@@ -1,0 +1,18 @@
+{% load bootstrap4 %}
+
+<h4>Detail</h4>
+<table class="table table-striped">
+  <thead><th>File Name</th><th>Status</th><th>Check Status</th></tr></thead>
+  <tbody>
+  {% for status, message, name in fits %}
+    <tr>
+      <td>{{ name }}</td>
+      <td>{{ message }}</td>
+      <td>
+        {%  if Status != 'S' or Status != 'I' %}
+
+        {% endif %}
+        </td>
+    </tr>
+  {% endfor %}
+</table>
