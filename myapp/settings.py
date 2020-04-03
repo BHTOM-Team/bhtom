@@ -107,7 +107,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'tom_common.middleware.ExternalServiceMiddleware',
+<<<<<<< HEAD
+=======
 
+>>>>>>> 302b25a3e8cc54ecff18b8335f1724c4fb9130c9
 ]
 
 ROOT_URLCONF = 'bhtom.urls'
@@ -260,17 +263,17 @@ FACILITIES = {
             'GN': 'https://128.171.88.221:8443',
         },
         'api_key': {
-            'GS': '',
-            'GN': '',
+            'GS': 'ZVBRH',
+            'GN': 'XKLCT',
         },
-        'user_email': '',
+        'user_email': 'markus.hundertmark@uni-heidelberg.de',
         'programs': {
-            'GS-YYYYS-T-NNN': {
-                'MM': 'Std: Some descriptive text',
+            'GS-2020A-DD-104': {
+                'MM': 'Std: Std GS',
                 'NN': 'Rap: Some descriptive text'
             },
-            'GN-YYYYS-T-NNN': {
-                'QQ': 'Std: Some descriptive text',
+            'GN-2020A-DD-104': {
+                'QQ': 'Std: Std GN',
                 'PP': 'Rap: Some descriptive text',
             },
         },

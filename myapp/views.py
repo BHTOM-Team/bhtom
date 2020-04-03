@@ -84,7 +84,6 @@ class BlackHoleListView(FilterView):
     model = Target
     filterset_class = TargetFilter
     permission_required = 'tom_targets.view_target' #or remove if want it freely visible
-
     def get_queryset(self, *args, **kwargs):
         qs = super().get_queryset(*args, **kwargs)
 
@@ -133,7 +132,6 @@ class BlackHoleListView(FilterView):
                                 if self.request.user.is_authenticated
                                 else TargetList.objects.none())
         context['query_string'] = self.request.META['QUERY_STRING']
-
         jd_now = Time(datetime.utcnow()).jd
 
         prioritylist = []

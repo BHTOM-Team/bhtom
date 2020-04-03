@@ -24,14 +24,12 @@ def target_post_save(target, created):
             {'objectId': objectId}
         ]
         }
-
         try:
             r = requests.post(url, json=request)
             results = r.json()['results'][0]['results']
             return results
         except Exception as e:
             return [None,'Error message : \n'+str(e)]
-
     logger.info('Target post save hook: %s created: %s', target, created)
   ### how to pass those variables from settings?
     try:
@@ -82,7 +80,6 @@ def target_post_save(target, created):
 
 #     if (ztf_name!=''):
 #         alerts = get(ztf_name)
-
 #         filters = {1: 'g_ZTF', 2: 'r_ZTF', 3: 'i_ZTF'}
 #         jdarr = []
 #         for alert in alerts:
@@ -249,7 +246,6 @@ def target_post_save(target, created):
 #                     rd.save()
 #                 except:
 #                     print("FAILED storing (CPCS)")
-
 #             #Updating the last observation JD
 #             jdlast = np.max(np.array(jd).astype(np.float))
 

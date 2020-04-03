@@ -32,7 +32,6 @@ class BHEvent(models.Model):
         max_length=100, default='', verbose_name='Target classification', help_text='The classification of this target, e.g. Ulens, Be, FUORI',
         blank=True, null=True
     )
-
     all_phot = models.TextField(
         verbose_name='All photometry', help_text='All photometry',
         null=True, blank=True
