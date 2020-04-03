@@ -1,9 +1,12 @@
 from django.contrib import admin
-
-# Register your models here.
-
 from myapp.models import BHTomFits, Cpcs_user
 
-admin.site.register(BHTomFits)
-admin.site.register(Cpcs_user)
 
+class BhtonFitsField(admin.ModelAdmin):
+    list_display = ('fits_id','status', )
+
+class Cpcs_displayField(admin.ModelAdmin):
+    list_display = ('user','obsName')
+
+admin.site.register(BHTomFits, BhtonFitsField)
+admin.site.register(Cpcs_user, Cpcs_displayField)
