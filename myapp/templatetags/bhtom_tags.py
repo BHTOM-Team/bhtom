@@ -12,22 +12,17 @@ import datetime
 import json
 from astropy.time import Time
 from datetime import timedelta
-<<<<<<< HEAD
 
-=======
 from myapp.models import BHTomFits, Cpcs_user
->>>>>>> 302b25a3e8cc54ecff18b8335f1724c4fb9130c9
 
 from astropy import units as u
 from astropy.coordinates import get_moon, get_sun, SkyCoord, AltAz
 import numpy as np
 import time, math
-<<<<<<< HEAD
 
-=======
 import logging
 logger = logging.getLogger(__name__)
->>>>>>> 302b25a3e8cc54ecff18b8335f1724c4fb9130c9
+
 register = template.Library()
 
 @register.inclusion_tag('bhtom/airmass_collapse.html')
@@ -431,9 +426,7 @@ def get_angular_dist_from_the_sun(ra, dec, alpha_sun, delta_sun):
     sep_rad = math.atan(licz/mian)
     sep = np.rad2deg(sep_rad)
     sep_str = "{:.0f}".format(sep)
-<<<<<<< HEAD
-    return sep_str
-=======
+
     return sep_str
 
 
@@ -454,4 +447,3 @@ def detail_fits_upload(target, user):
 
     }
 
->>>>>>> 302b25a3e8cc54ecff18b8335f1724c4fb9130c9
