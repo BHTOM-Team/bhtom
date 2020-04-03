@@ -441,7 +441,7 @@ def detail_fits_upload(target, user):
 
     for fit in fits:
         try:
-            tabFits.append([fit.status, fit.status_message, DataProduct.objects.get(id=fit.dataproduct_id).data])
+            tabFits.append([fit.status.split('/')[-1], fit.status_message, format(DataProduct.objects.get(id=fit.dataproduct_id).data).split('/')[-1]])
         except Exception as e:
             logger.error('error: ' + str(e))
 
