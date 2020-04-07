@@ -1,0 +1,69 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 static cache %}
+{% block title %} Data Product List {% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_observations/css/main.css' %}">
+{% endblock %}
+{% block content %}
+{% include 'tom_dataproducts/partials/js9_scripts.html' %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="row">
+      <div class="col-md-12">
+
+      </div>
+    </div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Photometry</th>
+          <th>CPCS</th>
+          <th>Filter</th>
+          <th>Observatory</th>
+          <th>Status</th>
+          <th>MJD</th>
+          <th>Exposure time</th>
+          <th>Thumbnail</th>
+        </tr>
+      </thead>
+      <tbody>
+
+      {% for FileUrl, File, PhotometryUrl, Photometry, CPCSUrl, CPCC, Filter, Observatory, Status, MJD, expTime, type in fits %}
+      <tr>
+        <td><a href="/data/{{ FileUrl }}">{{ File|truncatechars:20 }}</a></td>
+        <td><a href="/data/{{ PhotometryUrl }}">{{ Photometry|truncatechars:20 }}</a></td>
+        <td><a href="/data/{{ CPCSUrl }}">{{ CPCS|truncatechars:20 }}</a></td>
+        <td>{{ Filter }}</td>
+        <td>{{ Observatory }}</td>
+        <td>{{ Status }}</td>
+        {% if MJD != None %}
+          <td>{{ MJD }}</td>
+        {% else %}
+          <td></td>
+        {% endif %}
+        {% if expTime != None %}
+        <td>{{ expTime }}</td>
+        {% else %}
+          <td></td>
+        {% endif %}
+        {% if type == 'fits_file' %}
+          <td>
+            {% cache None thumbnail product.id %}
+            <img src="{{ product.get_preview }}" class="thumbnail"><br/>
+            {% endcache %}
+            {% include 'tom_dataproducts/partials/js9_button.html' with url="/data/"|add:FileUrl only %}
+          </td>
+          {% else %}
+          <td></td>
+          {% endif %}
+      </tr>
+      {% endfor %}
+
+      </tbody>
+    </table>
+
+  </div>
+
+</div>
+{% endblock %}

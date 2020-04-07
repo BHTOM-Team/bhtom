@@ -16,8 +16,8 @@ from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
 from tom_dataproducts.data_processor import run_data_processor
 from tom_dataproducts.exceptions import InvalidFileFormatException
-from tom_dataproducts.models import ReducedDatum, DataProduct
-
+from tom_dataproducts.models import ReducedDatum, DataProduct, DataProductGroup
+from tom_dataproducts.filters import DataProductFilter
 from rest_framework import viewsets, status
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
@@ -393,6 +393,46 @@ class TargetDeleteView(PermissionRequiredMixin, DeleteView):
     permission_required = 'tom_targets.delete_target'
     success_url = reverse_lazy('bhlist')
     model = Target
+
+    def get_object(self, queryset=None):
+        """ Hook to ensure object is owned by request.user. """
+        obj = super(TargetDeleteView, self).get_object()
+
+        return obj
+
+class TargetFileView(LoginRequiredMixin, ListView):
+
+    permission_required = 'tom_targets.view_target'
+    template_name = 'tom_dataproducts/dataproduct_list.html'
+    model = BHTomFits
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        context['object_list']
+
+        user = Cpcs_user.objects.filter(user=self.request.user).values_list('id')
+        data_product = DataProduct.objects.filter(target_id=self.kwargs['pk']).values_list('id')
+        fits = BHTomFits.objects.filter(dataproduct_id__in=data_product)
+
+        tabFits = []
+
+        for fit in fits:
+            try:
+                data_product = DataProduct.objects.get(id=fit.dataproduct_id)
+
+                tabFits.append([format(data_product.data), format(data_product.data).split('/')[-1],
+                                format(fit.ccdphot_result), format(fit.ccdphot_result).split('/')[-1],
+                                format(fit.cpcs_result), format(fit.cpcs_result).split('/')[-1],
+                                fit.filter, Cpcs_user.objects.get(id=fit.user_id).obsName,
+                                fit.status, fit.mjd, fit.expTime,
+                                DataProduct.objects.get(id=fit.dataproduct_id).data_product_type])
+
+            except Exception as e:
+                logger.error('error: ' + str(e))
+
+        context['fits']=tabFits
+        return context
 
 
 class IsAuthenticatedOrReadOnlyOrCreation(IsAuthenticatedOrReadOnly):

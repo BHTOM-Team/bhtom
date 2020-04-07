@@ -74,13 +74,14 @@ class BHTomFits(models.Model):
         ('U', 'User not active'),
     ]
     fits_id = models.CharField(db_index=True, max_length=50, primary_key=True)
-    user_id = models.ForeignKey(Cpcs_user, on_delete=models.CASCADE)
+    user = models.ForeignKey(Cpcs_user, on_delete=models.CASCADE)
     dataproduct_id = models.IntegerField(null=False, blank=False)
     status = models.CharField(max_length=1, choices=FITS_STATUS, default='C')
     status_message = models.TextField(default='Fits upload', blank=True, editable=False)
     mjd = models.FloatField(null=True, blank=True)
     expTime = models.FloatField(null=True, blank=True)
     ccdphot_result = models.FileField(upload_to='photometry', null=True, blank=True, editable=False)
+    cpcs_result = models.FileField(upload_to='calibrations', null=True, blank=True, editable=False)
     cpcs_time = models.DateTimeField(null=True, blank=True, editable=False)
     filter = models.CharField(max_length=255, null=True, blank=True)
 
