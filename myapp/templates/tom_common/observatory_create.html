@@ -2,10 +2,11 @@
 {% load bootstrap4 %}
 {% block title %}Create observatory{% endblock %}
 {% block content %}
-{% if object %}
-<form action="{% url 'observatory-update' object.id %}" method="POST">
+{{ users }}
+{% if users %}
+<form action="{% url 'observatory_update' object.id %}" method="POST">
 {% else %}
-  <p> Create your observatory. After creation, wait for activate by the Administrator. </p>
+  <p> Create your observatory. Afterwards, wait for activate by the Administrator. </p>
 <form action="{% url 'observatory_create' %}" enctype="multipart/form-data" method="POST">
 {% endif %}
 {% csrf_token %}

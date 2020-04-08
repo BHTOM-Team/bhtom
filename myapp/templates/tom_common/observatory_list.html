@@ -4,13 +4,15 @@
 
 <div class="row">
   <div class="col-md-12">
-
+    {% target_feature object %}
     <a href="{% url 'observatory_create' %}" title="Observatory Create" class="btn btn-outline-primary">Add Observatory</a>
     <table class="table table-striped">
       <thead>
         <tr>
           <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>Allow Upload</th><th>Activation</th>
-
+          {% if request.user.is_superuser %}
+          <th>Update</th><th>Delete</th>
+          {% endif %}
         </tr>
       </thead>
       <tbody>
@@ -21,7 +23,15 @@
           <td>{{ cpcs_user.lat }}</td>
           <td>{% if cpcs_user.allow_upload %} True {%else%} False{% endif %}</td>
           <td>{% if cpcs_user.user_activation %} True {%else%} False{% endif %}</td>
+          {% if request.user.is_superuser %}
+          <td>
+            <a href="{% url 'observatory_update' pk=cpcs_user.id %}" title="Update observatory" class="btn  btn-primary">Update</a>
+          </td>
+          <td>
+            <a href="{% url 'observatory_delete' pk=cpcs_user.id %}" title="Delete observatory" class="btn  btn-danger">Delete</a>
+          </td>
         </tr>
+        {% endif %}
         {% endfor %}
       </tbody>
     </table>

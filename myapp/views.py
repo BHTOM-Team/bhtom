@@ -405,33 +405,81 @@ class TargetFileView(LoginRequiredMixin, ListView):
     permission_required = 'tom_targets.view_target'
     template_name = 'tom_dataproducts/dataproduct_list.html'
     model = BHTomFits
+    paginate_by = 25
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+    def get_queryset(self):
+        """
+        Gets the set of ``DataProduct`` objects that the user has permission to view.
 
-        context['object_list']
-
-        user = Cpcs_user.objects.filter(user=self.request.user).values_list('id')
-        data_product = DataProduct.objects.filter(target_id=self.kwargs['pk']).values_list('id')
-        fits = BHTomFits.objects.filter(dataproduct_id__in=data_product)
-
+        :returns: Set of ``DataProduct`` objects
+        :rtype: QuerySet
+        """
+        data_product = DataProduct.objects.filter(target_id=self.kwargs['pk'], data_product_type='fits_file').values_list('id')
+        fits = BHTomFits.objects.filter(dataproduct_id__in=data_product).order_by('-start_time')
+        target_name = str(Target.objects.get(id=self.kwargs['pk']).name)
         tabFits = []
 
         for fit in fits:
             try:
                 data_product = DataProduct.objects.get(id=fit.dataproduct_id)
+                ccdphot_url = "/".join(["/data", target_name, "photometry", str(fit.ccdphot_result)])
 
-                tabFits.append([format(data_product.data), format(data_product.data).split('/')[-1],
-                                format(fit.ccdphot_result), format(fit.ccdphot_result).split('/')[-1],
-                                format(fit.cpcs_result), format(fit.cpcs_result).split('/')[-1],
+                tabFits.append([fit.fits_id, fit.start_time,
+                                format(data_product.data), format(data_product.data).split('/')[-1],
+                                ccdphot_url, format(fit.ccdphot_result),
                                 fit.filter, Cpcs_user.objects.get(id=fit.user_id).obsName,
-                                fit.status, fit.mjd, fit.expTime,
+                                fit.status_message, fit.mjd, fit.expTime,
                                 DataProduct.objects.get(id=fit.dataproduct_id).data_product_type])
 
             except Exception as e:
                 logger.error('error: ' + str(e))
 
-        context['fits']=tabFits
+        return tabFits
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        Adds the ``DataProductUploadForm`` to the context and prepopulates the hidden fields.
+
+        :returns: context object
+        :rtype: dict
+        """
+        context = super().get_context_data(*args, **kwargs)
+        target = Target.objects.get(id=self.kwargs['pk'])
+        context['target'] = target
+        return context
+
+class TargetFileDetailView(LoginRequiredMixin, ListView):
+    permission_required = 'tom_targets.view_target'
+    template_name = 'tom_dataproducts/dataproduct_fits_detail.html'
+    model = BHTomFits
+
+    def get_context_data(self, *args, **kwargs):
+
+        context = super().get_context_data(*args, **kwargs)
+
+        target = Target.objects.get(id=self.kwargs['pk'])
+        fits = BHTomFits.objects.get(fits_id=self.kwargs['pk_fits'])
+        cpcs_user = Cpcs_user.objects.get(id=fits.user_id)
+        data_product = DataProduct.objects.get(id=fits.dataproduct_id)
+        tabFits = {}
+
+        try:
+            data_product = DataProduct.objects.get(id=fits.dataproduct_id)
+            ccdphot_url = "/".join(["/data", target.name, "photometry", str(fits.ccdphot_result)])
+            tabFits['fits_url'] = format(data_product.data)
+            tabFits['fits'] = format(data_product.data).split('/')[-1]
+            tabFits['ccdphot_url'] = ccdphot_url
+            tabFits['ccdphot'] = format(fits.ccdphot_result)
+        except Exception as e:
+            logger.error('error: ' + str(e))
+
+
+        context['target'] = target
+        context['fits'] = fits
+        context['cpcs_user'] = cpcs_user
+        context['data_product'] = data_product
+        context['tabFits'] = tabFits
+
         return context
 
 
@@ -520,9 +568,10 @@ class result_fits(viewsets.ModelViewSet):
                 instance.status = 'R'
                 instance.cpcs_time = datetime.now()
                 instance.ccdphot_result = ccdphot_result.name
-                instance.status_message = 'Result from ccdphot'
+                instance.status_message = 'Photometry result'
                 instance.mjd = request.query_params.get('fits_mjd')
                 instance.expTime = request.query_params.get('fits_exp')
+                instance.ccdphot_filter = request.query_params.get('fits_filter')
                 instance.save()
 
             else:
@@ -533,7 +582,7 @@ class result_fits(viewsets.ModelViewSet):
                 if request.query_params.get('status_message'):
                     instance.status_message = request.query_params.get('status_message')
                 else:
-                    instance.status_message = 'Result from ccdphot with error'
+                    instance.status_message = 'Photometry error'
                 instance.save()
         except Exception as e:
             logger.error('error: ' + str(e))
@@ -741,5 +790,45 @@ class ObservatoryList(LoginRequiredMixin, ListView):
     strict = False
 
     def get_queryset(self, *args, **kwargs):
+        return Cpcs_user.objects.all()
+        #return Cpcs_user.objects.filter(user=self.request.user)
 
-        return Cpcs_user.objects.filter(user=self.request.user)
+
+class UpdateObservatory(LoginRequiredMixin, UpdateView):
+
+    template_name = 'tom_common/observatory_create.html'
+    form_class = ObservatoryCreationForm
+    success_url = reverse_lazy('observatory')
+    model = Cpcs_user
+
+    @transaction.atomic
+    def form_valid(self, form):
+        # super().form_valid(form)
+
+        user = self.request.user
+        fits = self.request.FILES.getlist('fits')
+        logger.info('1')
+        for f in fits:
+            instance = Cpcs_user.objects.get(id=user)
+            instance.obsName = form.cleaned_data['obsName']
+            instance.lon = form.cleaned_data['lon']
+            instance.lat = form.cleaned_data['lat']
+            instance.allow_upload = form.cleaned_data['allow_upload']
+            instance.prefix = form.cleaned_data['prefix']
+            instance.matchDist = form.cleaned_data['matchDist']
+            #instance.user_activation = False
+            instance.fits = f
+            instance.save()
+
+        return redirect(self.get_success_url())
+
+class DeleteObservatory(LoginRequiredMixin, DeleteView):
+
+    success_url = reverse_lazy('observatory')
+    model = Cpcs_user
+    template_name = 'tom_common/observatory_delete.html'
+    def get_object(self, queryset=None):
+
+        obj = super(DeleteObservatory, self).get_object()
+
+        return obj
