@@ -333,7 +333,6 @@ def send_to_cpcs(result, fits, eventID):
         fits.status_message = 'Error: %s' % str(e)
         fits.save()
 
-
 @receiver(pre_save, sender=Cpcs_user)
 def create_cpcs_user_profile(sender, instance, **kwargs):
 
@@ -357,3 +356,4 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
         except Exception as e:
              logger.error('error: ' + str(e))
              raise Exception(str(e)) from None
+

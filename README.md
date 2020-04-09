@@ -49,12 +49,12 @@ insert into myapp_catalogs values (7,'VSTATLAS',ARRAY['u','g','r','i','z']);
 
 Adres for send fits to bhtom:  /upload/
 
-Sending parameters in 'data': hashtag, target(name), data_product_type (photometry, fits_file, spectroscopy, image_file) 
+Sending parameters in 'data': hashtag, target(name),filter, data_product_type (photometry, fits_file, spectroscopy, image_file) 
 
 Sending file in 'files'
 
 Exemple: 
-    post('url+/upload/', data = {'hashtag': hashtag, 'target': target.name, 'data_product_type':  fits_file, ' files={'files': file})
+    post('url/upload/', data = {'hashtag': hashtag, 'target': target.name, 'filter': 'APASS/V', data_product_type':  fits_file}, files={'files': file})
 
 
 

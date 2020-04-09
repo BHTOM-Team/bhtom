@@ -33,7 +33,7 @@ from myapp.views import TargetCreateView, TargetUpdateView, TargetDeleteView, Ta
 router = routers.DefaultRouter()
 router.register('upload', views.fits_upload)
 router.register('result', views.result_fits)
-router.register('status', views.status_fits)
+#router.register('status', views.status_fits)
 
 urlpatterns = [
     path('', include('tom_common.urls')),

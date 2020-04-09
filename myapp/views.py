@@ -158,6 +158,7 @@ class BlackHoleListView(FilterView):
 
         return context
 
+
 class TargetCreateView(LoginRequiredMixin, CreateView):
     """
     View for creating a Target. Requires authentication.
@@ -400,6 +401,7 @@ class TargetDeleteView(PermissionRequiredMixin, DeleteView):
 
         return obj
 
+
 class TargetFileView(LoginRequiredMixin, ListView):
 
     permission_required = 'tom_targets.view_target'
@@ -448,6 +450,7 @@ class TargetFileView(LoginRequiredMixin, ListView):
         context['target'] = target
         return context
 
+
 class TargetFileDetailView(LoginRequiredMixin, ListView):
     permission_required = 'tom_targets.view_target'
     template_name = 'tom_dataproducts/dataproduct_fits_detail.html'
@@ -489,6 +492,7 @@ class IsAuthenticatedOrReadOnlyOrCreation(IsAuthenticatedOrReadOnly):
     def has_permission(self, request, view):
         return request.method == 'POST' or super().has_permission(request, view)
 
+
 class fits_upload(viewsets.ModelViewSet):
 
     queryset = BHTomFits.objects.all()
@@ -504,7 +508,7 @@ class fits_upload(viewsets.ModelViewSet):
         except:
             observation_filter = None
         try:
-            target = request.data['target']
+            target = request.data.get('target')
             data_product_files = request.FILES.getlist("files")
             hashtag = request.data.get('hashtag')
             dp_type = request.data.get('data_product_type')
@@ -548,6 +552,7 @@ class fits_upload(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         ret = super().list(request, *args, **kwargs)
         return ret
+
 
 class result_fits(viewsets.ModelViewSet):
 
@@ -614,7 +619,7 @@ class result_fits(viewsets.ModelViewSet):
         return ret
 
 
-class status_fits(viewsets.ModelViewSet):
+'''class status_fits(viewsets.ModelViewSet):
 
     queryset = BHTomFits.objects.all()
     serializer_class = BHTomFitsStatusSerializer
@@ -636,6 +641,8 @@ class status_fits(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         ret = super().list(request, *args, **kwargs)
         return ret
+'''
+
 
 class DataProductUploadView(LoginRequiredMixin, FormView):
     """
@@ -807,6 +814,7 @@ class UpdateObservatory(LoginRequiredMixin, UpdateView):
         super().form_valid(form)
         messages.success(self.request, 'Successfully updated %s' % form.cleaned_data['obsName'])
         return redirect(self.get_success_url())
+
 
 class DeleteObservatory(LoginRequiredMixin, DeleteView):
 
