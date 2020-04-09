@@ -424,3 +424,4 @@ def get_angular_dist_from_the_sun(ra, dec, alpha_sun, delta_sun):
     sep_str = "{:.0f}".format(sep)
 
     return sep_str
+

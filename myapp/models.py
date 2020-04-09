@@ -56,11 +56,11 @@ class Cpcs_user(models.Model):
     cpcs_hashtag = models.CharField(max_length=255, editable=True, null=False,  blank=False)
     lon = models.FloatField(null=False, blank=False, verbose_name='Longitude')
     lat = models.FloatField(null=False, blank=False, verbose_name='Latitude')
-    prefix = models.CharField(max_length=255, null=True,  blank=True)
+    prefix = models.CharField(max_length=255, null=True, blank=True)
     user_activation = models.BooleanField()
     matchDist = models.CharField(max_length=10, choices=MATCHING_RADIUS, default='1 arcsec', verbose_name='Matching radius')
     allow_upload = models.BooleanField(verbose_name='Dry Run (no data will be stored in the database)')
-    fits = models.FileField(upload_to='user_fits', null=True, blank=True, verbose_name='Sample fits')
+    fits = models.FileField(upload_to='user_fits', null=False, blank=False, verbose_name='Sample fits')
 
 
 class BHTomFits(models.Model):

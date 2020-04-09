@@ -515,7 +515,7 @@ class fits_upload(viewsets.ModelViewSet):
                 return Response(status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            logger.error('error1: ' + str(e))
+            logger.error('error: ' + str(e))
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         successful_uploads = []
@@ -780,6 +780,7 @@ class CreateObservatory(LoginRequiredMixin, FormView):
                 user_activation=False,
                 fits=f
             )
+        messages.success(self.request, 'Successfully created %s' % obsName)
         return redirect(self.get_success_url())
 
 
@@ -803,23 +804,8 @@ class UpdateObservatory(LoginRequiredMixin, UpdateView):
 
     @transaction.atomic
     def form_valid(self, form):
-        # super().form_valid(form)
-
-        user = self.request.user
-        fits = self.request.FILES.getlist('fits')
-        logger.info('1')
-        for f in fits:
-            instance = Cpcs_user.objects.get(id=user)
-            instance.obsName = form.cleaned_data['obsName']
-            instance.lon = form.cleaned_data['lon']
-            instance.lat = form.cleaned_data['lat']
-            instance.allow_upload = form.cleaned_data['allow_upload']
-            instance.prefix = form.cleaned_data['prefix']
-            instance.matchDist = form.cleaned_data['matchDist']
-            #instance.user_activation = False
-            instance.fits = f
-            instance.save()
-
+        super().form_valid(form)
+        messages.success(self.request, 'Successfully updated %s' % form.cleaned_data['obsName'])
         return redirect(self.get_success_url())
 
 class DeleteObservatory(LoginRequiredMixin, DeleteView):
@@ -830,5 +816,4 @@ class DeleteObservatory(LoginRequiredMixin, DeleteView):
     def get_object(self, queryset=None):
 
         obj = super(DeleteObservatory, self).get_object()
-
         return obj

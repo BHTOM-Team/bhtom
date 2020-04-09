@@ -84,9 +84,3 @@ class ObservatoryCreationForm(forms.ModelForm):
         model = Cpcs_user
         fields = ('obsName', 'lon', 'lat', 'allow_upload', 'prefix', 'matchDist', 'fits')
 
-    def save(self, *args, **kwargs):
-        user = self.request.user
-        instance = super().save(*args, **kwargs)
-        instance.user.set(user)
-        instance.save()
-        return instance

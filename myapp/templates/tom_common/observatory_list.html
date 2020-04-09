@@ -4,7 +4,7 @@
 
 <div class="row">
   <div class="col-md-12">
-    {% target_feature object %}
+
     <a href="{% url 'observatory_create' %}" title="Observatory Create" class="btn btn-outline-primary">Add Observatory</a>
     <table class="table table-striped">
       <thead>
@@ -30,8 +30,8 @@
           <td>
             <a href="{% url 'observatory_delete' pk=cpcs_user.id %}" title="Delete observatory" class="btn  btn-danger">Delete</a>
           </td>
+          {% endif %}
         </tr>
-        {% endif %}
         {% endfor %}
       </tbody>
     </table>
