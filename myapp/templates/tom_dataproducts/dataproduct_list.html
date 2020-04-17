@@ -1,0 +1,84 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 static targets_extras cache %}
+{% block title %} Data Product List {% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_observations/css/main.css' %}">
+<style>
+.dhtmlwindow{
+    top:100px!important;
+}
+</style>
+{% endblock %}
+{% block content %}
+{% include 'tom_dataproducts/partials/js9_scripts.html' %}
+<div class="row">
+
+  <div class="col-md-12">
+    <div class="row">
+      <div class="col-md-12">
+       <h1> Uploaded Fits</h1>
+      </div>
+      <div class="col-md-12">
+        <h3>Target: {{target.name }}</h3>
+      </div>
+    </div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Photometry</th>
+          <th>Filter</th>
+          <th>Observatory</th>
+          <th>Status</th>
+          <th>MJD</th>
+          <th>Exp</th>
+          <th>Time Uploaded</th>
+          <th></th>
+          <th>Detail</th>
+        </tr>
+      </thead>
+      <tbody>
+
+      {% for fit_id, time,  FileUrl, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type in object_list %}
+      <tr>
+        <td><a href="/data/{{ FileUrl }}">{{ File|truncatechars:20 }}</a></td>
+        <td><a href="{{ PhotometryUrl }}">{{ Photometry|truncatechars:20 }}</a></td>
+        <td>{{ Filter }}</td>
+        <td>{{ Observatory }}</td>
+        <td><div title="{{Status}}">{{ Status|truncatechars:22 }}</div></td>
+        {% if MJD != None %}
+          <td>{{ MJD }}</td>
+        {% else %}
+          <td></td>
+        {% endif %}
+        {% if expTime != None %}
+        <td>{{ expTime }}</td>
+        {% else %}
+          <td></td>
+        {% endif %}
+        {% if time != None %}
+        <td>{{ time }}</td>
+         {% else %}
+          <td></td>
+        {% endif %}
+        {% if type == 'fits_file' %}
+          <td>
+            {% include 'tom_dataproducts/partials/js9_button.html' with url="/data/"|add:FileUrl only %}
+          </td>
+          {% else %}
+          <td></td>
+          {% endif %}
+
+        <td>
+          <a href="{% url 'bhlist_file_detail' pk=target.id pk_fits=fit_id%}" title="Show details" class="btn btn-primary">Detail</a>
+        </td>
+      </tr>
+      {% endfor %}
+
+      </tbody>
+    </table>
+    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+  </div>
+
+</div>
+{% endblock %}

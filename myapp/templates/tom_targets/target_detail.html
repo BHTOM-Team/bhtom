@@ -27,9 +27,9 @@
       <li class="nav-item">
         <span class="nav-link" data-target="#data" data-toggle="tab">Data</span>
       </li>
-      <li class="nav-item">
+     <!-- <li class="nav-item">
         <span class="nav-link" data-target="#detailView" data-toggle="tab">Detail</span>
-      </li>
+      </li>-->
       <li class="nav-item">
         <span class="nav-link" data-target="#schedule" data-toggle="tab">Schedule Observations</span>
       </li>
@@ -61,12 +61,12 @@
         {% observation_list object %}
       </div>
       <div class="tab-pane" id="data">
-        {% include 'tom_targets/upload.html' %}
+        {% include 'tom_targets/target_upload.html' %}
         {% dataproduct_list_for_target object %}
       </div>
-       <div class="tab-pane" id="detailView">
+       <!--<div class="tab-pane" id="detailView">
         {% detail_fits_upload object user%}
-      </div>
+      </div>-->
       <div class="tab-pane" id="cross-reference">
         <h4>Cross-Reference</h4>
         <p>Under construction</p>

@@ -5,6 +5,8 @@ import uuid
 from .models import BHTomFits, Cpcs_user
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
+from datetime import datetime
+import json
 
 # from django.core.mail import send_mail
 # from bhtom import settings
@@ -266,7 +268,7 @@ def target_post_save(target, created):
 def data_product_post_upload(dp, observation_instrument, observation_filter):
 
     url = 'data/' + format(dp)
-    logger.info('Running post upload hook for DataProduct: {}'.format(url))
+    ('Running post upload hook for DataProduct: {}'.format(url))
 
     if dp.data_product_type == 'fits_file' and observation_instrument != None:
         with open(url, 'rb') as file:
@@ -275,14 +277,15 @@ def data_product_post_upload(dp, observation_instrument, observation_filter):
 
                 response = requests.post(secret.CCDPHOTD_URL,  {'job_id': fits_id}, files={'fits_file': file})
                 if response.status_code == 201:
-                    logger.info('Fits send to ccdphotd')
-                    BHTomFits.objects.create(fits_id=fits_id, status='S', user_id=observation_instrument, dataproduct_id=dp.id,
-                                                 status_message='Fits send to ccdphotd', filter=observation_filter)
+
+                    BHTomFits.objects.create(fits_id=fits_id, status='S', user=observation_instrument, dataproduct_id=dp.id,
+                                                 status_message='Sent to photometry', start_time = datetime.now() ,
+                                                filter=observation_filter)
 
                 else:
                     error_message = 'Error  code: %s' % response.status_code
                     logger.info(error_message)
-                    BHTomFits.objects.create(fits_id=fits_id, status='E', user_id=observation_instrument, dataproduct_id=dp.id, fits_file=url, status_message=error_message, filter=observation_filter)
+                    BHTomFits.objects.create(fits_id=fits_id, status='E', user=observation_instrument, dataproduct_id=dp.id, fits_file=url, status_message=error_message, filter=observation_filter)
             except Exception as e:
                 logger.error('error: ' + str(e))
                 raise Exception(response.content.decode('utf-8')) from None
@@ -294,16 +297,28 @@ def send_to_cpcs(result, fits, eventID):
 
     try:
         with open(format(result), 'rb') as file:
+
             response = requests.post(url_cpcs, {'MJD': fits.mjd, 'EventID': eventID, 'expTime':  fits.expTime,
-                                          'matchDist': fits.user_id.matchDist, 'dryRun': int(fits.user_id.allow_upload),
-                                          'forceFilter': fits.filter, 'hashtag': fits.user_id.cpcs_hashtag}, files={'sexCat': file})
+                                          'matchDist': fits.user.matchDist, 'dryRun': int(fits.user.allow_upload),
+                                          'forceFilter': fits.filter, 'hashtag': fits.user.cpcs_hashtag,
+                                            'outputFormat': 'json'}, files={'sexCat': file})
 
         logger.info(response.content)
 
-        if response.status_code == 201:
+        if response.status_code == 201 or response.status_code == 200:
 
-            fits.status='F'
-            fits.status_message='Finished'
+            json_data = json.loads(response.text)
+            fits.status = 'F'
+            fits.status_message = 'Finished'
+            fits.cpcs_plot = json_data['image_link']
+            fits.mag = json_data['mag']
+            fits.mag_err = json_data['mag_err']
+            fits.ra = json_data['ra']
+            fits.dec = json_data['dec']
+            fits.zeropoint = json_data['zeropoint']
+            fits.outlier_fraction = json_data['outlier_fraction']
+            fits.scatter = json_data['scatter']
+            fits.npoints = json_data['npoints']
             fits.save()
         else:
             error_message = 'Error: %s' % response.content
@@ -314,8 +329,9 @@ def send_to_cpcs(result, fits, eventID):
 
     except Exception as e:
         logger.error('error: ' + str(e))
-
-
+        fits.status = 'E'
+        fits.status_message = 'Error: %s' % str(e)
+        fits.save()
 
 @receiver(pre_save, sender=Cpcs_user)
 def create_cpcs_user_profile(sender, instance, **kwargs):
@@ -340,3 +356,4 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
         except Exception as e:
              logger.error('error: ' + str(e))
              raise Exception(str(e)) from None
+

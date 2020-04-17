@@ -52,39 +52,51 @@ class Cpcs_user(models.Model):
     }
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    obsName = models.CharField(max_length=255, verbose_name='Observatory name')
+    obsName = models.CharField(max_length=255, verbose_name='Observatory name', unique=True)
     cpcs_hashtag = models.CharField(max_length=255, editable=True, null=False,  blank=False)
     lon = models.FloatField(null=False, blank=False, verbose_name='Longitude')
     lat = models.FloatField(null=False, blank=False, verbose_name='Latitude')
-    prefix = models.CharField(max_length=255, null=True,  blank=True)
+    prefix = models.CharField(max_length=255, null=True, blank=True)
     user_activation = models.BooleanField()
     matchDist = models.CharField(max_length=10, choices=MATCHING_RADIUS, default='1 arcsec', verbose_name='Matching radius')
     allow_upload = models.BooleanField(verbose_name='Dry Run (no data will be stored in the database)')
-    fits = models.FileField(upload_to='user_fits', null=True, blank=True, verbose_name='Sample fits')
+    fits = models.FileField(upload_to='user_fits', null=False, blank=False, verbose_name='Sample fits')
 
 
 class BHTomFits(models.Model):
     FITS_STATUS = [
         ('C', 'Created'),
-        ('S', 'Send_to_ccdphotd'),
-        ('I', 'In_progress'),
-        ('R', 'Result_from_ccdphotd'),
+        ('S', 'Sent to photometry'),
+        ('I', 'Photometry in progress'),
+        ('R', 'Photometry result'),
         ('F', 'Finished'),
         ('E', 'Error'),
         ('U', 'User not active'),
     ]
     fits_id = models.CharField(db_index=True, max_length=50, primary_key=True)
-    user_id = models.ForeignKey(Cpcs_user, on_delete=models.CASCADE)
+    user = models.ForeignKey(Cpcs_user, on_delete=models.CASCADE)
     dataproduct_id = models.IntegerField(null=False, blank=False)
     status = models.CharField(max_length=1, choices=FITS_STATUS, default='C')
     status_message = models.TextField(default='Fits upload', blank=True, editable=False)
     mjd = models.FloatField(null=True, blank=True)
     expTime = models.FloatField(null=True, blank=True)
     ccdphot_result = models.FileField(upload_to='photometry', null=True, blank=True, editable=False)
+    cpcs_plot = models.TextField(null=True, blank=True)
+    mag = models.FloatField(null=True, blank=True)
+    mag_err = models.FloatField(null=True, blank=True)
+    ra = models.FloatField(null=True, blank=True)
+    dec = models.FloatField(null=True, blank=True)
+    zeropoint = models.FloatField(null=True, blank=True)
+    outlier_fraction = models.FloatField(null=True, blank=True)
+    scatter = models.FloatField(null=True, blank=True)
+    npoints = models.IntegerField(null=True, blank=True)
+    ccdphot_filter = models.CharField(max_length=255, null=True, blank=True)
     cpcs_time = models.DateTimeField(null=True, blank=True, editable=False)
+    start_time = models.DateTimeField(null=True, blank=True, editable=False)
     filter = models.CharField(max_length=255, null=True, blank=True)
 
 class Catalogs(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.TextField(blank=False, editable=False)
     filters = ArrayField(models.CharField(max_length=10))
+

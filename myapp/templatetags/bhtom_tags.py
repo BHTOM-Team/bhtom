@@ -3,7 +3,6 @@ import plotly.graph_objs as go
 from django import template
 
 from tom_targets.models import Target
-from tom_targets.forms import TargetVisibilityForm
 from tom_observations import utils, facility
 from tom_dataproducts.models import DataProduct, ReducedDatum, ObservationRecord
 
@@ -11,15 +10,15 @@ from astroplan import Observer, FixedTarget, AtNightConstraint, time_grid_from_r
 import datetime
 import json
 from astropy.time import Time
-from datetime import timedelta
-from myapp.models import BHTomFits, Cpcs_user
 
 from astropy import units as u
 from astropy.coordinates import get_moon, get_sun, SkyCoord, AltAz
 import numpy as np
-import time, math
+import math
+
 import logging
 logger = logging.getLogger(__name__)
+
 register = template.Library()
 
 @register.inclusion_tag('bhtom/airmass_collapse.html')
@@ -423,23 +422,6 @@ def get_angular_dist_from_the_sun(ra, dec, alpha_sun, delta_sun):
     sep_rad = math.atan(licz/mian)
     sep = np.rad2deg(sep_rad)
     sep_str = "{:.0f}".format(sep)
+
     return sep_str
-
-
-@register.inclusion_tag('tom_targets/partials/detail_fits_upload.html')
-def detail_fits_upload(target, user):
-    """
-    Given a ``Target``, returns a list of ``Upload Fits``
-    """
-    user = Cpcs_user.objects.filter(user=user).values_list('id')
-    fits = BHTomFits.objects.filter(user_id__in=user)
-    tabFits=[]
-    for fit in fits:
-        tabFits.append([fit.status, fit.status_message, DataProduct.objects.get(id=fit.dataproduct_id).data])
-
-    return {
-        'fits': tabFits,
-        'target': target
-
-    }
 
