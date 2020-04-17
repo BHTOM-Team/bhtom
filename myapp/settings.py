@@ -107,10 +107,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'tom_common.middleware.ExternalServiceMiddleware',
-<<<<<<< HEAD
-=======
-
->>>>>>> 302b25a3e8cc54ecff18b8335f1724c4fb9130c9
 ]
 
 ROOT_URLCONF = 'bhtom.urls'
