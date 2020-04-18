@@ -111,6 +111,7 @@ INSTALLED_APPS = [
     'myapp',
     'datatools',
     'rest_framework',
+    'tom_publications',
 ]
 
 SITE_ID = 3
@@ -404,3 +405,6 @@ try:
     from local_settings import * # noqa
 except ImportError:
     pass
+
+#TOM Toolkit 1.4 requires
+TARGET_PERMISSIONS_ONLY = True
