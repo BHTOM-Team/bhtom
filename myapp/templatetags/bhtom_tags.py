@@ -314,22 +314,30 @@ def bh_target_distribution(targets):
     delta_moon = moon_pos.dec.deg
 
     ###
+
     locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
+
     # for ra,dec,name in locations:
     #     print(name,get_angular_dist_from_the_sun(ra,dec,alpha_sun, delta_sun),' deg from Sun')
     #TODO: add field per target to allow sorting by the Sun distance
-    data = [
-        #targets
-        dict(
-            lon=[l[0] for l in locations],
-            lat=[l[1] for l in locations],
-            text=[l[2] for l in locations],
-            hoverinfo='text',
-            mode='markers',
-            marker=dict(size=10,
-                                    color='red'),
-            type='scattergeo'
-        ),
+
+    data = []
+
+    if locations.exists():
+        data.append(
+            # targets
+            dict(
+                lon=[l[0] for l in locations],
+                lat=[l[1] for l in locations],
+                text=[l[2] for l in locations],
+                hoverinfo='text',
+                mode='markers',
+                marker=dict(size=10,
+                            color='red'),
+                type='scattergeo'
+            ))
+
+    data.append(
         #grid
         dict(
             lon=list(range(0, 360, 60))+[180]*4,
@@ -338,21 +346,25 @@ def bh_target_distribution(targets):
             hoverinfo='none',
             mode='text',
             type='scattergeo'
-        ),
+        )
+    )
+    data.append(
         #sun
         dict(
             lon=[alpha_sun], lat=[delta_sun], text=['SUN'], hoverinfo='text', mode='markers',
             marker=dict(size=50, color='yellow', opacity=0.5),
             type='scattergeo'
-        ),
+        )
+    )
+    data.append(
         #moon
         dict(
             lon=[alpha_moon], lat=[delta_moon], text=['Moon'], hoverinfo='text', mode='markers',
             marker=dict(size=50, color='grey', opacity=0.5),
             type='scattergeo'
         )
+    )
 
-    ]
     layout = {
         'title': 'Target Map (equatorial)',
         'hovermode': 'closest',
