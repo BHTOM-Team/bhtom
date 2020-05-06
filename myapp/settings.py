@@ -140,7 +140,7 @@ if black_tom_DB_BACKEND == 'postgres':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'bhtom',
+            'NAME': 'blacktom', #bhtom?
             'USER': black_tom_DB_USER,
             'PASSWORD': black_tom_DB_PASSWORD,
             'HOST': 'localhost',

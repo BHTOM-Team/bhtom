@@ -37,14 +37,6 @@ try:
     black_tom_DB_USER = secret.black_tom_DB_USER
     black_tom_DB_PASSWORD = secret.black_tom_DB_PASSWORD
     CPCS_DATA_ACCESS_HASHTAG = secret.CPCS_DATA_ACCESS_HASHTAG
-    GEMINI_S_API_KEY = secret.GEMINI_S_API_KEY
-    GEMINI_N_API_KEY = secret.GEMINI_N_API_KEY
-    LT_PROPOSAL_ID = secret.LT_PROPOSAL_ID
-    LT_PROPOSAL_NAME = secret.LT_PROPOSAL_NAME
-    LT_PROPOSAL_USER = secret.LT_PROPOSAL_USER
-    LT_PROPOSAL_PASS = secret.LT_PROPOSAL_PASS
-    LT_PROPOSAL_HOST = secret.LT_PROPOSAL_HOST
-    LT_PROPOSAL_PORT = secret.LT_PROPOSAL_PORT    
 except:
     LCO_APIKEY = os.environ['LCO_APIKEY']
     SECRET_KEY = os.environ['SECRET_KEY']
@@ -79,7 +71,7 @@ EMAIL_HOST_USER = TOMEMAIL
 EMAIL_HOST_PASSWORD = TOMEMAILPASSWORD
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 #SESSION_COOKIE_SECURE = True
 #SECURE_SSL_REDIRECT = True
 #X_FRAME_OPTIONS = 'DENY'
@@ -284,39 +276,27 @@ FACILITIES = {
         'portal_url': 'https://observe.lco.global',
         'api_key':LCO_APIKEY,
     },
-     'GEM': {
+    'GEM': {
         'portal_url': {
-            'GS': 'https://gsodb.gemini.edu:8443',
-            'GN': 'https://gnodb.gemini.edu:8443',
+            'GS': 'https://139.229.34.15:8443',
+            'GN': 'https://128.171.88.221:8443',
         },
         'api_key': {
-            'GS': GEMINI_S_API_KEY,
-            'GN': GEMINI_N_API_KEY,
+            'GS': '',
+            'GN': '',
         },
-        'user_email': 'kruszynskakat@gmail.com',
+        'user_email': '',
         'programs': {
-            'GS-2020A-DD-104': {
-                '8':  'GMOS Aquisiton 0.75arcsec',
-                '9':  'Std: R400 LongSlit 0.75arcsec for Blue Objects',
-                '12': 'Std: B600 LongSlit 0.75arcsec for Red Objects',
+            'GS-YYYYS-T-NNN': {
+                'MM': 'Std: Some descriptive text',
+                'NN': 'Rap: Some descriptive text'
             },
-            'GN-2020A-DD-104': {
-                '8': 'GMOS Aquisiton 0.75arcsec',
-                '9': 'Std: R400 LongSlit 0.75arcsec for Red Objects',
-                '17': 'Std: B600 LongSlit 0.75arcsec for Blue Objects',
+            'GN-YYYYS-T-NNN': {
+                'QQ': 'Std: Some descriptive text',
+                'PP': 'Rap: Some descriptive text',
             },
-
         },
     },
-    ### configuration of LT remote telescope access, requires local_settings variables:
-    'LT': {
-        'proposalIDs': ((LT_PROPOSAL_ID, LT_PROPOSAL_NAME), ),
-        'username': LT_PROPOSAL_USER,
-        'password': LT_PROPOSAL_PASS,
-        'LT_HOST': LT_PROPOSAL_HOST,
-        'LT_PORT': LT_PROPOSAL_PORT,
-        'DEBUG': False,
-        },
 }
 
 # Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no
@@ -335,8 +315,7 @@ DATA_PROCESSORS = {
 
 TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
-    'tom_observations.facilities.gemini.GEMFacility',
-    'tom_lt.lt.LTFacility',
+    'tom_observations.facilities.gemini.GEMFacility'
 ]
 
 TOM_ALERT_CLASSES = [
@@ -429,4 +408,3 @@ except ImportError:
 
 #TOM Toolkit 1.4 requires
 TARGET_PERMISSIONS_ONLY = True
-
