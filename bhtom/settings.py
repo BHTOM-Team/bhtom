@@ -266,8 +266,8 @@ FACILITIES = {
             'GN': 'https://gnodb.gemini.edu:8443',
         },
         'api_key': {
-            'GS': '784830',
-            'GN': '217643',
+            'GS': GEMINI_S_API_KEY,
+            'GN': GEMINI_N_API_KEY,
         },
         'user_email': 'kruszynskakat@gmail.com',
         'programs': {
@@ -384,3 +384,16 @@ try:
     from local_settings import * # noqa
 except ImportError:
     pass
+
+#TOM Toolkit 1.4 requires
+TARGET_PERMISSIONS_ONLY = True
+
+### configuration of LT remote telescope access, requires local_settings variables:
+'LT': {
+            'proposalIDs': ((LT_PROPOSAL_ID, LT_PROPOSAL_NAME), ),
+            'username': LT_PROPOSAL_USER,
+            'password': LT_PROPOSAL_PASS,
+            'LT_HOST': LT_PROPOSAL_HOST,
+            'LT_PORT': LT_PROPOSAL_PORT,
+            'DEBUG': False,
+     },

@@ -1,6 +1,7 @@
 antares-client==0.3.1
 appnope==0.1.0
 asdf==2.4.2
+asgiref==3.2.3
 astroplan==0.5
 astropy==3.2.3
 astroquery==0.3.10
@@ -47,6 +48,7 @@ jupyterlab-server==1.0.6
 keyring==19.2.0
 kiwisolver==1.1.0
 libmagic==1.0
+lxml==4.5.0
 MarkupSafe==1.1.1
 matplotlib==3.1.1
 mechanize==0.4.3
@@ -84,9 +86,11 @@ six==1.13.0
 soupsieve==1.9.5
 specutils==0.6
 sqlparse==0.3.0
+suds-py3==1.4.1.0
 terminado==0.8.3
 testpath==0.4.4
 tom-antares==0.1.0
+tom-lt==0.3.0
 tomtoolkit==1.2.3
 tornado==6.0.3
 traitlets==4.3.3
