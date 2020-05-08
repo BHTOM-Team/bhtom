@@ -104,6 +104,7 @@ INSTALLED_APPS = [
     'tom_dataproducts',
     'myapp',
     'datatools',
+    'tom_publications',
 ]
 
 SITE_ID = 0

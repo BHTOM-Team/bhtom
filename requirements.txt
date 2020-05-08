@@ -2,8 +2,8 @@ antares-client==0.3.1
 appnope==0.1.0
 asdf==2.4.2
 asgiref==3.2.3
-astroplan==0.5
-astropy==3.2.3
+astroplan==0.6
+astropy==4.0
 astroquery==0.3.10
 attrs==19.3.0
 backcall==0.1.0
@@ -19,7 +19,7 @@ decorator==4.4.1
 defusedxml==0.6.0
 Django==2.2.8
 django-bootstrap4==1.0.1
-django-contrib-comments==1.9.1
+django-contrib-comments==1.9.2
 django-crispy-forms==1.8.0
 django-extensions==2.2.5
 django-filter==2.2.0
@@ -30,7 +30,7 @@ fits2image==0.4.3
 gevent==1.4.0
 greenlet==0.4.15
 gunicorn==20.0.0
-gwcs==0.11.0
+gwcs==0.13.0
 html5lib==1.0.1
 idna==2.8
 importlib-metadata==0.23
@@ -84,14 +84,14 @@ semantic-version==2.6.0
 Send2Trash==1.5.0
 six==1.13.0
 soupsieve==1.9.5
-specutils==0.6
+specutils==0.7
 sqlparse==0.3.0
 suds-py3==1.4.1.0
 terminado==0.8.3
 testpath==0.4.4
 tom-antares==0.1.0
 tom-lt==0.3.0
-tomtoolkit==1.2.3
+tomtoolkit==1.4.0
 tornado==6.0.3
 traitlets==4.3.3
 urllib3==1.25.7

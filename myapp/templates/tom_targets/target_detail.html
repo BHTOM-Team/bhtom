@@ -1,77 +1,95 @@
 {% extends 'tom_common/base.html' %}
-{% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras static cache bhtom_tags %}
+{% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras publication_extras static cache %}
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
-<link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
+<link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
 {% endblock %}
+{% bootstrap_javascript jquery='True' %}
 {% block content %}
 <div class="row">
-  <div class="col-md-5">
+  <div class="col-md-4">
     <div id="target-info">
       {% target_feature object %}
+      {% if object.future_observations %}
+      <div class="alert alert-success">
+        {{ object.future_observations|length }} upcoming observation{{ object.future_observations|pluralize }}
+      </div>
+      {% endif %}
+      {% target_buttons object %}
       {% target_data object %}
-      {% aladin_collapse object %}
+      {% if object.type == 'SIDEREAL' %}
+      {% aladin object %}
+      {% endif %}
     </div>
   </div>
-  <div class="col-md-7">
+  <div class="col-md-8">
     <ul class="nav nav-tabs" id="tabs">
       <li class="nav-item">
-        <span class="nav-link active" data-target="#overview" data-toggle="tab">Overview</span>
+        <span class="nav-link active" data-target="#observe" data-toggle="tab">Observe</span>
       </li>
       <li class="nav-item">
-        <span class="nav-link" data-target="#spectra" data-toggle="tab">Spectra</span>
+        <span class="nav-link" data-target="#observations" data-toggle="tab">Observations</span>
       </li>
       <li class="nav-item">
-        <span class="nav-link" data-target="#images" data-toggle="tab">Images</span>
+        <span class="nav-link" data-target="#manage-data" data-toggle="tab">Manage Data</span>
       </li>
       <li class="nav-item">
-        <span class="nav-link" data-target="#data" data-toggle="tab">Data</span>
+        <span class="nav-link" data-target="#manage-groups" data-toggle="tab">Manage Groups</span>
       </li>
       <li class="nav-item">
-        <span class="nav-link" data-target="#schedule" data-toggle="tab">Schedule Observations</span>
+        <span class="nav-link" data-target="#photometry" data-toggle="tab">Photometry</span>
+      </li>
+      <li class="nav-item">
+        <span class="nav-link" data-target="#spectroscopy" data-toggle="tab">Spectroscopy</span>
       </li>
     </ul>
     <div class="tab-content">
-      <div class="tab-pane in active" id="overview">
-        
-        {% lightcurve target %}
+      <div class="tab-pane active" id="observe">
+        <h4>Observe</h4>
+        {% observing_buttons object %}
         <hr/>
-        <h5>Current Visibility of the target</h5>
-        {% airmass_plot %}
-        <hr />
-        {% comments_enabled as comments_are_enabled %}
-        <h5>Comments</h5>
-          {% if comments_are_enabled %}
-            {% render_comment_list for object %}
-            {% url 'targets:detail' object.id as next %}
-            {% if user.is_authenticated %}
-              {% render_comment_form for object %}
-            {% endif %}
-          {% endif %}
+        {% observingstrategy_run object %}
+        <hr/>
+        <h4>Plan</h4>
+        {% if object.type == 'SIDEREAL' %}
+          {% target_plan %}
+          {% moon_distance object %}
+        {% elif target.type == 'NON_SIDEREAL' %}
+          <p>Airmass plotting for non-sidereal targets is not currently supported. If you would like to add this functionality, please check out the <a href="https://github.com/TOMToolkit/tom_nonsidereal_airmass" target="_blank">non-sidereal airmass plugin.</a></p>
+        {% endif %}
       </div>
-      <div class="tab-pane" id="spectra">
-        <h4>Spectra</h4>
-        {% spectra_plot target %}
-      </div>
-      <div class="tab-pane" id="images">
-        <h4>Examine Images</h4>
+      <div class="tab-pane" id="observations">
+        <h4>Observations</h4>
         <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Update status of observations for target" class="btn btn-primary">Update Observations Status</a>
         {% observation_list object %}
       </div>
-      <div class="tab-pane" id="data">
-        {% include 'tom_dataproducts/upload_dataproduct.html' %}
+      <div class="tab-pane" id="manage-data">
+        {% if user.is_authenticated %}
+          {% upload_dataproduct object %}
+        {% endif %}
         {% dataproduct_list_for_target object %}
       </div>
-      <div class="tab-pane" id="cross-reference">
-        <h4>Cross-Reference</h4>
-        <p>Under construction</p>
+      <div class="tab-pane" id="manage-groups">
+        {% target_groups target %}
       </div>
-      <div class="tab-pane" id="schedule">
-        <h4>Schedule Observations</h4>
-        {% observing_buttons object %}
-        {% moon_vis object %}
+      <div class="tab-pane" id="photometry">
+        {% photometry_for_target target %}
+        </div>
+      <div class="tab-pane" id="spectroscopy">
+        {% spectroscopy_for_target target %}
       </div>
+      {% comments_enabled as comments_are_enabled %}
+      <hr/>
+      <h5>Comments</h5>
+        {% if comments_are_enabled %}
+          {% render_comment_list for object %}
+          {% url 'targets:detail' object.id as next %}
+          {% if user.is_authenticated %}
+            {% render_comment_form for object %}
+          {% endif %}
+        {% endif %}
     </div>
   </div>
 </div>
 {% endblock %}
+
