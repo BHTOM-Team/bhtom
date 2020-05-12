@@ -26,6 +26,8 @@ from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assi
 
 from tom_dataproducts.models import ReducedDatum
 
+from django.db import models, transaction
+
 import numpy as np
 
 def make_magrecent(all_phot, jd_now):
