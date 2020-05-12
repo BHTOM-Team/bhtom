@@ -18,6 +18,9 @@ from tom_targets.templatetags.targets_extras import target_extra_field
 
 from django.db.models import Case, When
 
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import Group
+
 from tom_dataproducts.models import ReducedDatum
 
 import numpy as np
