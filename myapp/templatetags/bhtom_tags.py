@@ -3,7 +3,6 @@ import plotly.graph_objs as go
 from django import template
 
 from tom_targets.models import Target
-from tom_targets.forms import TargetVisibilityForm
 from tom_observations import utils, facility
 from tom_dataproducts.models import DataProduct, ReducedDatum, ObservationRecord
 
@@ -11,13 +10,14 @@ from astroplan import Observer, FixedTarget, AtNightConstraint, time_grid_from_r
 import datetime
 import json
 from astropy.time import Time
-from datetime import timedelta
-
 
 from astropy import units as u
 from astropy.coordinates import get_moon, get_sun, SkyCoord, AltAz
 import numpy as np
-import time, math
+import math
+
+import logging
+logger = logging.getLogger(__name__)
 
 register = template.Library()
 
@@ -314,22 +314,30 @@ def bh_target_distribution(targets):
     delta_moon = moon_pos.dec.deg
 
     ###
+
     locations = targets.filter(type=Target.SIDEREAL).values_list('ra', 'dec', 'name')
+
     # for ra,dec,name in locations:
     #     print(name,get_angular_dist_from_the_sun(ra,dec,alpha_sun, delta_sun),' deg from Sun')
     #TODO: add field per target to allow sorting by the Sun distance
-    data = [
-        #targets
-        dict(
-            lon=[l[0] for l in locations],
-            lat=[l[1] for l in locations],
-            text=[l[2] for l in locations],
-            hoverinfo='text',
-            mode='markers',
-            marker=dict(size=10,
-                                    color='red'),
-            type='scattergeo'
-        ),
+
+    data = []
+
+    if locations.exists():
+        data.append(
+            # targets
+            dict(
+                lon=[l[0] for l in locations],
+                lat=[l[1] for l in locations],
+                text=[l[2] for l in locations],
+                hoverinfo='text',
+                mode='markers',
+                marker=dict(size=10,
+                            color='red'),
+                type='scattergeo'
+            ))
+
+    data.append(
         #grid
         dict(
             lon=list(range(0, 360, 60))+[180]*4,
@@ -338,21 +346,25 @@ def bh_target_distribution(targets):
             hoverinfo='none',
             mode='text',
             type='scattergeo'
-        ),
+        )
+    )
+    data.append(
         #sun
         dict(
             lon=[alpha_sun], lat=[delta_sun], text=['SUN'], hoverinfo='text', mode='markers',
             marker=dict(size=50, color='yellow', opacity=0.5),
             type='scattergeo'
-        ),
+        )
+    )
+    data.append(
         #moon
         dict(
             lon=[alpha_moon], lat=[delta_moon], text=['Moon'], hoverinfo='text', mode='markers',
             marker=dict(size=50, color='grey', opacity=0.5),
             type='scattergeo'
         )
+    )
 
-    ]
     layout = {
         'title': 'Target Map (equatorial)',
         'hovermode': 'closest',
@@ -422,4 +434,6 @@ def get_angular_dist_from_the_sun(ra, dec, alpha_sun, delta_sun):
     sep_rad = math.atan(licz/mian)
     sep = np.rad2deg(sep_rad)
     sep_str = "{:.0f}".format(sep)
+
     return sep_str
+
