@@ -29,20 +29,14 @@ from django.conf.urls.static import static
 from tom_common.views import UserListView, UserPasswordChangeView, UserCreateView, UserDeleteView, UserUpdateView
 from tom_common.views import CommentDeleteView, GroupCreateView, GroupUpdateView, GroupDeleteView
 
-from myapp import views
-from myapp.views import DataProductUploadView, TargetDetailView, CreateObservatory, ObservatoryList, TargetFileDetailView
-from myapp.views import TargetCreateView, TargetUpdateView, TargetDeleteView, TargetFileView, UpdateObservatory, DeleteObservatory
 
 urlpatterns = [
     path('', include('tom_common.urls')),
     path('datatools/', include('datatools.urls')),
     path('about/', TemplateView.as_view(template_name='tom_common/about.html'), name='about'),
     path('bhlist/', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='bhlist'),
-    path('bhlist/', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='targets'),
-    path('bhlist/create/', TargetCreateView.as_view(), name='bhlist_create'),
-    path('bhlist/<pk>/update/', TargetUpdateView.as_view(), name='bhlist_update'),
-    path('bhlist/<pk>/delete/', TargetDeleteView.as_view(), name='bhlist_delete'),
-    path('bhlist/<pk>/', TargetDetailView.as_view(), name='bhlist_detail'),
+    path('targets/', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='targets'),
+    path('targets/list', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='targets'),
     # The static helper below only works in development see
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
  ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
