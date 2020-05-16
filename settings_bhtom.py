@@ -37,14 +37,6 @@ try:
     black_tom_DB_USER = secret.black_tom_DB_USER
     black_tom_DB_PASSWORD = secret.black_tom_DB_PASSWORD
     CPCS_DATA_ACCESS_HASHTAG = secret.CPCS_DATA_ACCESS_HASHTAG
-    GEMINI_S_API_KEY = secret.GEMINI_S_API_KEY
-    GEMINI_N_API_KEY = secret.GEMINI_N_API_KEY
-    LT_PROPOSAL_ID = secret.LT_PROPOSAL_ID
-    LT_PROPOSAL_NAME = secret.LT_PROPOSAL_NAME
-    LT_PROPOSAL_USER = secret.LT_PROPOSAL_USER
-    LT_PROPOSAL_PASS = secret.LT_PROPOSAL_PASS
-    LT_PROPOSAL_HOST = secret.LT_PROPOSAL_HOST
-    LT_PROPOSAL_PORT = secret.LT_PROPOSAL_PORT    
 except:
     LCO_APIKEY = os.environ['LCO_APIKEY']
     SECRET_KEY = os.environ['SECRET_KEY']
@@ -116,7 +108,7 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
-    'bhtom',
+    'myapp',
     'datatools',
     'rest_framework',
     'tom_publications',
@@ -136,12 +128,12 @@ MIDDLEWARE = [
     'tom_common.middleware.ExternalServiceMiddleware',
 ]
 
-ROOT_URLCONF = 'bhtom.urls'
+ROOT_URLCONF = 'myapp.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'bhtom/templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'myapp/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -156,7 +148,7 @@ TEMPLATES = [
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
-WSGI_APPLICATION = 'settings.wsgi.application'
+WSGI_APPLICATION = 'bhtom.wsgi.application'
 black_tom_DB_BACKEND = 'postgres'
 
 
@@ -232,11 +224,11 @@ DATE_FORMAT = 'Y-m-d'
 # #STATIC_URL = '/static/'
 # #LW: new from stackoverflow:
 #STATIC_URL = os.path.join(BASE_DIR, 'static').replace('\\','')+'/'
-STATIC_URL = '/bhtom/static/'
+STATIC_URL = '/bhtom/myapp/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, '_static/')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-#STATICFILES_DIRS  = ['/Users/wyrzykow/settings/bhtom/static/']
+#STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+#STATICFILES_DIRS  = ['/Users/wyrzykow/bhtom/myapp/static/']
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = '/data/'
@@ -284,49 +276,36 @@ FACILITIES = {
         'portal_url': 'https://observe.lco.global',
         'api_key':LCO_APIKEY,
     },
-     'GEM': {
+    'GEM': {
         'portal_url': {
-            'GS': 'https://gsodb.gemini.edu:8443',
-            'GN': 'https://gnodb.gemini.edu:8443',
+            'GS': 'https://139.229.34.15:8443',
+            'GN': 'https://128.171.88.221:8443',
         },
         'api_key': {
-            'GS': GEMINI_S_API_KEY,
-            'GN': GEMINI_N_API_KEY,
+            'GS': '',
+            'GN': '',
         },
-        'user_email': 'kruszynskakat@gmail.com',
+        'user_email': '',
         'programs': {
-            'GS-2020A-DD-104': {
-                '8':  'GMOS Aquisiton 0.75arcsec',
-                '9':  'Std: R400 LongSlit 0.75arcsec for Blue Objects',
-                '12': 'Std: B600 LongSlit 0.75arcsec for Red Objects',
+            'GS-YYYYS-T-NNN': {
+                'MM': 'Std: Some descriptive text',
+                'NN': 'Rap: Some descriptive text'
             },
-            'GN-2020A-DD-104': {
-                '8': 'GMOS Aquisiton 0.75arcsec',
-                '9': 'Std: R400 LongSlit 0.75arcsec for Red Objects',
-                '17': 'Std: B600 LongSlit 0.75arcsec for Blue Objects',
+            'GN-YYYYS-T-NNN': {
+                'QQ': 'Std: Some descriptive text',
+                'PP': 'Rap: Some descriptive text',
             },
-
         },
     },
-    ### configuration of LT remote telescope access, requires local_settings variables:
-    'LT': {
-        'proposalIDs': ((LT_PROPOSAL_ID, LT_PROPOSAL_NAME), ),
-        'username': LT_PROPOSAL_USER,
-        'password': LT_PROPOSAL_PASS,
-        'LT_HOST': LT_PROPOSAL_HOST,
-        'LT_PORT': LT_PROPOSAL_PORT,
-        'DEBUG': False,
-        },
 }
 
 # Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no
 # longer be valid, and may cause issues unless the offending records are modified.
 DATA_PRODUCT_TYPES = {
-    'photometry_cpcs': ('photometry_cpcs', 'Instrumental photometry file (SExtractor format)'),
-    'fits_file': ('fits_file', 'Fits image for photometric processing'),
-    'spectroscopy': ('spectroscopy', 'Spectrum as ASCII'),
-    'photometry': ('photometry', 'Photometric time-series (CSV)'),
-
+    'photometry': ('photometry', 'Photometry'),
+    'fits_file': ('fits_file', 'FITS File'),
+    'spectroscopy': ('spectroscopy', 'Spectroscopy'),
+    'image_file': ('image_file', 'Image File')
 }
 
 DATA_PROCESSORS = {
@@ -336,8 +315,7 @@ DATA_PROCESSORS = {
 
 TOM_FACILITY_CLASSES = [
     'tom_observations.facilities.lco.LCOFacility',
-    'tom_observations.facilities.gemini.GEMFacility',
-    'tom_lt.lt.LTFacility',
+    'tom_observations.facilities.gemini.GEMFacility'
 ]
 
 TOM_ALERT_CLASSES = [
@@ -390,15 +368,15 @@ OPEN_URLS = []
 
 HOOKS = {
 #    'target_post_save': 'tom_common.hooks.target_post_save',
-    'target_post_save': 'bhtom.hooks.target_post_save',
+    'target_post_save': 'myapp.hooks.target_post_save',
     'observation_change_state': 'tom_common.hooks.observation_change_state',
-    'data_product_post_upload': 'bhtom.hooks.data_product_post_upload',
+    'data_product_post_upload': 'myapp.hooks.data_product_post_upload',
 }
 
 #Gaia Alerts added by LW
 #others are copied from default AbstractHarvester
 TOM_HARVESTER_CLASSES = [
-    'bhtom.harvesters.gaia_alerts_harvester.GaiaAlertsHarvester',
+    'myapp.harvesters.gaia_alerts_harvester.GaiaAlertsHarvester',
     'tom_catalogs.harvesters.simbad.SimbadHarvester',
     'tom_catalogs.harvesters.ned.NEDHarvester',
     'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',
@@ -430,4 +408,3 @@ except ImportError:
 
 #TOM Toolkit 1.4 requires
 TARGET_PERMISSIONS_ONLY = True
-
