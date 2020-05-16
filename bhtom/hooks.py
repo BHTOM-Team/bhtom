@@ -141,5 +141,6 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
 
         except Exception as e:
              logger.error('error: ' + str(e))
-             raise Exception(str(e)) from None
+             return None
+             #raise Exception(str(e)) from None
 
