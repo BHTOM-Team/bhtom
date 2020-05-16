@@ -3,7 +3,7 @@ from django.conf import settings
 
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
-from myapp.models import Cpcs_user, Catalogs
+from bhtom.models import Cpcs_user, Catalogs
 from django.contrib.auth.models import User
 from django.contrib.postgres.forms import SimpleArrayField
 import logging

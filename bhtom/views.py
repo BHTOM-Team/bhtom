@@ -22,10 +22,10 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from myapp.models import BHTomFits, Cpcs_user, Catalogs
-from myapp.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer, BHTomFitsStatusSerializer
-from myapp.hooks import send_to_cpcs
-from myapp.forms import DataProductUploadForm, ObservatoryCreationForm
+from bhtom.models import BHTomFits, Cpcs_user, Catalogs
+from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer, BHTomFitsStatusSerializer
+from bhtom.hooks import send_to_cpcs
+from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm
 
 from django.http import HttpResponseServerError
 from django.views.generic.edit import FormView, DeleteView

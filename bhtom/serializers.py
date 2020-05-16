@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from myapp.models import BHTomFits
+from bhtom.models import BHTomFits
 
 
 class BHTomFitsCreateSerializer(serializers.ModelSerializer):

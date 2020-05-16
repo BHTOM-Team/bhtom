@@ -2,7 +2,7 @@ import uuid
 from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.test import APIRequestFactory, APITestCase, APIClient
-from myapp.views import result_fits
+from bhtom.views import result_fits
 
 class UploadFITSTestCase(APITestCase):
 

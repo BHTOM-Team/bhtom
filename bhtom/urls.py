@@ -26,9 +26,9 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework import routers, permissions
-from myapp import views
-from myapp.views import DataProductUploadView, TargetDetailView, CreateObservatory, ObservatoryList, TargetFileDetailView
-from myapp.views import TargetCreateView, TargetUpdateView, TargetDeleteView, TargetFileView, UpdateObservatory, DeleteObservatory
+from bhtom import views
+from bhtom.views import DataProductUploadView, TargetDetailView, CreateObservatory, ObservatoryList, TargetFileDetailView
+from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView, TargetFileView, UpdateObservatory, DeleteObservatory
 
 router = routers.DefaultRouter()
 router.register('upload', views.fits_upload)
