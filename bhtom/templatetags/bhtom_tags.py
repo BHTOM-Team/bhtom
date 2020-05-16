@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 register = template.Library()
 
-@register.inclusion_tag('bhtom/airmass_collapse.html')
+@register.inclusion_tag('settings/airmass_collapse.html')
 def airmass_collapse(target):
     interval = 30 #min
     airmass_limit = 3.0
@@ -49,7 +49,7 @@ def airmass_collapse(target):
         'figure': visibility_graph
     }
 
-@register.inclusion_tag('bhtom/airmass.html', takes_context=True)
+@register.inclusion_tag('settings/airmass.html', takes_context=True)
 def airmass_plot(context):
     #request = context['request']
     interval = 15 #min
@@ -137,7 +137,7 @@ def get_24hr_airmass(target, interval, airmass_limit):
 
     return plot_data
 
-@register.inclusion_tag('bhtom/lightcurve.html')
+@register.inclusion_tag('settings/lightcurve.html')
 def lightcurve(target):
     def get_color(filter_name):
         filter_translate = {'U': 'U', 'B': 'B', 'V': 'V','I':'I', 'G':'G',
@@ -197,7 +197,7 @@ def lightcurve(target):
             'plot': 'No photometry for this target yet.'
         }
 
-@register.inclusion_tag('bhtom/moon.html')
+@register.inclusion_tag('settings/moon.html')
 def moon_vis(target):
 
     day_range = 30
@@ -243,7 +243,7 @@ def moon_vis(target):
    
     return {'plot': figure}
 
-@register.inclusion_tag('bhtom/spectra.html')
+@register.inclusion_tag('settings/spectra.html')
 def spectra_plot(target, dataproduct=None):
     spectra = []
     spectral_dataproducts = ReducedDatum.objects.filter(target=target, data_type='spectroscopy')
@@ -295,7 +295,7 @@ def spectra_plot(target, dataproduct=None):
             'plot': 'No spectra for this target yet.'
         }
 
-@register.inclusion_tag('bhtom/aladin_collapse.html')
+@register.inclusion_tag('settings/aladin_collapse.html')
 def aladin_collapse(target):
     return {'target': target}
 

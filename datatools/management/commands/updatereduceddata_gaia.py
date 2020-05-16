@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from tom_observations.models import ObservationRecord
 from tom_targets.models import Target
 
-from myapp.harvesters import gaia_alerts_harvester
+from bhtom.harvesters import gaia_alerts_harvester
 
 class Command(BaseCommand):
 

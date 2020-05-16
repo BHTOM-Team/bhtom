@@ -23,7 +23,7 @@ import numpy as np
 
 ### how to pass those variables from settings?
 try:
-    from bhtom import local_settings as secret
+    from settings import local_settings as secret
 except ImportError:
     pass
 try:

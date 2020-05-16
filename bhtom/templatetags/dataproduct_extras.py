@@ -1,4 +1,4 @@
-from myapp.models import BHTomFits, Cpcs_user
+from bhtom.models import BHTomFits, Cpcs_user
 import json
 
 from django import template

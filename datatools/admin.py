@@ -1,9 +1,9 @@
 from django.contrib import admin
-from myapp.models import BHTomFits, Cpcs_user
+from bhtom.models import BHTomFits, Cpcs_user
 
 
 class BhtonFitsField(admin.ModelAdmin):
-    list_display = ('fits_id','status', )
+    list_display = ('file_id','status', )
 
 class Cpcs_displayField(admin.ModelAdmin):
     list_display = ('user','obsName')

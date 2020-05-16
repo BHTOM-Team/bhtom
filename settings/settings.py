@@ -108,7 +108,7 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
-    'myapp',
+    'bhtom',
     'datatools',
     'rest_framework',
     'tom_publications',
@@ -128,12 +128,12 @@ MIDDLEWARE = [
     'tom_common.middleware.ExternalServiceMiddleware',
 ]
 
-ROOT_URLCONF = 'myapp.urls'
+ROOT_URLCONF = 'bhtom.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'myapp/templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'bhtom/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -148,7 +148,7 @@ TEMPLATES = [
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
-WSGI_APPLICATION = 'bhtom.wsgi.application'
+WSGI_APPLICATION = 'settings.wsgi.application'
 black_tom_DB_BACKEND = 'postgres'
 
 
@@ -224,11 +224,11 @@ DATE_FORMAT = 'Y-m-d'
 # #STATIC_URL = '/static/'
 # #LW: new from stackoverflow:
 #STATIC_URL = os.path.join(BASE_DIR, 'static').replace('\\','')+'/'
-STATIC_URL = '/bhtom/myapp/static/'
+STATIC_URL = '/bhtom/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, '_static/')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-#STATICFILES_DIRS  = ['/Users/wyrzykow/bhtom/myapp/static/']
+#STATICFILES_DIRS  = ['/Users/wyrzykow/settings/bhtom/static/']
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = '/data/'
@@ -369,15 +369,15 @@ OPEN_URLS = []
 
 HOOKS = {
 #    'target_post_save': 'tom_common.hooks.target_post_save',
-    'target_post_save': 'myapp.hooks.target_post_save',
+    'target_post_save': 'bhtom.hooks.target_post_save',
     'observation_change_state': 'tom_common.hooks.observation_change_state',
-    'data_product_post_upload': 'myapp.hooks.data_product_post_upload',
+    'data_product_post_upload': 'bhtom.hooks.data_product_post_upload',
 }
 
 #Gaia Alerts added by LW
 #others are copied from default AbstractHarvester
 TOM_HARVESTER_CLASSES = [
-    'myapp.harvesters.gaia_alerts_harvester.GaiaAlertsHarvester',
+    'bhtom.harvesters.gaia_alerts_harvester.GaiaAlertsHarvester',
     'tom_catalogs.harvesters.simbad.SimbadHarvester',
     'tom_catalogs.harvesters.ned.NEDHarvester',
     'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',

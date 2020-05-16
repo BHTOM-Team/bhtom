@@ -1,5 +1,5 @@
 """
-WSGI config for bhtom project.
+WSGI config for settings project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -15,14 +15,14 @@ from django.contrib.staticfiles.handlers import StaticFilesHandler
 
 from whitenoise import WhiteNoise
  
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'bhtom.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings.settings')
 
 # if settings.DEBUG:
 #     application = StaticFilesHandler(get_wsgi_application())
 # else:
 #     application = get_wsgi_application()
 
-BASE_DIR = os.path.join(settings.BASE_DIR, 'myapp/static')
+BASE_DIR = os.path.join(settings.BASE_DIR, 'bhtom/static')
 
 application = get_wsgi_application()
 application = WhiteNoise(application, root=BASE_DIR)

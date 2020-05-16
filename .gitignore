@@ -106,7 +106,7 @@ venv.bak/
 
 #MY STUFF:
 secret_stuff.txt
-bhtom/local_settings.py
+settings/local_settings.py
 
 runtime.txt
 

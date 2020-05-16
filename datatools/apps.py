@@ -5,4 +5,4 @@ class DatatoolsConfig(AppConfig):
     name = 'datatools'
 
     def ready(self):
-        import myapp.signals
+        import bhtom.signals
