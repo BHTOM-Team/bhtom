@@ -424,11 +424,11 @@ class TargetFileView(LoginRequiredMixin, ListView):
         for fit in fits:
             try:
                 data_product = DataProduct.objects.get(id=fit.dataproduct_id)
-                ccdphot_url = "/".join(["/data", target_name, "photometry", str(fit.ccdphot_result)])
+                ccdphot_url = "/".join(["/data", target_name, "photometry", str(fit.photometry_file)])
 
-                tabFits.append([fit.fits_id, fit.start_time,
+                tabFits.append([fit.file_id, fit.start_time,
                                 format(data_product.data), format(data_product.data).split('/')[-1],
-                                ccdphot_url, format(fit.ccdphot_result),
+                                ccdphot_url, format(fit.photometry_file),
                                 fit.filter, Cpcs_user.objects.get(id=fit.user_id).obsName,
                                 fit.status_message, fit.mjd, fit.expTime,
                                 DataProduct.objects.get(id=fit.dataproduct_id).data_product_type])
@@ -461,21 +461,20 @@ class TargetFileDetailView(LoginRequiredMixin, ListView):
         context = super().get_context_data(*args, **kwargs)
 
         target = Target.objects.get(id=self.kwargs['pk'])
-        fits = BHTomFits.objects.get(fits_id=self.kwargs['pk_fits'])
+        fits = BHTomFits.objects.get(file_id=self.kwargs['pk_fits'])
         cpcs_user = Cpcs_user.objects.get(id=fits.user_id)
         data_product = DataProduct.objects.get(id=fits.dataproduct_id)
         tabFits = {}
 
         try:
             data_product = DataProduct.objects.get(id=fits.dataproduct_id)
-            ccdphot_url = "/".join(["/data", target.name, "photometry", str(fits.ccdphot_result)])
+            ccdphot_url = "/".join(["/data", target.name, "photometry", str(fits.photometry_file)])
             tabFits['fits_url'] = format(data_product.data)
             tabFits['fits'] = format(data_product.data).split('/')[-1]
             tabFits['ccdphot_url'] = ccdphot_url
-            tabFits['ccdphot'] = format(fits.ccdphot_result)
+            tabFits['ccdphot'] = format(fits.photometry_file)
         except Exception as e:
             logger.error('error: ' + str(e))
-
 
         context['target'] = target
         context['fits'] = fits
@@ -534,7 +533,8 @@ class fits_upload(viewsets.ModelViewSet):
             dp.save()
 
             try:
-                run_hook('data_product_post_upload', dp, hashtag, observation_filter)
+               # run_hook('data_product_post_upload', dp, hashtag, observation_filter)
+
                 run_data_processor(dp)
                 successful_uploads.append(str(dp))
 
@@ -562,11 +562,11 @@ class result_fits(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
 
-        #fits_id = request.data['fits_id']
-        fits_id = request.query_params.get('job_id')
+        #file_id = request.data['fits_id']
+        file_id = request.query_params.get('job_id')
 
         try:
-            instance = BHTomFits.objects.get(fits_id=fits_id)
+            instance = BHTomFits.objects.get(file_id=file_id)
 
             if request.query_params.get('status') == 'D' or request.query_params.get('status') == 'F':
                 ccdphot_result = request.FILES["ccdphot_result_upload"]
@@ -672,6 +672,10 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
         data_product_files = self.request.FILES.getlist('files')
         observation_instrument = form.cleaned_data['instrument']
         observation_filter = form.cleaned_data['filter']
+        MJD = form.cleaned_data['MJD']
+        ExpTime = form.cleaned_data['ExpTime']
+        matchDist = form.cleaned_data['matchDist']
+        dryRun = form.cleaned_data['dryRun']
 
         successful_uploads = []
         for f in data_product_files:
@@ -684,8 +688,11 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             )
             dp.save()
             try:
-                run_hook('data_product_post_upload', dp, observation_instrument, observation_filter)
-                run_data_processor(dp)
+                run_hook('data_product_post_upload', dp, observation_instrument, observation_filter, MJD, ExpTime, dryRun, matchDist)
+
+                if dp.data_product_type == 'photometry':
+                    run_data_processor(dp)
+
                 successful_uploads.append(str(dp))
             except InvalidFileFormatException as iffe:
                 ReducedDatum.objects.filter(data_product=dp).delete()
@@ -694,7 +701,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
                     self.request,
                     'File format invalid for file {0} -- error was {1}'.format(str(dp), iffe)
                 )
-            except Exception:
+            except Exception as e:
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
                 messages.error(self.request, 'There was a problem processing your file: {0}'.format(str(dp)))

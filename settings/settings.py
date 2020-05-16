@@ -34,8 +34,8 @@ try:
     TOMEMAIL = secret.TOMEMAIL
     TOMEMAILPASSWORD = secret.TOMEMAILPASSWORD
     SNEXBOT_APIKEY =  secret.TNSBOT_APIKEY
-    black_tom_DB_USER = secret.black_tom_DB_USER 
-    black_tom_DB_PASSWORD = secret.black_tom_DB_PASSWORD 
+    black_tom_DB_USER = secret.black_tom_DB_USER
+    black_tom_DB_PASSWORD = secret.black_tom_DB_PASSWORD
     CPCS_DATA_ACCESS_HASHTAG = secret.CPCS_DATA_ACCESS_HASHTAG
 except:
     LCO_APIKEY = os.environ['LCO_APIKEY']
@@ -64,11 +64,26 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'u&amp;!)0%2f^l3n#g+#7ldg7xf)&amp;#eg79n+0gf0c@_v&amp;8wc9vp-3f'
 
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = TOMEMAIL
+EMAIL_HOST_PASSWORD = TOMEMAILPASSWORD
+
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
+DEBUG = True
+#SESSION_COOKIE_SECURE = True
+#SECURE_SSL_REDIRECT = True
+#X_FRAME_OPTIONS = 'DENY'
+#CSRF_COOKIE_SECURE = True
+#SECURE_BROWSER_XSS_FILTER = True
+#SECURE_CONTENT_TYPE_NOSNIFF = True
+#SECURE_HSTS_PRELOAD  = True
+#SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+#SECURE_HSTS_SECONDS = 3600
 ALLOWED_HOSTS = ['*']
-
+#ALLOWED_HOSTS = ['bh-tom.astrolabs.pl']
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 
 # Application definition
 
@@ -93,14 +108,17 @@ INSTALLED_APPS = [
     'tom_catalogs',
     'tom_observations',
     'tom_dataproducts',
-    'tom_publications',
     'myapp',
+    'datatools',
+    'rest_framework',
+    'tom_publications',
 ]
 
-SITE_ID = 1
+SITE_ID = 3
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -110,12 +128,12 @@ MIDDLEWARE = [
     'tom_common.middleware.ExternalServiceMiddleware',
 ]
 
-ROOT_URLCONF = 'bhtom.urls'
+ROOT_URLCONF = 'myapp.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'myapp/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -140,7 +158,7 @@ if black_tom_DB_BACKEND == 'postgres':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'bhtom',
+            'NAME': 'blacktom',
             'USER': black_tom_DB_USER,
             'PASSWORD': black_tom_DB_PASSWORD,
             'HOST': 'localhost',
@@ -203,17 +221,21 @@ DATE_FORMAT = 'Y-m-d'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
-#STATIC_URL = '/static/'
-#LW: new from stackoverflow:
-STATIC_URL = os.path.join(BASE_DIR, '_static').replace('\\','')+'/'
+# #STATIC_URL = '/static/'
+# #LW: new from stackoverflow:
+#STATIC_URL = os.path.join(BASE_DIR, 'static').replace('\\','')+'/'
+STATIC_URL = '/bhtom/myapp/static/'
 
-STATIC_ROOT = os.path.join(BASE_DIR, '_static')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'bhtom/')]
+STATIC_ROOT = os.path.join(BASE_DIR, '_static/')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+#STATICFILES_DIRS  = ['/Users/wyrzykow/bhtom/myapp/static/']
+
 MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
-#STATIC_ROOT = '/Users/wyrzykow/bhtom/_static'
-#STATICFILES_DIRS = ['static']
-#MEDIA_ROOT = '/Users/wyrzykow/bhtom/data'
 MEDIA_URL = '/data/'
+
+# STATIC_URL = '/static/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
+# MEDIA_URL = '/data/'
 
 LOGGING = {
     'version': 1,
@@ -260,17 +282,17 @@ FACILITIES = {
             'GN': 'https://128.171.88.221:8443',
         },
         'api_key': {
-            'GS': 'ZVBRH',
-            'GN': 'XKLCT',
+            'GS': '',
+            'GN': '',
         },
-        'user_email': 'markus.hundertmark@uni-heidelberg.de',
+        'user_email': '',
         'programs': {
-            'GS-2020A-DD-104': {
-                'MM': 'Std: Std GS',
+            'GS-YYYYS-T-NNN': {
+                'MM': 'Std: Some descriptive text',
                 'NN': 'Rap: Some descriptive text'
             },
-            'GN-2020A-DD-104': {
-                'QQ': 'Std: Std GN',
+            'GN-YYYYS-T-NNN': {
+                'QQ': 'Std: Some descriptive text',
                 'PP': 'Rap: Some descriptive text',
             },
         },
@@ -280,10 +302,11 @@ FACILITIES = {
 # Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no
 # longer be valid, and may cause issues unless the offending records are modified.
 DATA_PRODUCT_TYPES = {
-    'photometry': ('photometry', 'Photometry'),
-    'fits_file': ('fits_file', 'FITS File'),
-    'spectroscopy': ('spectroscopy', 'Spectroscopy'),
-    'image_file': ('image_file', 'Image File')
+    'photometry_cpcs': ('photometry_cpcs', 'Instrumental photometry file (SExtractor format)'),
+    'fits_file': ('fits_file', 'Fits image for photometric processing'),
+    'spectroscopy': ('spectroscopy', 'Spectrum as ASCII'),
+    'photometry': ('photometry', 'Photometric time-series (CSV)'),
+
 }
 
 DATA_PROCESSORS = {
@@ -328,10 +351,12 @@ EXTRA_FIELDS = [
     {'name': 'classification', 'type': 'string'},
     {'name': 'tweet', 'type': 'boolean'},
     {'name': 'jdlastobs', 'type': 'number'},
+    {'name': 'maglast', 'type': 'number'},
     {'name': 'priority', 'type': 'number'},
     {'name': 'dicovery_date', 'type': 'datetime'},
-    {'name': 'cadence', 'type': 'number'}
-
+    {'name': 'cadence', 'type': 'number'},
+    {'name': 'Sun_separation', 'type': 'number'},
+    {'name': 'dont_update_me', 'type':'boolean'}
 ]
 
 # Authentication strategy can either be LOCKED (required login for all views)
@@ -346,20 +371,27 @@ HOOKS = {
 #    'target_post_save': 'tom_common.hooks.target_post_save',
     'target_post_save': 'myapp.hooks.target_post_save',
     'observation_change_state': 'tom_common.hooks.observation_change_state',
-    'data_product_post_upload': 'tom_dataproducts.hooks.data_product_post_upload',
-
+    'data_product_post_upload': 'myapp.hooks.data_product_post_upload',
 }
 
 #Gaia Alerts added by LW
 #others are copied from default AbstractHarvester
 TOM_HARVESTER_CLASSES = [
-    'bhtom.harvesters.gaia_alerts_harvester.GaiaAlertsHarvester',
+    'myapp.harvesters.gaia_alerts_harvester.GaiaAlertsHarvester',
     'tom_catalogs.harvesters.simbad.SimbadHarvester',
     'tom_catalogs.harvesters.ned.NEDHarvester',
     'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',
     'tom_catalogs.harvesters.mpc.MPCHarvester',
     'tom_catalogs.harvesters.tns.TNSHarvester',
     ]
+
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny'
+    ]
+}
 
 AUTO_THUMBNAILS = False
 
@@ -374,3 +406,6 @@ try:
     from local_settings import * # noqa
 except ImportError:
     pass
+
+#TOM Toolkit 1.4 requires
+TARGET_PERMISSIONS_ONLY = True

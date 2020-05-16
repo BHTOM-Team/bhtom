@@ -27,6 +27,14 @@ class FilterChoiceField(forms.ModelChoiceField):
 
 class DataProductUploadForm(forms.Form):
 
+    MATCHING_RADIUS = {
+        ('0', 'Auto'),
+        ('1', '1 arcsec'),
+        ('2', '2 arcsec'),
+        ('4', '4 arcsec'),
+        ('6', '6 arcsec')
+    }
+
     observation_record = forms.ModelChoiceField(
         ObservationRecord.objects.all(),
         widget=forms.HiddenInput(),
@@ -40,13 +48,39 @@ class DataProductUploadForm(forms.Form):
 
     files = forms.FileField(
         widget=forms.ClearableFileInput(
-        attrs={'multiple': True}
+            attrs={'multiple': True}
         )
      )
+
     data_product_type = forms.ChoiceField(
         choices=[v for k, v in settings.DATA_PRODUCT_TYPES.items()],
-        widget=forms.RadioSelect(),
+        widget=forms.RadioSelect(attrs={'onclick' : "dataProductSelect();"}),
         required=True
+    )
+
+    MJD = forms.DecimalField(
+        label="MJD OBS",
+        widget=forms.NumberInput(attrs={'id': 'mjd'}),
+        required=False
+    )
+
+    ExpTime = forms.IntegerField(
+        label='Exposure time (sec)',
+        widget=forms.NumberInput(attrs={'id': 'ExpTime'}),
+        required=False
+    )
+
+    matchDist = forms.ChoiceField(
+        choices=MATCHING_RADIUS,
+        widget=forms.Select(),
+        label='Matching radius',
+        initial='0',
+        required=False
+    )
+
+    dryRun = forms.BooleanField(
+        label='Dry Run (no data will be stored in the database)',
+        required=False
     )
 
     referrer = forms.CharField(
@@ -57,7 +91,7 @@ class DataProductUploadForm(forms.Form):
 
         user = kwargs.pop('user')
         filter = {}
-        filter['None'] = 'None'
+        filter['no'] = 'Auto'
         catalogs = Catalogs.objects.all().values_list('name', 'filters')
         for curval in catalogs:
             curname, filters = curval
@@ -66,16 +100,17 @@ class DataProductUploadForm(forms.Form):
 
         super(DataProductUploadForm, self).__init__(*args, **kwargs)
 
-        self.fields['instrument']=InstrumentChoiceField(
+        self.fields['instrument'] = InstrumentChoiceField(
                 queryset=Cpcs_user.objects.filter(user=user, user_activation=True),
                 widget=forms.Select(),
-                required=False,
+                required=False
         )
 
         self.fields['filter']=forms.ChoiceField(
                 choices=[v for v in filter.items()],
                 widget=forms.Select(),
                 required=False,
+                label='Force filter'
         )
 
 class ObservatoryCreationForm(forms.ModelForm):
