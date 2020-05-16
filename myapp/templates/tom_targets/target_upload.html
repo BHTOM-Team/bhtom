@@ -2,10 +2,15 @@
 {% if user.is_authenticated %}
 <h4>Upload a data product</h4>
 <p>
-  For example CSVs, see the <a href="{% static 'tom_dataproducts/photometry_sample.csv' %}">photometry</a> and <a href="{% static 'tom_dataproducts/spectrum_sample.csv' %}">spectroscopy</a> sample files. FITS is supported for spectra.
-</p>
-<p>
-  To properly process FITS, you need to choice an observation instrument and filter. You can add a new instrument <a href="{% url 'observatory_create' %}">here.</a>
+  Here you can upload your photometric and spectroscopic observations for this target. Please refer to the BHTOM manual for details.
+  <br>Example CSV formats for <a href="{% static 'tom_dataproducts/photometry_sample.csv' %}">photometry</a>
+  and 
+   <a href="{% static 'tom_dataproducts/spectrum_sample.csv' %}">spectroscopy</a>.
+   SExtractor format is required for instrumental photometry. 
+  FITS is supported for spectra.
+  <br>
+  For photometric FITS processing choose the observatory from the list. 
+  You can add a new instrument <a href="{% url 'observatory_create' %}">here.</a>
 </p>
 <form method="POST" action="{% url 'data_upload' %}" enctype="multipart/form-data">
   {% csrf_token %}
