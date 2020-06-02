@@ -2,11 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 
-class obsInfo(models.Model):
-    id = models.IntegerField(primary_key=True)
-    obsInfo = models.TextField(default='obsInfo', null=False, blank=False, editable=False)
-
-class Cpcs_user(models.Model):
+class Observatory(models.Model):
 
     MATCHING_RADIUS = {
         ('1', '1 arcsec'),
@@ -15,18 +11,21 @@ class Cpcs_user(models.Model):
         ('6', '6 arcsec')
     }
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
     obsName = models.CharField(max_length=255, verbose_name='Observatory name', unique=True)
-    cpcs_hashtag = models.CharField(max_length=255, editable=True, null=False,  blank=False)
     lon = models.FloatField(null=False, blank=False, verbose_name='Longitude')
     lat = models.FloatField(null=False, blank=False, verbose_name='Latitude')
     prefix = models.CharField(max_length=255, null=True, blank=True)
-    user_activation = models.BooleanField()
+    userActivation = models.BooleanField()
     matchDist = models.CharField(max_length=10, choices=MATCHING_RADIUS, default='1 arcsec', verbose_name='Matching radius')
-    allow_upload = models.BooleanField(verbose_name='Dry Run (no data will be stored in the database)')
-    fits = models.FileField(upload_to='user_fits', null=False, blank=False, verbose_name='Sample fits')
+    fits = models.FileField(upload_to='user_fits', null=True, blank=True, verbose_name='Sample fits')
+    obsInfo = models.FileField(upload_to='ObsInfo', null=True, blank=True, verbose_name='Obs Info')
 
-    #obsInfo = models.ForeignKey(obsInfo, on_delete=models.CASCADE)
+class Instrument(models.Model):
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    observatory_id = models.ForeignKey(Observatory, on_delete=models.CASCADE)
+    insName = models.CharField(max_length=255, verbose_name='Instrument name')
+    dry_run = models.BooleanField(verbose_name='Dry Run (no data will be stored in the database)')
+    hashtag = models.CharField(max_length=255, editable=True, null=False, blank=False)
 
 class BHTomFits(models.Model):
     FITS_STATUS = [
@@ -46,7 +45,7 @@ class BHTomFits(models.Model):
     }
 
     file_id = models.AutoField(db_index=True, primary_key=True)
-    user = models.ForeignKey(Cpcs_user, on_delete=models.CASCADE)
+    instrument_id = models.ForeignKey(Instrument, on_delete=models.CASCADE)
     dataproduct_id = models.IntegerField(null=False, blank=False)
     status = models.CharField(max_length=1, choices=FITS_STATUS, default='C')
     status_message = models.TextField(default='Fits upload', blank=True, editable=False)
@@ -69,7 +68,6 @@ class BHTomFits(models.Model):
     matchDist = models.CharField(max_length=10, choices=MATCHING_RADIUS, default='2 arcsec',
                                  verbose_name='Matching radius')
     allow_upload = models.BooleanField(verbose_name='Dry Run (no data will be stored in the database)')
-    cpcs_hashtag = models.CharField(max_length=255, editable=False, null=True,  blank=True)
 
 class Catalogs(models.Model):
     id = models.IntegerField(primary_key=True)

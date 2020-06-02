@@ -3,12 +3,17 @@ from django.conf import settings
 
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
-from bhtom.models import Cpcs_user, Catalogs
+from bhtom.models import Observatory, Instrument, Catalogs
 from django.contrib.auth.models import User
 from django.contrib.postgres.forms import SimpleArrayField
 import logging
 logger = logging.getLogger(__name__)
 class InstrumentChoiceField(forms.ModelChoiceField):
+
+    def label_from_instance(self, obj):
+        return '{insName}'.format(insName=obj.insName)
+
+class ObservatoryChoiceField(forms.ModelChoiceField):
 
     def label_from_instance(self, obj):
         return '{obsName}'.format(obsName=obj.obsName)
@@ -101,7 +106,8 @@ class DataProductUploadForm(forms.Form):
         super(DataProductUploadForm, self).__init__(*args, **kwargs)
 
         self.fields['instrument'] = InstrumentChoiceField(
-                queryset=Cpcs_user.objects.filter(user=user, user_activation=True),
+
+                queryset=Instrument.objects.filter(user_id=user), #, userActivation=True
                 widget=forms.Select(),
                 required=False
         )
@@ -116,6 +122,36 @@ class DataProductUploadForm(forms.Form):
 class ObservatoryCreationForm(forms.ModelForm):
 
     class Meta:
-        model = Cpcs_user
-        fields = ('obsName', 'lon', 'lat', 'allow_upload', 'prefix', 'matchDist', 'fits')
+        model = Observatory
+        fields = ('obsName', 'lon', 'lat', 'matchDist', 'fits', 'obsInfo')
 
+class InstrumentCreationForm(forms.Form):
+
+
+    def __init__(self, *args, **kwargs):
+
+        user = kwargs.pop('user')
+        super(InstrumentCreationForm, self).__init__(*args, **kwargs)
+
+        instrument = Instrument.objects.filter(user_id=user)
+        insTab = []
+        for ins in instrument:
+            insTab.append(ins.observatory_id.id)
+
+        self.fields['observatory'] = ObservatoryChoiceField(
+
+            queryset=Observatory.objects.exclude(id__in=insTab),
+            widget=forms.Select(),
+            required=False
+        )
+
+
+    insName = forms.CharField(
+        label='Instrument Name',
+        required=True
+    )
+
+    dryRun = forms.BooleanField(
+        label='Dry Run (no data will be stored in the database)',
+        required=False
+    )

@@ -15,7 +15,6 @@ Including another URLconf
 """
 from django.urls import path, include
 
-from django.views.generic import TemplateView
 from .views import BlackHoleListView
 
 from django.contrib import admin
@@ -29,7 +28,8 @@ from rest_framework import routers, permissions
 from bhtom import views
 from bhtom.views import DataProductUploadView, TargetDetailView, CreateObservatory, ObservatoryList, TargetFileDetailView
 from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView, TargetFileView, UpdateObservatory, DeleteObservatory
-
+from bhtom.views import CreateInstrument
+from bhtom.views import RegisterUser
 router = routers.DefaultRouter()
 router.register('upload', views.fits_upload)
 router.register('result', views.result_fits)
@@ -50,11 +50,12 @@ urlpatterns = [
     path('', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('dataUpload/', DataProductUploadView.as_view(), name='data_upload'),
+    path('instrument/create/', CreateInstrument.as_view(), name='instrument_create'),
     path('observatory/create/', CreateObservatory.as_view(), name='observatory_create'),
     path('observatory/<int:pk>/update/', UpdateObservatory.as_view(), name='observatory_update'),
     path('observatory/<pk>/delete/', DeleteObservatory.as_view(), name='observatory_delete'),
     path('observatory/list/', ObservatoryList.as_view(), name='observatory'),
-
+    path('user/create/', RegisterUser.as_view(), name='register_user'),
     # The static helper below only works in development see
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
  ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

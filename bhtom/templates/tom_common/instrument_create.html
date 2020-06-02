@@ -1,0 +1,27 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 %}
+{% block title %}Create observatory{% endblock %}
+{% block content %}
+{{ users }}
+{% if object %}
+<form action="{% url 'observatory_update' object.id %}" enctype="multipart/form-data" method="POST">
+{% else %}
+  <p> Create your new Instrument.
+
+<form action="{% url 'instrument_create' %}" enctype="multipart/form-data" method="POST">
+{% endif %}
+{% csrf_token %}
+{% bootstrap_form form %}
+{% buttons %}
+<a href="{% url 'observatory_create' %}" title="Observatory Create" class="btn btn-primary">New Observatory</a>
+  <button type="submit" class="btn btn-primary">
+
+    {% if object %}
+    Update
+    {% else %}
+    Create Instrument
+    {% endif %}
+  </button>
+{% endbuttons %}
+</form>
+{% endblock %}

@@ -14,6 +14,7 @@ from tom_targets.forms import (SiderealTargetCreateForm, NonSiderealTargetCreate
 from tom_targets.filters import TargetFilter
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
+from tom_common.forms import CustomUserCreationForm
 from tom_dataproducts.data_processor import run_data_processor
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.models import ReducedDatum, DataProduct, DataProductGroup
@@ -22,10 +23,10 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from bhtom.models import BHTomFits, Cpcs_user, Catalogs
+from bhtom.models import BHTomFits, Observatory, Instrument
 from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer, BHTomFitsStatusSerializer
 from bhtom.hooks import send_to_cpcs
-from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm
+from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, InstrumentCreationForm
 
 from django.http import HttpResponseServerError
 from django.views.generic.edit import FormView, DeleteView
@@ -34,6 +35,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Group
 from django.core.management import call_command
+from django.core.mail import send_mail
 from django.db import transaction
 from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
@@ -45,6 +47,11 @@ from django_filters.views import FilterView
 
 from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
+
+try:
+    from settings import local_settings as secret
+except ImportError:
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -425,11 +432,12 @@ class TargetFileView(LoginRequiredMixin, ListView):
             try:
                 data_product = DataProduct.objects.get(id=fit.dataproduct_id)
                 ccdphot_url = "/".join(["/data", target_name, "photometry", str(fit.photometry_file)])
+                instrument = Instrument.objects.get(id=fit.instrument_id.id)
 
                 tabFits.append([fit.file_id, fit.start_time,
                                 format(data_product.data), format(data_product.data).split('/')[-1],
                                 ccdphot_url, format(fit.photometry_file),
-                                fit.filter, Cpcs_user.objects.get(id=fit.user_id).obsName,
+                                fit.filter, Observatory.objects.get(id=instrument.observatory_id.id).obsName,
                                 fit.status_message, fit.mjd, fit.expTime,
                                 DataProduct.objects.get(id=fit.dataproduct_id).data_product_type])
 
@@ -462,7 +470,8 @@ class TargetFileDetailView(LoginRequiredMixin, ListView):
 
         target = Target.objects.get(id=self.kwargs['pk'])
         fits = BHTomFits.objects.get(file_id=self.kwargs['pk_fits'])
-        cpcs_user = Cpcs_user.objects.get(id=fits.user_id)
+        instrument = Instrument.objects.get(id=fits.instrument_id.id)
+        observatory = Observatory.objects.get(id=instrument.observatory_id.id)
         data_product = DataProduct.objects.get(id=fits.dataproduct_id)
         tabFits = {}
 
@@ -478,7 +487,7 @@ class TargetFileDetailView(LoginRequiredMixin, ListView):
 
         context['target'] = target
         context['fits'] = fits
-        context['cpcs_user'] = cpcs_user
+        context['Observatory'] = observatory
         context['data_product'] = data_product
         context['tabFits'] = tabFits
 
@@ -511,10 +520,10 @@ class fits_upload(viewsets.ModelViewSet):
             data_product_files = request.FILES.getlist("files")
             hashtag = request.data.get('hashtag')
             dp_type = request.data.get('data_product_type')
-            user = Cpcs_user.objects.get(cpcs_hashtag=hashtag)
+            instrument = Instrument.objects.get(hashtag=hashtag)
             target_id = Target.objects.get(name=target)
 
-            if user is None or target_id is None:
+            if instrument is None or target_id is None:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
@@ -629,7 +638,7 @@ class result_fits(viewsets.ModelViewSet):
 
         try:
             instance = self.get_object()
-            instance.status = request.data.get("status")
+            instance.status = request.TargetFileViewdata.get("status")
             instance.save()
         except Exception as e:
             logger.error('error: ' + str(e))
@@ -670,7 +679,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             observation_record = None
         dp_type = form.cleaned_data['data_product_type']
         data_product_files = self.request.FILES.getlist('files')
-        observation_instrument = form.cleaned_data['instrument']
+        instrument = form.cleaned_data['instrument']
         observation_filter = form.cleaned_data['filter']
         MJD = form.cleaned_data['MJD']
         ExpTime = form.cleaned_data['ExpTime']
@@ -688,7 +697,7 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
             )
             dp.save()
             try:
-                run_hook('data_product_post_upload', dp, observation_instrument, observation_filter, MJD, ExpTime, dryRun, matchDist)
+                run_hook('data_product_post_upload', dp, instrument, observation_filter, MJD, ExpTime, dryRun, matchDist)
 
                 if dp.data_product_type == 'photometry':
                     run_data_processor(dp)
@@ -757,6 +766,68 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
             return redirect(reverse('bhlist_detail', args=(target_id,)))
         return super().get(request, *args, **kwargs)
 
+class CreateInstrument(LoginRequiredMixin, FormView):
+    """
+    View that handles manual upload of DataProducts. Requires authentication.
+    """
+
+    template_name = 'tom_common/instrument_create.html'
+    form_class = InstrumentCreationForm
+    success_url = reverse_lazy('observatory')
+
+    def get_form_kwargs(self):
+        kwargs = super(CreateInstrument, self).get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+
+        user = self.request.user
+        insName = form.cleaned_data['insName']
+        dry_run = form.cleaned_data['dryRun']
+        observatoryID = form.cleaned_data['observatory']
+
+        try:
+            instrument = Instrument.objects.create(
+                    insName=insName,
+                    dry_run=dry_run,
+                    user_id=user,
+                    observatory_id=observatoryID,
+                )
+            instrument.save()
+            observatory = Observatory.objects.get(id=observatoryID.id)
+
+            if (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits == None or observatory.fits == ''): #tylko obsInfo wysylamy maila
+                logger.info('Send mail')
+                send_mail('Stworzono nowy instrument', 'Użytkownik nie podał Fitsa', settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+            elif (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits != None or observatory.fits != '') : #procesujemy fitsa
+
+                '''dp = DataProduct(
+                    target=target,
+                    data=observatory.fits,
+                    product_id=None,
+                    data_product_type='fits_file'
+                )
+                dp.save()
+                run_hook('data_product_post_upload', dp, instrument, 'No', None, None, 1, 2)'''
+                logger.info('Send mail')
+                send_mail('Stworzono nowy instrument', 'Fits został wysłany do ccdphotd', settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+            elif (observatory.obsInfo == None or observatory.obsInfo == '') and (observatory.fits != None or observatory.fits != ''):
+                logger.info('Send mail')
+                send_mail('Stworzono nowy instrument', 'Użytkonik nie podał obsInfo', settings.EMAIL_HOST_USER,
+                          secret.RECIPIENTEMAIL, fail_silently=False)
+            elif (observatory.obsInfo == None or observatory.obsInfo == '') and (
+                    observatory.fits == None or observatory.fits == ''):
+                logger.info('Send mail')
+                send_mail('Stworzono nowy instrument', 'Użytkonik nie podał obsInfo i fitsa', settings.EMAIL_HOST_USER,
+                          secret.RECIPIENTEMAIL, fail_silently=False)
+        except Exception as e:
+            logger.error('error: ' + str(e))
+            messages.error(self.request, 'Error with creating the instrument%s' % insName)
+            return redirect(self.get_success_url())
+
+        messages.success(self.request, 'Successfully created %s' % insName)
+        return redirect(self.get_success_url())
 
 class CreateObservatory(LoginRequiredMixin, FormView):
     """
@@ -776,24 +847,26 @@ class CreateObservatory(LoginRequiredMixin, FormView):
         obsName = form.cleaned_data['obsName']
         lon = form.cleaned_data['lon']
         lat = form.cleaned_data['lat']
-        allow_upload = form.cleaned_data['allow_upload']
-        prefix = form.cleaned_data['prefix']
         matchDist = form.cleaned_data['matchDist']
 
-        fits = self.request.FILES.getlist('fits')
-
-        for f in fits:
-            Cpcs_user.objects.create(
-                user=user,
+        fits = self.request.FILES.get('fits')
+        obsInfo = self.request.FILES.get('obsInfo')
+        logger.info(fits)
+        observatory = Observatory.objects.create(
                 obsName=obsName,
                 lon=lon,
                 lat=lat,
-                allow_upload=allow_upload,
-                prefix=prefix,
                 matchDist=matchDist,
-                user_activation=False,
-                fits=f
-            )
+                userActivation=False,
+                prefix=obsName,
+                fits=fits,
+                obsInfo=obsInfo
+        )
+
+        observatory.save()
+        logger.info('Send mail')
+        send_mail('Stworzono nowe obserwatorium', 'Stworzono nowe obserwatorium: ' + obsName, settings.EMAIL_HOST_USER,
+                  secret.RECIPIENTEMAIL, fail_silently=False)
         messages.success(self.request, 'Successfully created %s' % obsName)
         return redirect(self.get_success_url())
 
@@ -801,20 +874,29 @@ class CreateObservatory(LoginRequiredMixin, FormView):
 class ObservatoryList(LoginRequiredMixin, ListView):
 
     template_name = 'tom_common/observatory_list.html'
-    model = Cpcs_user
+    model = Observatory
     strict = False
 
-    def get_queryset(self, *args, **kwargs):
-        return Cpcs_user.objects.all()
-        #return Cpcs_user.objects.filter(user=self.request.user)
+    def get_context_data(self, *args, **kwargs):
 
+        context = super().get_context_data(*args, **kwargs)
+        instrument = Instrument.objects.filter(user_id=self.request.user)
+
+        observatory_user_list = []
+        for ins in instrument:
+            observatory_user_list.append([ins.hashtag, Observatory.objects.get(id=ins.observatory_id.id)])
+
+        context['observatory_list'] = Observatory.objects.all()
+        context['observatory_user_list'] = observatory_user_list
+
+        return context
 
 class UpdateObservatory(LoginRequiredMixin, UpdateView):
 
     template_name = 'tom_common/observatory_create.html'
     form_class = ObservatoryCreationForm
     success_url = reverse_lazy('observatory')
-    model = Cpcs_user
+    model = Observatory
 
     @transaction.atomic
     def form_valid(self, form):
@@ -826,9 +908,33 @@ class UpdateObservatory(LoginRequiredMixin, UpdateView):
 class DeleteObservatory(LoginRequiredMixin, DeleteView):
 
     success_url = reverse_lazy('observatory')
-    model = Cpcs_user
+    model = Observatory
     template_name = 'tom_common/observatory_delete.html'
     def get_object(self, queryset=None):
 
         obj = super(DeleteObservatory, self).get_object()
         return obj
+
+class RegisterUser(PermissionListMixin, CreateView):
+    """
+    View that handles ``User`` creation.
+    """
+    permission_required = 'tom_targets.view_targetlist'
+    template_name = 'tom_common/register_user.html'
+    success_url = reverse_lazy('home')
+    form_class = CustomUserCreationForm
+
+    def form_valid(self, form):
+        """
+        Called after form is validated. Creates the ``User`` and adds them to the public ``Group``.
+
+        :param form: User creation form
+        :type form: django.forms.Form
+        """
+        logger.info('b')
+        super().form_valid(form)
+        group, _ = Group.objects.get_or_create(name='Public')
+        group.user_set.add(self.object)
+        group.save()
+        messages.success(self.request, 'Successfully registered')
+        return redirect(self.get_success_url())
