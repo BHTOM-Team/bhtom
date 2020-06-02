@@ -1,12 +1,16 @@
 from django.contrib import admin
-from bhtom.models import BHTomFits, Cpcs_user
+from bhtom.models import BHTomFits, Instrument, Observatory
 
 
-class BhtonFitsField(admin.ModelAdmin):
+class BHTomFits_displayField(admin.ModelAdmin):
     list_display = ('file_id','status', )
 
-class Cpcs_displayField(admin.ModelAdmin):
-    list_display = ('user','obsName')
+class Instrument_displayField(admin.ModelAdmin):
+    list_display = ('user_id','observatory_id')
 
-admin.site.register(BHTomFits, BhtonFitsField)
-admin.site.register(Cpcs_user, Cpcs_displayField)
+class Observatory_displayField(admin.ModelAdmin):
+    list_display = ('obsName','prefix')
+
+admin.site.register(BHTomFits, BHTomFits_displayField)
+admin.site.register(Instrument, Instrument_displayField)
+admin.site.register(Observatory, Observatory_displayField)
