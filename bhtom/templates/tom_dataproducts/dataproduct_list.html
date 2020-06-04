@@ -41,23 +41,23 @@
 
       {% for fit_id, time,  FileUrl, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type in object_list %}
       <tr>
-        <td><a href="/data/{{ FileUrl }}">{{ File|truncatechars:20 }}</a></td>
-        <td><a href="{{ PhotometryUrl }}">{{ Photometry|truncatechars:20 }}</a></td>
-        <td>{{ Filter }}</td>
-        <td>{{ Observatory }}</td>
+        <td><div title="{{File}}"><a href="/data/{{ FileUrl }}">{{ File|truncatechars:20 }}</a></div></td>
+        <td><div title="{{PhotometryUrl}}"><a href="{{ PhotometryUrl }}">{{ Photometry|truncatechars:20 }}</a></div></td>
+        <td><div title="{{Filter}}">{{ Filter }}</div></td>
+        <td><div title="{{Observatory}}">{{ Observatory }}</div></td>
         <td><div title="{{Status}}">{{ Status|truncatechars:22 }}</div></td>
         {% if MJD != None %}
-          <td>{{ MJD }}</td>
+        <td><div title="{{Status}}">{{ MJD }}</div></td>
         {% else %}
           <td></td>
         {% endif %}
         {% if expTime != None %}
-        <td>{{ expTime }}</td>
+        <td><div title="{{expTime}}">{{ expTime }}</div></td>
         {% else %}
           <td></td>
         {% endif %}
         {% if time != None %}
-        <td>{{ time }}</td>
+        <td><div title="{{time}}">{{ time }}</div></td>
          {% else %}
           <td></td>
         {% endif %}

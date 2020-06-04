@@ -53,10 +53,10 @@ def data_product_post_upload(dp, instrument, observation_filter, MJD, expTime, a
                     instance.status_message = 'Sent to photometry'
                     instance.save()
                 else:
-                    error_message = 'Error  code: %s' % response.status_code
+                    error_message = 'CCDPHOTD error: %s' % response.status_code
                     logger.info(error_message)
                     instance.status = 'E'
-                    instance.status_message = 'error_message'
+                    instance.status_message = error_message
                     instance.save()
 
             except Exception as e:
@@ -111,8 +111,7 @@ def send_to_cpcs(result, fits, eventID):
             fits.npoints = json_data['npoints']
             fits.save()
         else:
-            error_message = 'Error: %s' % response.content
-
+            error_message = 'Cpcs error: %s' % response.content.decode()
             fits.status='E'
             fits.status_message = error_message
             fits.save()
