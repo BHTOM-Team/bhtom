@@ -423,7 +423,7 @@ class TargetFileView(LoginRequiredMixin, ListView):
         :returns: Set of ``DataProduct`` objects
         :rtype: QuerySet
         """
-        data_product = DataProduct.objects.filter(target_id=self.kwargs['pk'], data_product_type__in=['fits_file','TargetFileView']).values_list('id')
+        data_product = DataProduct.objects.filter(target_id=self.kwargs['pk'], data_product_type__in=['fits_file','photometry_cpcs']).values_list('id')
         fits = BHTomFits.objects.filter(dataproduct_id__in=data_product).order_by('-start_time')
         target_name = str(Target.objects.get(id=self.kwargs['pk']).name)
         tabFits = []

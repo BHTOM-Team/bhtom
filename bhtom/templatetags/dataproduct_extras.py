@@ -1,4 +1,4 @@
-from bhtom.models import BHTomFits, Cpcs_user
+from bhtom.models import BHTomFits, Instrument
 import json
 
 from django import template
@@ -46,7 +46,7 @@ def detail_fits_upload(target, user):
     """
     Given a ``Target``, returns a list of ``Upload Fits``
     """
-    user = Cpcs_user.objects.filter(user=user).values_list('id')
+    user = Instrument.objects.filter(user_id=user).values_list('id')
     data_product = DataProduct.objects.filter(target_id=target.id).values_list('id')
     fits = BHTomFits.objects.filter(user_id__in=user, dataproduct_id__in=data_product)
     tabFits=[]
