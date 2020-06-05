@@ -11,12 +11,13 @@
 {% endblock %}
 {% block content %}
 {% include 'tom_dataproducts/partials/js9_scripts.html' %}
+<div class="container">
 <div class="row">
 
   <div class="col-md-12">
     <div class="row">
       <div class="col-md-12">
-       <h1> Uploaded Fits</h1>
+       <h1> Uploaded File</h1>
       </div>
       <div class="col-md-12">
         <h3>Target: {{target.name }}</h3>
@@ -27,27 +28,42 @@
         <tr>
           <th>File</th>
           <th>Photometry</th>
+          <th>Type</th>
           <th>Filter</th>
           <th>Observatory</th>
           <th>Status</th>
           <th>MJD</th>
           <th>Exp</th>
-          <th>Time Uploaded</th>
+          <th>Uploaded</th>
           <th></th>
-          <th>Detail</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
 
       {% for fit_id, time,  FileUrl, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type in object_list %}
       <tr>
-        <td><div title="{{File}}"><a href="/data/{{ FileUrl }}">{{ File|truncatechars:20 }}</a></div></td>
-        <td><div title="{{PhotometryUrl}}"><a href="{{ PhotometryUrl }}">{{ Photometry|truncatechars:20 }}</a></div></td>
+       {% if type != 'photometry_cpcs' %}
+        <td><div title="{{File}}"><a href="/data/{{ FileUrl }}">{{ File|truncatechars:15 }}</a></div></td>
+        {% else %}
+          <td></td>
+        {% endif %}
+        <td><div title="{{Photometry}}"><a href="{{ PhotometryUrl }}">{{ Photometry|truncatechars:15 }}</a></div></td>
+
+       {% if type == 'fits_file' %}
+          <td><div title="Fits image">Fits image</div></td>
+        {% elif type == 'photometry_cpcs' %}
+          <td><div title="	Instrumental photometry">Instrumental photometry</div></td>
+        {% else %}
+        <td><div title="{{type}}">{{ type }}</div></td>
+         {% endif %}
+
+
         <td><div title="{{Filter}}">{{ Filter }}</div></td>
         <td><div title="{{Observatory}}">{{ Observatory }}</div></td>
         <td><div title="{{Status}}">{{ Status|truncatechars:22 }}</div></td>
         {% if MJD != None %}
-        <td><div title="{{Status}}">{{ MJD }}</div></td>
+        <td><div title="{{MJD}}">{{ MJD|floatformat:4 }}</div></td>
         {% else %}
           <td></td>
         {% endif %}
@@ -57,18 +73,10 @@
           <td></td>
         {% endif %}
         {% if time != None %}
-        <td><div title="{{time}}">{{ time }}</div></td>
+        <td style="min-width: 115px"><div title="{{time}}">{{ time }}</div></td>
          {% else %}
           <td></td>
         {% endif %}
-        {% if type == 'fits_file' %}
-          <td>
-            {% include 'tom_dataproducts/partials/js9_button.html' with url="/data/"|add:FileUrl only %}
-          </td>
-          {% else %}
-          <td></td>
-          {% endif %}
-
         <td>
           <a href="{% url 'bhlist_file_detail' pk=target.id pk_fits=fit_id%}" title="Show details" class="btn btn-primary">Detail</a>
         </td>
@@ -80,5 +88,6 @@
     {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
   </div>
 
+</div>
 </div>
 {% endblock %}

@@ -146,9 +146,9 @@ class InstrumentCreationForm(forms.Form):
         )
 
 
-    insName = forms.CharField(
-        label='Instrument Name',
-        required=True
+    hashtag = forms.CharField(
+        label='hashtag',
+        required=False
     )
 
     dryRun = forms.BooleanField(

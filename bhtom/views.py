@@ -15,10 +15,11 @@ from tom_targets.filters import TargetFilter
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
 from tom_common.forms import CustomUserCreationForm
+
 from tom_dataproducts.data_processor import run_data_processor
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.models import ReducedDatum, DataProduct, DataProductGroup
-from tom_dataproducts.filters import DataProductFilter
+
 from rest_framework import viewsets, status
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
@@ -32,7 +33,7 @@ from django.http import HttpResponseServerError
 from django.views.generic.edit import FormView, DeleteView
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+
 from django.contrib.auth.models import Group
 from django.core.management import call_command
 from django.core.mail import send_mail
@@ -45,7 +46,8 @@ from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django_filters.views import FilterView
 
-from guardian.mixins import PermissionRequiredMixin, PermissionListMixin
+from django.http import HttpResponseRedirect
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
 
 try:
@@ -85,17 +87,22 @@ def computePriority(dt, priority, cadence):
     return ret*priority
 
 
-class BlackHoleListView(FilterView):
+class BlackHoleListView(PermissionRequiredMixin, FilterView):
+
+    permission_required = 'tom_targets.view_target'
     paginate_by = 20
     strict = False
     model = Target
     filterset_class = TargetFilter
-    permission_required = 'tom_targets.view_target' #or remove if want it freely visible
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
     def get_queryset(self, *args, **kwargs):
+
         qs = super().get_queryset(*args, **kwargs)
-
         jd_now = Time(datetime.utcnow()).jd
-
         prioritylist = []
         pklist = []
 
@@ -165,14 +172,17 @@ class BlackHoleListView(FilterView):
 
         return context
 
-
-class TargetCreateView(LoginRequiredMixin, CreateView):
+class TargetCreateView(PermissionRequiredMixin, CreateView):
     """
     View for creating a Target. Requires authentication.
     """
-
+    permission_required = 'tom_targets.change_target'
     model = Target
     fields = '__all__'
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def get_default_target_type(self):
         """
@@ -274,7 +284,6 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             form.add_error(None, names.errors)
             form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
-
         logger.info('Target post save hook: %s created: %s', self.object, True)
         run_hook('target_post_save', target=self.object, created=True)
 
@@ -294,7 +303,6 @@ class TargetCreateView(LoginRequiredMixin, CreateView):
             form.fields['groups'].queryset = self.request.user.groups.all()
         return form
 
-
 class TargetUpdateView(PermissionRequiredMixin, UpdateView):
     """
     View that handles updating a target. Requires authorization.
@@ -302,6 +310,10 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
     permission_required = 'tom_targets.change_target'
     model = Target
     fields = '__all__'
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def get_context_data(self, **kwargs):
         """
@@ -393,7 +405,6 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
             form.fields['groups'].queryset = self.request.user.groups.all()
         return form
 
-
 class TargetDeleteView(PermissionRequiredMixin, DeleteView):
     """
     View for deleting a target. Requires authorization.
@@ -402,19 +413,26 @@ class TargetDeleteView(PermissionRequiredMixin, DeleteView):
     success_url = reverse_lazy('bhlist')
     model = Target
 
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
     def get_object(self, queryset=None):
         """ Hook to ensure object is owned by request.user. """
         obj = super(TargetDeleteView, self).get_object()
 
         return obj
 
+class TargetFileView(PermissionRequiredMixin, ListView):
 
-class TargetFileView(LoginRequiredMixin, ListView):
-
-    permission_required = 'tom_targets.view_target'
+    permission_required = 'tom_dataproducts.view_dataproduct'
     template_name = 'tom_dataproducts/dataproduct_list.html'
     model = BHTomFits
     paginate_by = 25
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def get_queryset(self):
         """
@@ -436,7 +454,7 @@ class TargetFileView(LoginRequiredMixin, ListView):
 
                 tabFits.append([fit.file_id, fit.start_time,
                                 format(data_product.data), format(data_product.data).split('/')[-1],
-                                ccdphot_url, format(fit.photometry_file),
+                                ccdphot_url, format(fit.photometry_file).split('/')[-1],
                                 fit.filter, Observatory.objects.get(id=instrument.observatory_id.id).obsName,
                                 fit.status_message, fit.mjd, fit.expTime,
                                 DataProduct.objects.get(id=fit.dataproduct_id).data_product_type])
@@ -458,16 +476,19 @@ class TargetFileView(LoginRequiredMixin, ListView):
         context['target'] = target
         return context
 
+class TargetFileDetailView(PermissionRequiredMixin, ListView):
 
-class TargetFileDetailView(LoginRequiredMixin, ListView):
-    permission_required = 'tom_targets.view_target'
+    permission_required = 'tom_dataproducts.view_dataproduct'
     template_name = 'tom_dataproducts/dataproduct_fits_detail.html'
     model = BHTomFits
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def get_context_data(self, *args, **kwargs):
 
         context = super().get_context_data(*args, **kwargs)
-
         target = Target.objects.get(id=self.kwargs['pk'])
         fits = BHTomFits.objects.get(file_id=self.kwargs['pk_fits'])
         instrument = Instrument.objects.get(id=fits.instrument_id.id)
@@ -493,13 +514,11 @@ class TargetFileDetailView(LoginRequiredMixin, ListView):
 
         return context
 
-
 class IsAuthenticatedOrReadOnlyOrCreation(IsAuthenticatedOrReadOnly):
     """Allows Read only operations and Creation of new data (no modify or delete)"""
 
     def has_permission(self, request, view):
         return request.method == 'POST' or super().has_permission(request, view)
-
 
 class fits_upload(viewsets.ModelViewSet):
 
@@ -561,7 +580,6 @@ class fits_upload(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         ret = super().list(request, *args, **kwargs)
         return ret
-
 
 class result_fits(viewsets.ModelViewSet):
 
@@ -653,11 +671,10 @@ class result_fits(viewsets.ModelViewSet):
 '''
 
 
-class DataProductUploadView(LoginRequiredMixin, FormView):
+class DataProductUploadView(FormView):
     """
     View that handles manual upload of DataProducts. Requires authentication.
     """
-
     form_class = DataProductUploadForm
 
     def get_form_kwargs(self):
@@ -670,6 +687,10 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
         Runs after ``DataProductUploadForm`` is validated. Saves each ``DataProduct`` and calls ``run_data_processor``
         on each saved file. Redirects to the previous page.
         """
+
+        if not self.request.user.has_perm('bhtom.add_bhtomfits'):
+            messages.error(self.request, 'You have no permission to upload file.')
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
         target = form.cleaned_data['target']
         if not target:
@@ -730,13 +751,17 @@ class DataProductUploadView(LoginRequiredMixin, FormView):
         messages.error(self.request, 'There was a problem uploading your file: {}'.format(form.errors.as_json()))
         return redirect(form.cleaned_data.get('referrer', '/'))
 
-
 class TargetDetailView(PermissionRequiredMixin, DetailView):
 
     permission_required = 'tom_targets.view_target'
     model = Target
 
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
     def get_context_data(self, *args, **kwargs):
+
         context = super().get_context_data(*args, **kwargs)
 
         data_product_upload_form = DataProductUploadForm(user=self.request.user,
@@ -744,7 +769,6 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
                 'target': self.get_object(),
                 'referrer': reverse('bhlist_detail', args=(self.get_object().id,))
             },
-
         )
 
         context['data_product_form_from_user'] = data_product_upload_form
@@ -766,14 +790,18 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
             return redirect(reverse('bhlist_detail', args=(target_id,)))
         return super().get(request, *args, **kwargs)
 
-class CreateInstrument(LoginRequiredMixin, FormView):
+class CreateInstrument(PermissionRequiredMixin, FormView):
     """
     View that handles manual upload of DataProducts. Requires authentication.
     """
-
+    permission_required = 'bhtom.add_instrument'
     template_name = 'tom_common/instrument_create.html'
     form_class = InstrumentCreationForm
     success_url = reverse_lazy('observatory')
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def get_form_kwargs(self):
         kwargs = super(CreateInstrument, self).get_form_kwargs()
@@ -829,15 +857,18 @@ class CreateInstrument(LoginRequiredMixin, FormView):
         messages.success(self.request, 'Successfully created %s' % insName)
         return redirect(self.get_success_url())
 
-class CreateObservatory(LoginRequiredMixin, FormView):
+class CreateObservatory(PermissionRequiredMixin, FormView):
     """
     View that handles manual upload of DataProducts. Requires authentication.
     """
-
+    permission_required = 'bhtom.add_observatory'
     template_name = 'tom_common/observatory_create.html'
     form_class = ObservatoryCreationForm
     success_url = reverse_lazy('observatory')
 
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def form_valid(self, form):
 
@@ -870,12 +901,16 @@ class CreateObservatory(LoginRequiredMixin, FormView):
         messages.success(self.request, 'Successfully created %s' % obsName)
         return redirect(self.get_success_url())
 
+class ObservatoryList(PermissionRequiredMixin, ListView):
 
-class ObservatoryList(LoginRequiredMixin, ListView):
-
+    permission_required = 'bhtom.view_observatory'
     template_name = 'tom_common/observatory_list.html'
     model = Observatory
     strict = False
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def get_context_data(self, *args, **kwargs):
 
@@ -891,12 +926,17 @@ class ObservatoryList(LoginRequiredMixin, ListView):
 
         return context
 
-class UpdateObservatory(LoginRequiredMixin, UpdateView):
+class UpdateObservatory(PermissionRequiredMixin, UpdateView):
 
+    permission_required = 'bhtom.change_observatory'
     template_name = 'tom_common/observatory_create.html'
     form_class = ObservatoryCreationForm
     success_url = reverse_lazy('observatory')
     model = Observatory
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     @transaction.atomic
     def form_valid(self, form):
@@ -904,22 +944,26 @@ class UpdateObservatory(LoginRequiredMixin, UpdateView):
         messages.success(self.request, 'Successfully updated %s' % form.cleaned_data['obsName'])
         return redirect(self.get_success_url())
 
+class DeleteObservatory(PermissionRequiredMixin, DeleteView):
 
-class DeleteObservatory(LoginRequiredMixin, DeleteView):
-
+    permission_required = 'bhtom.delete_observatory'
     success_url = reverse_lazy('observatory')
     model = Observatory
     template_name = 'tom_common/observatory_delete.html'
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
     def get_object(self, queryset=None):
 
         obj = super(DeleteObservatory, self).get_object()
         return obj
 
-class RegisterUser(PermissionListMixin, CreateView):
+class RegisterUser(CreateView):
     """
     View that handles ``User`` creation.
     """
-    permission_required = 'tom_targets.view_targetlist'
     template_name = 'tom_common/register_user.html'
     success_url = reverse_lazy('home')
     form_class = CustomUserCreationForm

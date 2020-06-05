@@ -17,9 +17,14 @@ function dataProductSelect() {
 
     if (data_type_1== true){
         instrument.setAttribute("required", true);
+        /*mjd.setAttribute("disabled", 'disabled');
+        ExpTime.setAttribute("disabled", 'disabled');*/
+
     }
     else{
         instrument.removeAttribute("required");
+        /*mjd.removeAttribute("disable");
+        ExpTime.removeAttribute("disable");*/
     }
 
 }

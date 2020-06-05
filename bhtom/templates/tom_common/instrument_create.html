@@ -6,20 +6,20 @@
 {% if object %}
 <form action="{% url 'observatory_update' object.id %}" enctype="multipart/form-data" method="POST">
 {% else %}
-  <p> Create your new Instrument.
+  <p> Create your new User Observatory.
 
 <form action="{% url 'instrument_create' %}" enctype="multipart/form-data" method="POST">
 {% endif %}
 {% csrf_token %}
 {% bootstrap_form form %}
 {% buttons %}
-<a href="{% url 'observatory_create' %}" title="Observatory Create" class="btn btn-primary">New Observatory</a>
+<a href="{% url 'observatory_create' %}" title="Observatory Create" class="btn btn-primary">Add Observatory</a>
   <button type="submit" class="btn btn-primary">
 
     {% if object %}
     Update
     {% else %}
-    Create Instrument
+    Create Observatory
     {% endif %}
   </button>
 {% endbuttons %}

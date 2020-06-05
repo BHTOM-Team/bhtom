@@ -111,6 +111,7 @@ def send_to_cpcs(result, fits, eventID):
             fits.npoints = json_data['npoints']
             fits.save()
         else:
+
             error_message = 'Cpcs error: %s' % response.content.decode()
             fits.status='E'
             fits.status_message = error_message
@@ -148,3 +149,5 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
              return None
              #raise Exception(str(e)) from None
 
+def target_post_save(target, created):
+    logger.info('Target post save hook: %s created: %s', target, created)
