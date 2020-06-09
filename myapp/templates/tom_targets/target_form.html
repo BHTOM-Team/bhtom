@@ -7,7 +7,7 @@
   <ul class="nav nav-tabs">
     {% for k, v in type_choices %}
       <li class="nav-item">
-        <a class="nav-link {% if form.type.initial == k %} active {% endif %}" href="{% url 'bhtom:bhlist_create' %}?type={{ k }}">{{ v  }}</a>
+        <a class="nav-link {% if form.type.initial == k %} active {% endif %}" href="{% url 'bhlist_create' %}?type={{ k }}">{{ v  }}</a>
       </li>
     {% endfor %}
 {% else %}
@@ -27,10 +27,10 @@
 {% bootstrap_formset extra_form %}
 {% buttons %}
   {% if not object %}
-  <button type="submit" formaction="{% url 'bhtom:bhlist_create' %}"class="btn btn-primary">Submit</button>
+  <button type="submit" formaction="{% url 'bhlist_create' %}"class="btn btn-primary">Submit</button>
   {% else %}
-  <button type="submit" formaction="{% url 'bhtom:bhlist_update' pk=object.id %}"class="btn btn-primary">Save</button>
-  <a href="{% url 'bhtom:bhlist_detail' pk=object.id %}" class="btn btn-primary" title="Back">Back</a>
+  <button type="submit" formaction="{% url 'bhlist_update' pk=object.id %}"class="btn btn-primary">Save</button>
+  <a href="{% url 'bhlist_detail' pk=object.id %}" class="btn btn-primary" title="Back">Back</a>
   {% endif %}
 {% endbuttons %}
 </form>
