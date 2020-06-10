@@ -4,8 +4,9 @@ from django.conf import settings
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
 from bhtom.models import Observatory, Instrument, Catalogs
-from django.contrib.auth.models import User
-from django.contrib.postgres.forms import SimpleArrayField
+from django.contrib.auth.models import User, Group
+from django.contrib.auth.forms import UserCreationForm, UsernameField
+
 import logging
 logger = logging.getLogger(__name__)
 class InstrumentChoiceField(forms.ModelChoiceField):
@@ -155,3 +156,24 @@ class InstrumentCreationForm(forms.Form):
         label='Dry Run (no data will be stored in the database)',
         required=False
     )
+
+class CustomUserCreationForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+    groups = forms.ModelMultipleChoiceField(Group.objects.all().exclude(name='Public'),
+                                            required=False, widget=forms.CheckboxSelectMultiple)
+
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'email', 'groups')
+        field_classes = {'username': UsernameField}
+
+    def save(self, commit=True):
+        user = super(forms.ModelForm, self).save(commit=False)
+        if self.cleaned_data['password1']:
+            user.set_password(self.cleaned_data["password1"])
+        if commit:
+            user.is_active = False
+            user.save()
+            self.save_m2m()
+
+        return user

@@ -14,7 +14,6 @@ from tom_targets.forms import (SiderealTargetCreateForm, NonSiderealTargetCreate
 from tom_targets.filters import TargetFilter
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
-from tom_common.forms import CustomUserCreationForm
 
 from tom_dataproducts.data_processor import run_data_processor
 from tom_dataproducts.exceptions import InvalidFileFormatException
@@ -27,7 +26,7 @@ from rest_framework.response import Response
 from bhtom.models import BHTomFits, Observatory, Instrument
 from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer, BHTomFitsStatusSerializer
 from bhtom.hooks import send_to_cpcs
-from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, InstrumentCreationForm
+from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, InstrumentCreationForm, CustomUserCreationForm
 
 from django.http import HttpResponseServerError
 from django.views.generic.edit import FormView, DeleteView
@@ -975,10 +974,11 @@ class RegisterUser(CreateView):
         :param form: User creation form
         :type form: django.forms.Form
         """
-        logger.info('b')
         super().form_valid(form)
         group, _ = Group.objects.get_or_create(name='Public')
         group.user_set.add(self.object)
         group.save()
+        send_mail('Stworzono nowe konto', 'Stworzono nowe konto: ' + self.object.username, settings.EMAIL_HOST_USER,
+                  secret.RECIPIENTEMAIL, fail_silently=False)
         messages.success(self.request, 'Successfully registered')
         return redirect(self.get_success_url())

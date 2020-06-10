@@ -68,14 +68,12 @@
               <td>{{ hashtag }}</td>
 
               <td>{% if observatory.userActivation %} True {%else%} False{% endif %}</td>
-              {% if request.user.is_superuser %}
               <td>
                 <a href="{% url 'observatory_update' pk=observatory.id %}" title="Update observatory" class="btn  btn-primary">Edit</a>
               </td>
               <td>
                 <a href="{% url 'observatory_delete' pk=observatory.id %}" title="Delete observatory" class="btn  btn-danger">Delete</a>
               </td>
-              {% endif %}
             </tr>
             {% endfor %}
           </tbody>
