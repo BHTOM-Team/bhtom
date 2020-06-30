@@ -13,7 +13,7 @@ bson==0.5.8
 certifi==2019.9.11
 chardet==3.0.4
 Click==7.0
-confluent-kafka==1.2.0
+
 cycler==0.10.0
 decorator==4.4.1
 defusedxml==0.6.0
@@ -52,7 +52,6 @@ libmagic==1.0
 llvmlite==0.31.0
 lxml==4.5.0
 MarkupSafe==1.1.1
-matplotlib==3.1.1
 mechanize==0.4.3
 mistune==0.8.4
 more-itertools==7.2.0
@@ -70,9 +69,7 @@ Pillow==6.2.1
 plotly==4.3.0
 prometheus-client==0.7.1
 prompt-toolkit==3.0.2
-psycopg2==2.8.4
 ptyprocess==0.6.0
-pyFFTW==0.11.1
 Pygments==2.5.2
 pyparsing==2.4.5
 PyQt5==5.14.1
@@ -98,7 +95,7 @@ terminado==0.8.3
 testpath==0.4.4
 tom-antares==0.1.0
 tom-lt==0.3.0
-tomtoolkit==1.4.0
+tomtoolkit==1.5.0
 tornado==6.0.3
 traitlets==4.3.3
 urllib3==1.25.7

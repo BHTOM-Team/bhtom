@@ -140,7 +140,7 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
             if response.status_code == 200:
                 instance.hashtag = response.content.decode('utf-8').split(': ')[1]
                 logger.info('Send mail')
-                send_mail('Wygenerowano hastag', 'Wygenerowano hastag dla ' + instance.insName, settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+                send_mail('Wygenerowano hastag', secret.EMAILTEXT_CREATE_HASTAG + instance.insName, settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             else:
                 raise Exception(response.content.decode('utf-8')) from None
 

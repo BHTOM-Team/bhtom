@@ -810,13 +810,11 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
     def form_valid(self, form):
 
         user = self.request.user
-        insName = form.cleaned_data['insName']
         dry_run = form.cleaned_data['dryRun']
         observatoryID = form.cleaned_data['observatory']
 
         try:
             instrument = Instrument.objects.create(
-                    insName=insName,
                     dry_run=dry_run,
                     user_id=user,
                     observatory_id=observatoryID,
@@ -826,7 +824,7 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
 
             if (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits == None or observatory.fits == ''): #tylko obsInfo wysylamy maila
                 logger.info('Send mail')
-                send_mail('Stworzono nowy instrument', 'Użytkownik nie podał Fitsa', settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + user, settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             elif (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits != None or observatory.fits != '') : #procesujemy fitsa
 
                 '''dp = DataProduct(
@@ -838,22 +836,23 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
                 dp.save()
                 run_hook('data_product_post_upload', dp, instrument, 'No', None, None, 1, 2)'''
                 logger.info('Send mail')
-                send_mail('Stworzono nowy instrument', 'Fits został wysłany do ccdphotd', settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + instrument.insName, settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             elif (observatory.obsInfo == None or observatory.obsInfo == '') and (observatory.fits != None or observatory.fits != ''):
                 logger.info('Send mail')
-                send_mail('Stworzono nowy instrument', 'Użytkonik nie podał obsInfo', settings.EMAIL_HOST_USER,
+                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + instrument.insName, settings.EMAIL_HOST_USER,
                           secret.RECIPIENTEMAIL, fail_silently=False)
             elif (observatory.obsInfo == None or observatory.obsInfo == '') and (
                     observatory.fits == None or observatory.fits == ''):
                 logger.info('Send mail')
-                send_mail('Stworzono nowy instrument', 'Użytkonik nie podał obsInfo i fitsa', settings.EMAIL_HOST_USER,
+                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + instrument.insName, settings.EMAIL_HOST_USER,
                           secret.RECIPIENTEMAIL, fail_silently=False)
         except Exception as e:
             logger.error('error: ' + str(e))
-            messages.error(self.request, 'Error with creating the instrument%s' % insName)
+            messages.error(self.request, 'Error with creating the instrument%s')
+            instrument.delete()
             return redirect(self.get_success_url())
 
-        messages.success(self.request, 'Successfully created %s' % insName)
+        messages.success(self.request, 'Successfully created %s')
         return redirect(self.get_success_url())
 
 class CreateObservatory(PermissionRequiredMixin, FormView):
@@ -871,32 +870,38 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
 
     def form_valid(self, form):
 
-        #super().form_valid(form)
+        try:
+            #super().form_valid(form)
 
-        user = self.request.user
-        obsName = form.cleaned_data['obsName']
-        lon = form.cleaned_data['lon']
-        lat = form.cleaned_data['lat']
-        matchDist = form.cleaned_data['matchDist']
+            user = self.request.user
+            obsName = form.cleaned_data['obsName']
+            lon = form.cleaned_data['lon']
+            lat = form.cleaned_data['lat']
+            matchDist = form.cleaned_data['matchDist']
 
-        fits = self.request.FILES.get('fits')
-        obsInfo = self.request.FILES.get('obsInfo')
-        logger.info(fits)
-        observatory = Observatory.objects.create(
-                obsName=obsName,
-                lon=lon,
-                lat=lat,
-                matchDist=matchDist,
-                userActivation=False,
-                prefix=obsName,
-                fits=fits,
-                obsInfo=obsInfo
-        )
+            fits = self.request.FILES.get('fits')
+            obsInfo = self.request.FILES.get('obsInfo')
+            logger.info(fits)
+            observatory = Observatory.objects.create(
+                    obsName=obsName,
+                    lon=lon,
+                    lat=lat,
+                    matchDist=matchDist,
+                    userActivation=False,
+                    prefix=obsName,
+                    fits=fits,
+                    obsInfo=obsInfo
+            )
 
-        observatory.save()
-        logger.info('Send mail')
-        send_mail('Stworzono nowe obserwatorium', 'Stworzono nowe obserwatorium: ' + obsName, settings.EMAIL_HOST_USER,
-                  secret.RECIPIENTEMAIL, fail_silently=False)
+            observatory.save()
+            logger.info('Send mail')
+            send_mail('Stworzono nowe obserwatorium', secret.EMAILTEXT_CREATE_OBSERVATORY + obsName, settings.EMAIL_HOST_USER,
+                      secret.RECIPIENTEMAIL, fail_silently=False)
+        except Exception as e:
+            logger.error('error: ' + str(e))
+            messages.error(self.request, 'Error with creating the instrument%s' % obsName)
+            observatory.delete()
+            return redirect(self.get_success_url())
         messages.success(self.request, 'Successfully created %s' % obsName)
         return redirect(self.get_success_url())
 
@@ -978,7 +983,7 @@ class RegisterUser(CreateView):
         group, _ = Group.objects.get_or_create(name='Public')
         group.user_set.add(self.object)
         group.save()
-        send_mail('Stworzono nowe konto', 'Stworzono nowe konto: ' + self.object.username, settings.EMAIL_HOST_USER,
+        send_mail('Stworzono nowe konto', secret.EMAILTEXT_REGISTEUSER + self.object.username, settings.EMAIL_HOST_USER,
                   secret.RECIPIENTEMAIL, fail_silently=False)
         messages.success(self.request, 'Successfully registered')
         return redirect(self.get_success_url())

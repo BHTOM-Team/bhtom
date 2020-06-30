@@ -23,7 +23,7 @@ class Observatory(models.Model):
 class Instrument(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     observatory_id = models.ForeignKey(Observatory, on_delete=models.CASCADE)
-    insName = models.CharField(max_length=255, verbose_name='Instrument name')
+    insName = models.CharField(max_length=255, verbose_name='Instrument name', null=True, blank=True)
     dry_run = models.BooleanField(verbose_name='Dry Run (no data will be stored in the database)')
     hashtag = models.CharField(max_length=255, editable=True, null=False, blank=False)
 
