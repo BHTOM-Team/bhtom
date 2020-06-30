@@ -1,0 +1,86 @@
+{% extends 'tom_common/base.html' %}
+{% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras publication_extras static cache %}
+{% block title %}Target {{ object.name }}{% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
+{% endblock %}
+{% bootstrap_javascript jquery='True' %}
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <ul class="nav nav-tabs" id="tabs">
+      <li class="nav-item">
+        <span class="nav-link active" data-target="#all" data-toggle="tab">All</span>
+      </li>
+      <li class="nav-item">
+        <span class="nav-link" data-target="#user" data-toggle="tab">User</span>
+      </li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane active" id="all">
+          <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>Activation</th><th>Matching Radius</th>
+              {% if request.user.is_superuser %}
+              <th>Update</th><th>Delete</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for observatory_list in object_list %}
+            <tr>
+              <td>{{ observatory_list.obsName }}</td>
+              <td>{{ observatory_list.lon }}</td>
+              <td>{{ observatory_list.lat }}</td>
+              <td>{% if observatory_list.userActivation %} True {%else%} False{% endif %}</td>
+               <td>{{ observatory_list.matchDist }} arcsec</td>
+              {% if request.user.is_superuser %}
+              <td>
+                <a href="{% url 'observatory_update' pk=observatory_list.id %}" title="Update observatory" class="btn  btn-primary">Edit</a>
+              </td>
+              <td>
+                <a href="{% url 'observatory_delete' pk=observatory_list.id %}" title="Delete observatory" class="btn  btn-danger">Delete</a>
+              </td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="tab-pane" id="user">
+           <a href="{% url 'instrument_create' %}" title="Instrument Create" class="btn btn-outline-primary">Add user observatory</a>
+  <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>Hashtag</th><th>Activation</th>
+              {% if request.user.is_superuser %}
+              <th>Update</th><th>Delete</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for hashtag, observatory in observatory_user_list %}
+            <tr>
+              <td>{{ observatory.obsName }}</td>
+              <td>{{ observatory.lon }}</td>
+              <td>{{ observatory.lat }}</td>
+              <td>{{ hashtag }}</td>
+
+              <td>{% if observatory.userActivation %} True {%else%} False{% endif %}</td>
+              <td>
+                <a href="{% url 'observatory_update' pk=observatory.id %}" title="Update observatory" class="btn  btn-primary">Edit</a>
+              </td>
+              <td>
+                <a href="{% url 'observatory_delete' pk=observatory.id %}" title="Delete observatory" class="btn  btn-danger">Delete</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+  </div>
+</div>
+{% endblock %}
+
