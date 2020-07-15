@@ -23,10 +23,16 @@ body {
   background-Color: black;
   color: white;
 }
+
+.table {
+  color:  white;
+}
+
 .content {
   padding: 3rem 1.5rem;
   background-Color: black;
 }
+
 .navbar-brand > img {
    max-height: 25px;
 }
