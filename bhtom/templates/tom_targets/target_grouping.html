@@ -15,18 +15,16 @@
   <table class="table table-striped">
     <thead>
       <tr>
-        <th>Group</th>
+        <th>Group name</th>
         <th>Total Targets</th>
-        <th>Generate Latex</th>
-        <th>Delete</th>
+        <th>Delete Group</th>
       </tr>
     </thead>
     <tbody>
-     {% for group in object_list %}
+      {% for group in object_list %}
       <tr>
         <td><button type="submit" class="btn btn-link" name="targetlist__name" value="{{group.id}}" title="View Group">{{ group.name }}</button></td>
-        <td valign="middle">{{ group.targets.count }}</td>
-        <td>{% latex_button group %}</td>
+        <td valign="middle">{{ group.targets.count }}</td>        
         <td><a href="{% url 'targets:delete-group' group.id%}" title="Delete Group" class="btn btn-danger">Delete</a></td>
       </tr>
       {% empty %}

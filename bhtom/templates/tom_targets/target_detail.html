@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras publication_extras static cache bhtom_tags %}
+{% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras publication_extras static cache %}
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
@@ -15,9 +15,8 @@
         {{ object.future_observations|length }} upcoming observation{{ object.future_observations|pluralize }}
       </div>
       {% endif %}
-      {% target_buttons object %}
+
       {% target_data object %}
-      {% recent_photometry object limit=3 %}
       {% if object.type == 'SIDEREAL' %}
       {% aladin object %}
       {% endif %}
@@ -89,7 +88,7 @@
       <h5>Comments</h5>
         {% if comments_are_enabled %}
           {% render_comment_list for object %}
-          {% url 'targets:detail' object.id as next %}
+          {% url 'bhlist_detail' object.id as next %}
           {% if user.is_authenticated %}
             {% render_comment_form for object %}
           {% endif %}

@@ -149,11 +149,3 @@ def spectroscopy_for_target(context, target, dataproduct=None):
         'target': target,
         'plot': offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
     }
-
-@register.inclusion_tag('tom_dataproducts/partials/recent_photometry.html')
-def recent_photometry(target, limit=1):
-    """
-    Displays a table of the most recent photometric points for a target.
-    """
-    photometry = ReducedDatum.objects.filter(data_type='photometry').order_by('-timestamp')[:limit]
-    return {'data': [{'timestamp': rd.timestamp, 'magnitude': json.loads(rd.value)['magnitude']} for rd in photometry]}

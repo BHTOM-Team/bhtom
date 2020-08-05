@@ -26,7 +26,7 @@ from rest_framework.response import Response
 from bhtom.models import BHTomFits, Observatory, Instrument
 from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer, BHTomFitsStatusSerializer
 from bhtom.hooks import send_to_cpcs
-from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, InstrumentCreationForm, CustomUserCreationForm
+from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
 
 from django.http import HttpResponseServerError
 from django.views.generic.edit import FormView, DeleteView
@@ -812,19 +812,21 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
         user = self.request.user
         dry_run = form.cleaned_data['dryRun']
         observatoryID = form.cleaned_data['observatory']
+        hashtag = form.cleaned_data['hashtag']
 
         try:
             instrument = Instrument.objects.create(
                     dry_run=dry_run,
                     user_id=user,
                     observatory_id=observatoryID,
+                    hashtag=hashtag
                 )
-            instrument.save()
+            #instrument.save()
             observatory = Observatory.objects.get(id=observatoryID.id)
 
             if (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits == None or observatory.fits == ''): #tylko obsInfo wysylamy maila
                 logger.info('Send mail')
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + user, settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(user), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             elif (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits != None or observatory.fits != '') : #procesujemy fitsa
 
                 '''dp = DataProduct(
@@ -836,23 +838,62 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
                 dp.save()
                 run_hook('data_product_post_upload', dp, instrument, 'No', None, None, 1, 2)'''
                 logger.info('Send mail')
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + instrument.insName, settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(instrument.insName), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             elif (observatory.obsInfo == None or observatory.obsInfo == '') and (observatory.fits != None or observatory.fits != ''):
-                logger.info('Send mail')
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + instrument.insName, settings.EMAIL_HOST_USER,
+                logger.info('Send mai')
+                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(instrument.insName), settings.EMAIL_HOST_USER,
                           secret.RECIPIENTEMAIL, fail_silently=False)
             elif (observatory.obsInfo == None or observatory.obsInfo == '') and (
                     observatory.fits == None or observatory.fits == ''):
                 logger.info('Send mail')
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + instrument.insName, settings.EMAIL_HOST_USER,
+                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(instrument.insName), settings.EMAIL_HOST_USER,
                           secret.RECIPIENTEMAIL, fail_silently=False)
         except Exception as e:
             logger.error('error: ' + str(e))
-            messages.error(self.request, 'Error with creating the instrument%s')
+            messages.error(self.request, 'Error with creating the instrument')
             instrument.delete()
             return redirect(self.get_success_url())
 
-        messages.success(self.request, 'Successfully created %s')
+        messages.success(self.request, 'Successfully created')
+        return redirect(self.get_success_url())
+
+class DeleteInstrument(PermissionRequiredMixin, DeleteView):
+
+    permission_required = 'bhtom.delete_instrument'
+    success_url = reverse_lazy('observatory')
+    model = Instrument
+    template_name = 'tom_common/instrument_delete.html'
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def get_object(self, queryset=None):
+        obj = super(DeleteInstrument, self).get_object()
+        return obj
+
+    @transaction.atomic
+    def form_valid(self, form):
+        super().form_valid(form)
+        messages.success(self.request, 'Successfully delete')
+        return redirect(self.get_success_url())
+
+class UpdateInstrument(PermissionRequiredMixin, UpdateView):
+
+    permission_required = 'bhtom.change_instrument'
+    template_name = 'tom_common/instrument_create.html'
+    form_class = InstrumentUpdateForm
+    success_url = reverse_lazy('observatory')
+    model = Instrument
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    @transaction.atomic
+    def form_valid(self, form):
+        super().form_valid(form)
+        messages.success(self.request, 'Successfully updated')
         return redirect(self.get_success_url())
 
 class CreateObservatory(PermissionRequiredMixin, FormView):
@@ -895,7 +936,7 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
 
             observatory.save()
             logger.info('Send mail')
-            send_mail('Stworzono nowe obserwatorium', secret.EMAILTEXT_CREATE_OBSERVATORY + obsName, settings.EMAIL_HOST_USER,
+            send_mail('Stworzono nowe obserwatorium', secret.EMAILTEXT_CREATE_OBSERVATORY + str(obsName), settings.EMAIL_HOST_USER,
                       secret.RECIPIENTEMAIL, fail_silently=False)
         except Exception as e:
             logger.error('error: ' + str(e))
@@ -923,7 +964,7 @@ class ObservatoryList(PermissionRequiredMixin, ListView):
 
         observatory_user_list = []
         for ins in instrument:
-            observatory_user_list.append([ins.hashtag, Observatory.objects.get(id=ins.observatory_id.id)])
+            observatory_user_list.append([ins.id, ins.hashtag, Observatory.objects.get(id=ins.observatory_id.id)])
 
         context['observatory_list'] = Observatory.objects.all()
         context['observatory_user_list'] = observatory_user_list
@@ -963,6 +1004,12 @@ class DeleteObservatory(PermissionRequiredMixin, DeleteView):
 
         obj = super(DeleteObservatory, self).get_object()
         return obj
+
+    @transaction.atomic
+    def form_valid(self, form):
+        super().form_valid(form)
+        messages.success(self.request, 'Successfully delete')
+        return redirect(self.get_success_url())
 
 class RegisterUser(CreateView):
     """

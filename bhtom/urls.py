@@ -26,9 +26,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework import routers, permissions
 from bhtom import views
-from bhtom.views import DataProductUploadView, TargetDetailView, CreateObservatory, ObservatoryList, TargetFileDetailView
-from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView, TargetFileView, UpdateObservatory, DeleteObservatory
-from bhtom.views import CreateInstrument
+from bhtom.views import DataProductUploadView, TargetDetailView, TargetFileDetailView
+from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView, TargetFileView
+from bhtom.views import DeleteObservatory, UpdateObservatory, ObservatoryList, CreateObservatory
+from bhtom.views import DeleteInstrument, UpdateInstrument, CreateInstrument
 from bhtom.views import RegisterUser
 router = routers.DefaultRouter()
 router.register('upload', views.fits_upload)
@@ -51,6 +52,8 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('dataUpload/', DataProductUploadView.as_view(), name='data_upload'),
     path('instrument/create/', CreateInstrument.as_view(), name='instrument_create'),
+    path('instrument/<pk>/delete/', DeleteInstrument.as_view(), name='instrument_delete'),
+    path('instrument/<int:pk>/update/', UpdateInstrument.as_view(), name='instrument_update'),
     path('observatory/create/', CreateObservatory.as_view(), name='observatory_create'),
     path('observatory/<int:pk>/update/', UpdateObservatory.as_view(), name='observatory_update'),
     path('observatory/<pk>/delete/', DeleteObservatory.as_view(), name='observatory_delete'),

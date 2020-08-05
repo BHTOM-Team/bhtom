@@ -3,6 +3,7 @@
 {% block title %}Create observatory{% endblock %}
 {% block content %}
 {{ users }}
+
 {% if object %}
 <form action="{% url 'observatory_update' object.id %}" enctype="multipart/form-data" method="POST">
 {% else %}
