@@ -63,7 +63,7 @@
       </div>
       <div class="tab-pane" id="observations">
         <h4>Observations</h4>
-        <a href="{% url 'targets:detail' pk=target.id %}?update_status=True" title="Update status of observations for target" class="btn btn-primary">Update Observations Status</a>
+        <a href="{% url 'bhlist_detail' pk=target.id %}?update_status=True" title="Update status of observations for target" class="btn btn-primary">Update Observations Status</a>
         {% observation_list object %}
       </div>
       <div class="tab-pane" id="upload">
@@ -88,7 +88,7 @@
       <h5>Comments</h5>
         {% if comments_are_enabled %}
           {% render_comment_list for object %}
-          {% url 'targets:detail' object.id as next %}
+          {% url 'bhlist_detail' object.id as next %}
           {% if user.is_authenticated %}
             {% render_comment_form for object %}
           {% endif %}
