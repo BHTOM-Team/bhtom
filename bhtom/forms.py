@@ -126,6 +126,12 @@ class ObservatoryCreationForm(forms.ModelForm):
         model = Observatory
         fields = ('obsName', 'lon', 'lat', 'matchDist', 'fits', 'obsInfo')
 
+class InstrumentUpdateForm(forms.ModelForm):
+
+    class Meta:
+        model = Instrument
+        fields = ('hashtag', 'dry_run')
+
 class InstrumentCreationForm(forms.Form):
 
 
@@ -143,7 +149,7 @@ class InstrumentCreationForm(forms.Form):
 
             queryset=Observatory.objects.exclude(id__in=insTab),
             widget=forms.Select(),
-            required=False
+            required=True
         )
 
 

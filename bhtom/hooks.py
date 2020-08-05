@@ -126,11 +126,11 @@ def send_to_cpcs(result, fits, eventID):
 @receiver(pre_save, sender=Instrument)
 def create_cpcs_user_profile(sender, instance, **kwargs):
 
-    logger.info('Create_cpcs_user')
     url_cpcs = secret.CPCS_URL + 'newuser'
 
     if instance.hashtag == None or instance.hashtag == '':
         try:
+            logger.info('Create_cpcs_user')
             observatory = Observatory.objects.get(id=instance.observatory_id.id)
             response = requests.post(url_cpcs,
                                        {'obsName': instance.insName, 'lon': observatory.lon, 'lat': observatory.lat,
@@ -140,7 +140,7 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
             if response.status_code == 200:
                 instance.hashtag = response.content.decode('utf-8').split(': ')[1]
                 logger.info('Send mail')
-                send_mail('Wygenerowano hastag', secret.EMAILTEXT_CREATE_HASTAG + instance.insName, settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+                send_mail('Wygenerowano hastag', secret.EMAILTEXT_CREATE_HASTAG + str(instance.insName), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             else:
                 raise Exception(response.content.decode('utf-8')) from None
 
@@ -148,6 +148,8 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
              logger.error('error: ' + str(e))
              return None
              #raise Exception(str(e)) from None
+    else:
+        logger.info('Hastag exist: ' + instance.hashtag)
 
 def target_post_save(target, created):
     logger.info('Target post save hook: %s created: %s', target, created)
