@@ -47,7 +47,9 @@ def data_product_post_upload(dp, instrument, observation_filter, MJD, expTime, a
                                                     filter=observation_filter, allow_upload=dry_run, matchDist=matching_radius,
                                                     )
 
-                response = requests.post(secret.CCDPHOTD_URL,  {'job_id': instance.file_id, 'instrument': observatory.obsName, 'instrument_prefix': observatory.prefix}, files={'fits_file': file})
+                response = requests.post(secret.CCDPHOTD_URL,  {'job_id': instance.file_id, 'instrument': observatory.obsName,
+                                                                'webhook_id': secret.CCDPHOTD_WEBHOOK_ID,
+                                                                'instrument_prefix': observatory.prefix}, files={'fits_file': file})
                 if response.status_code == 201:
                     instance.status = 'S'
                     instance.status_message = 'Sent to photometry'
