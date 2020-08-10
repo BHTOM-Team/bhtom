@@ -34,6 +34,7 @@ try:
     TOMEMAIL = secret.TOMEMAIL
     TOMEMAILPASSWORD = secret.TOMEMAILPASSWORD
     SNEXBOT_APIKEY =  secret.TNSBOT_APIKEY
+    black_tom_DB_NAME = secret.black_tom_DB_NAME
     black_tom_DB_USER = secret.black_tom_DB_USER
     black_tom_DB_PASSWORD = secret.black_tom_DB_PASSWORD
     CPCS_DATA_ACCESS_HASHTAG = secret.CPCS_DATA_ACCESS_HASHTAG
@@ -58,6 +59,7 @@ except:
     TOMEMAILPASSWORD = os.environ['TOMEMAILPASSWORD']
     #tns harvester reads it too, but SNEXBOT api key still needed - FIX?
     SNEXBOT_APIKEY =  os.environ['TNSBOT_APIKEY']
+    black_tom_DB_NAME = os.environ['black_tom_DB_NAME']
     black_tom_DB_USER = os.environ['black_tom_DB_USER']
     black_tom_DB_PASSWORD = os.environ['black_tom_DB_PASSWORD']
     CPCS_DATA_ACCESS_HASHTAG = os.environ['CPCS_DATA_ACCESS_HASHTAG']
@@ -166,7 +168,7 @@ if black_tom_DB_BACKEND == 'postgres':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'blacktom',
+            'NAME': black_tom_DB_NAME,
             'USER': black_tom_DB_USER,
             'PASSWORD': black_tom_DB_PASSWORD,
             'HOST': 'localhost',
