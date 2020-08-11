@@ -114,7 +114,7 @@ class DataProductUploadForm(forms.Form):
 
         self.fields['observatory'] = ObservatoryChoiceField(
 
-            queryset=Observatory.objects.filter(id__in=insTab),
+            queryset=Observatory.objects.filter(id__in=insTab, userActivation=True),
             widget=forms.Select(),
             required=True
         )
