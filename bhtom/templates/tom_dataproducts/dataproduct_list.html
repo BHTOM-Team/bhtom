@@ -48,7 +48,7 @@
         {% else %}
           <td></td>
         {% endif %}
-        <td><div title="{{Photometry}}"><a href="{{ PhotometryUrl }}">{{ Photometry|truncatechars:15 }}</a></div></td>
+        <td><div title="{{Photometry}}"><a href="/data/{{ PhotometryUrl }}">{{ Photometry|truncatechars:15 }}</a></div></td>
 
        {% if type == 'fits_file' %}
           <td><div title="Fits image">Fits image</div></td>

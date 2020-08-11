@@ -448,13 +448,21 @@ class TargetFileView(PermissionRequiredMixin, ListView):
         for fit in fits:
             try:
                 data_product = DataProduct.objects.get(id=fit.dataproduct_id)
-                ccdphot_url = "/".join(["/data", target_name, "photometry", str(fit.photometry_file)])
                 instrument = Instrument.objects.get(id=fit.instrument_id.id)
 
+                if fit.filter == 'no':
+                    filter = 'Auto'
+                else:
+                    filter = fit.filter
+                if data_product.data_product_type == 'photometry_cpcs':
+                    ccdphot_url = format(data_product.data)
+                    logger.error(ccdphot_url)
+                else:
+                    ccdphot_url = "/".join([target_name, "photometry", str(fit.photometry_file)])
                 tabFits.append([fit.file_id, fit.start_time,
                                 format(data_product.data), format(data_product.data).split('/')[-1],
                                 ccdphot_url, format(fit.photometry_file).split('/')[-1],
-                                fit.filter, Observatory.objects.get(id=instrument.observatory_id.id).obsName,
+                                filter, Observatory.objects.get(id=instrument.observatory_id.id).obsName,
                                 fit.status_message, fit.mjd, fit.expTime,
                                 DataProduct.objects.get(id=fit.dataproduct_id).data_product_type])
 
@@ -497,16 +505,30 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
 
         try:
             data_product = DataProduct.objects.get(id=fits.dataproduct_id)
-            ccdphot_url = "/".join(["/data", target.name, "photometry", str(fits.photometry_file)])
-            tabFits['fits_url'] = format(data_product.data)
-            tabFits['fits'] = format(data_product.data).split('/')[-1]
-            tabFits['ccdphot_url'] = ccdphot_url
-            tabFits['ccdphot'] = format(fits.photometry_file)
+
+            if data_product.data_product_type == 'photometry_cpcs':
+
+                tabFits['ccdphot_url'] = format(data_product.data)
+                tabFits['ccdphot'] = format(data_product.data).split('/')[-1]
+            else:
+
+                tabFits['fits_url'] = format(data_product.data)
+                tabFits['fits'] = format(data_product.data).split('/')[-1]
+                if fits.photometry_file != '':
+                    ccdphot_url = "/".join(["/data", target.name, "photometry", str(fits.photometry_file)])
+                    tabFits['ccdphot_url'] = format(ccdphot_url.photometry_file)
+                    tabFits['ccdphot'] = format(ccdphot_url.photometry_file).split('/')[-1]
+
+            if fits.filter == 'no':
+                filter = 'Auto'
+            else:
+                filter = fits.filter
         except Exception as e:
             logger.error('error: ' + str(e))
 
         context['target'] = target
         context['fits'] = fits
+        context['filter'] = filter
         context['Observatory'] = observatory
         context['data_product'] = data_product
         context['tabFits'] = tabFits
@@ -699,7 +721,7 @@ class DataProductUploadView(FormView):
             observation_record = None
         dp_type = form.cleaned_data['data_product_type']
         data_product_files = self.request.FILES.getlist('files')
-        instrument = form.cleaned_data['instrument']
+        observatory = form.cleaned_data['observatory']
         observation_filter = form.cleaned_data['filter']
         MJD = form.cleaned_data['MJD']
         ExpTime = form.cleaned_data['ExpTime']
@@ -717,7 +739,7 @@ class DataProductUploadView(FormView):
             )
             dp.save()
             try:
-                run_hook('data_product_post_upload', dp, instrument, observation_filter, MJD, ExpTime, dryRun, matchDist)
+                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun, matchDist)
 
                 if dp.data_product_type == 'photometry':
                     run_data_processor(dp)
@@ -940,7 +962,7 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
                       secret.RECIPIENTEMAIL, fail_silently=False)
         except Exception as e:
             logger.error('error: ' + str(e))
-            messages.error(self.request, 'Error with creating the instrument%s' % obsName)
+            messages.error(self.request, 'Error with creating the instrument %s' % obsName)
             observatory.delete()
             return redirect(self.get_success_url())
         messages.success(self.request, 'Successfully created %s' % obsName)

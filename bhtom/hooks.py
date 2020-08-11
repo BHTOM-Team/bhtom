@@ -19,13 +19,15 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-def data_product_post_upload(dp, instrument, observation_filter, MJD, expTime, allow_upload, matchDist):
+def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, allow_upload, matchDist):
 
     url = 'data/' + format(dp)
     logger.info('Running post upload hook for DataProduct: {}'.format(url))
 
-    if instrument != None:
-        observatory = Observatory.objects.get(id=instrument.observatory_id.id)
+    if observatory != None:
+
+        observatory = Observatory.objects.get(id=observatory.id)
+        instrument = Instrument.objects.get(observatory_id=observatory.id)
 
         if matchDist != '0':
             matching_radius = matchDist
@@ -37,7 +39,7 @@ def data_product_post_upload(dp, instrument, observation_filter, MJD, expTime, a
         else:
             dry_run = allow_upload
 
-    if dp.data_product_type == 'fits_file' and instrument != None:
+    if dp.data_product_type == 'fits_file' and observatory != None:
 
         with open(url, 'rb') as file:
             #fits_id = uuid.uuid4().hex
@@ -65,7 +67,7 @@ def data_product_post_upload(dp, instrument, observation_filter, MJD, expTime, a
                 logger.error('error: ' + str(e))
                 instance.delete()
                 raise Exception(str(e))
-    if dp.data_product_type == 'photometry_cpcs' and instrument != None and MJD != None and expTime != None:
+    if dp.data_product_type == 'photometry_cpcs' and observatory != None and MJD != None and expTime != None:
 
         target = Target.objects.get(id=dp.target_id)
         try:
