@@ -49,8 +49,8 @@
         </table>
       </div>
       <div class="tab-pane" id="user">
-           <a href="{% url 'instrument_create' %}" title="Instrument Create" class="btn btn-outline-primary">Add user observatory</a>
-  <table class="table table-striped">
+           <a href="{% url 'instrument_create' %}" title="Create User observatory" class="btn btn-outline-primary">Add user observatory</a>
+        <table class="table table-striped">
           <thead>
             <tr>
               <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>Hashtag</th><th>Activation</th>
@@ -60,7 +60,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for hashtag, observatory in observatory_user_list %}
+            {% for instrument_id, hashtag, observatory in observatory_user_list %}
             <tr>
               <td>{{ observatory.obsName }}</td>
               <td>{{ observatory.lon }}</td>
@@ -69,10 +69,10 @@
 
               <td>{% if observatory.userActivation %} True {%else%} False{% endif %}</td>
               <td>
-                <a href="{% url 'observatory_update' pk=observatory.id %}" title="Update observatory" class="btn  btn-primary">Edit</a>
+                <a href="{% url 'instrument_update' pk=instrument_id %}" title="Update User observatory" class="btn  btn-primary">Edit</a>
               </td>
               <td>
-                <a href="{% url 'observatory_delete' pk=observatory.id %}" title="Delete observatory" class="btn  btn-danger">Delete</a>
+                <a href="{% url 'instrument_delete' pk=instrument_id %}" title="Delete User observatory" class="btn  btn-danger">Delete</a>
               </td>
             </tr>
             {% endfor %}
@@ -83,4 +83,3 @@
   </div>
 </div>
 {% endblock %}
-

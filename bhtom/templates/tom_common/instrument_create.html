@@ -3,8 +3,9 @@
 {% block title %}Create observatory{% endblock %}
 {% block content %}
 {{ users }}
+
 {% if object %}
-<form action="{% url 'observatory_update' object.id %}" enctype="multipart/form-data" method="POST">
+<form action="{% url 'instrument_update' object.id %}" enctype="multipart/form-data" method="POST">
 {% else %}
   <p> Create your new User Observatory.
 
@@ -13,15 +14,13 @@
 {% csrf_token %}
 {% bootstrap_form form %}
 {% buttons %}
-<a href="{% url 'observatory_create' %}" title="Observatory Create" class="btn btn-primary">Add Observatory</a>
-  <button type="submit" class="btn btn-primary">
+  {% if object %}
+    <button type="submit" class="btn btn-primary" title="Update">Update</button>
+  {% else %}
+    <a href="{% url 'observatory_create' %}" title="Add Observatory" class="btn btn-primary">Add Observatory</a>
+    <button type="submit" class="btn btn-primary" title="Create Observatory"> Create Observatory</button>
+  {% endif %}
 
-    {% if object %}
-    Update
-    {% else %}
-    Create Observatory
-    {% endif %}
-  </button>
 {% endbuttons %}
 </form>
 {% endblock %}
