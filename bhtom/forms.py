@@ -106,14 +106,20 @@ class DataProductUploadForm(forms.Form):
 
         super(DataProductUploadForm, self).__init__(*args, **kwargs)
 
-        self.fields['instrument'] = InstrumentChoiceField(
+        instrument = Instrument.objects.filter(user_id=user)
+        insTab = []
 
-                queryset=Instrument.objects.filter(user_id=user), #, userActivation=True
-                widget=forms.Select(),
-                required=False
+        for ins in instrument:
+            insTab.append(ins.observatory_id.id)
+
+        self.fields['observatory'] = ObservatoryChoiceField(
+
+            queryset=Observatory.objects.filter(id__in=insTab, userActivation=True),
+            widget=forms.Select(),
+            required=True
         )
 
-        self.fields['filter']=forms.ChoiceField(
+        self.fields['filter'] = forms.ChoiceField(
                 choices=[v for v in filter.items()],
                 widget=forms.Select(),
                 required=False,
