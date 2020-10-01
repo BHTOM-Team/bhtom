@@ -159,7 +159,7 @@ TEMPLATES = [
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 WSGI_APPLICATION = 'settings.wsgi.application'
-black_tom_DB_BACKEND = 'sqlite3'
+black_tom_DB_BACKEND = 'postgres'
 
 
 # Database
