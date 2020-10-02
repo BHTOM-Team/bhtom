@@ -23,7 +23,7 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from bhtom.models import BHTomFits, Observatory, Instrument
+from bhtom.models import BHTomFits, Observatory, Instrument, Comments
 from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer, BHTomFitsStatusSerializer
 from bhtom.hooks import send_to_cpcs
 from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
@@ -727,6 +727,7 @@ class DataProductUploadView(FormView):
         ExpTime = form.cleaned_data['ExpTime']
         matchDist = form.cleaned_data['matchDist']
         dryRun = form.cleaned_data['dryRun']
+        comments = form.cleaned_data['comments']
 
         successful_uploads = []
         for f in data_product_files:
@@ -738,6 +739,12 @@ class DataProductUploadView(FormView):
                 data_product_type=dp_type
             )
             dp.save()
+            if len(comments) > 0:
+                comments = Comments(
+                    dataproduct_id=dp.id,
+                    comments=comments,
+                )
+            comments.save()
             try:
                 run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun, matchDist)
 
@@ -747,6 +754,7 @@ class DataProductUploadView(FormView):
                 successful_uploads.append(str(dp))
             except InvalidFileFormatException as iffe:
                 ReducedDatum.objects.filter(data_product=dp).delete()
+                comments.delete()
                 dp.delete()
                 messages.error(
                     self.request,
@@ -754,6 +762,7 @@ class DataProductUploadView(FormView):
                 )
             except Exception as e:
                 ReducedDatum.objects.filter(data_product=dp).delete()
+                comments.delete()
                 dp.delete()
                 messages.error(self.request, 'There was a problem processing your file: {0}'.format(str(dp)))
         if successful_uploads:

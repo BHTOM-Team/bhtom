@@ -74,5 +74,7 @@ class Catalogs(models.Model):
     name = models.TextField(blank=False, editable=False)
     filters = ArrayField(models.CharField(max_length=10))
 
-
-
+class Comments(models.Model):
+    comments_id = models.AutoField(db_index=True, primary_key=True)
+    dataproduct_id = models.IntegerField(null=False, blank=False)
+    comments = models.TextField()

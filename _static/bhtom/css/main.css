@@ -44,3 +44,6 @@ td.orange {
 td.green {
   background-Color: green;
 }
+.table-hover tbody tr:hover {
+    color: white!important;
+}

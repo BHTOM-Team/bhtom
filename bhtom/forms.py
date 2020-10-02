@@ -60,13 +60,14 @@ class DataProductUploadForm(forms.Form):
 
     data_product_type = forms.ChoiceField(
         choices=[v for k, v in settings.DATA_PRODUCT_TYPES.items()],
+        initial='photometry_cpcs',
         widget=forms.RadioSelect(attrs={'onclick' : "dataProductSelect();"}),
         required=True
     )
 
     MJD = forms.DecimalField(
         label="MJD OBS",
-        widget=forms.NumberInput(attrs={'id': 'mjd'}),
+        widget=forms.NumberInput(attrs={'id': 'mjd', 'disable': 'none'}),
         required=False
     )
 
@@ -116,14 +117,20 @@ class DataProductUploadForm(forms.Form):
 
             queryset=Observatory.objects.filter(id__in=insTab, userActivation=True),
             widget=forms.Select(),
-            required=True
+            required=False
         )
 
         self.fields['filter'] = forms.ChoiceField(
-                choices=[v for v in filter.items()],
-                widget=forms.Select(),
-                required=False,
-                label='Force filter'
+            choices=[v for v in filter.items()],
+            widget=forms.Select(),
+            required=False,
+            label='Force filter'
+        )
+
+        self.fields['comments'] = forms.CharField(
+            widget=forms.Textarea,
+            required=False,
+            label='Comments',
         )
 
 class ObservatoryCreationForm(forms.ModelForm):

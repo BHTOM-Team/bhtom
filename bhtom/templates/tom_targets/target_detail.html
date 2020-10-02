@@ -83,16 +83,7 @@
        <div class="tab-pane" id="data">
         {% dataproduct_list_for_target object %}
       </div>
-      {% comments_enabled as comments_are_enabled %}
-      <hr/>
-      <h5>Comments</h5>
-        {% if comments_are_enabled %}
-          {% render_comment_list for object %}
-          {% url 'bhlist_detail' object.id as next %}
-          {% if user.is_authenticated %}
-            {% render_comment_form for object %}
-          {% endif %}
-        {% endif %}
+
     </div>
   </div>
 </div>
