@@ -47,7 +47,7 @@
       </li>
     </ul>
     <div class="tab-content">
-      <div class="tab-pane active" id="observe">
+      <div class="tab-pane" id="observe">
         <h4>Observe</h4>
         {% observing_buttons object %}
         <hr/>
@@ -74,7 +74,7 @@
       <div class="tab-pane" id="manage-groups">
         {% target_groups target %}
       </div>
-      <div class="tab-pane" id="photometry">
+      <div class="tab-pane active" id="photometry">
         {% photometry_for_target target %}
         </div>
       <div class="tab-pane" id="spectroscopy">

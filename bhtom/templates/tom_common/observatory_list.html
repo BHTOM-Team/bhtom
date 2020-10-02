@@ -6,6 +6,20 @@
 {% endblock %}
 {% bootstrap_javascript jquery='True' %}
 {% block content %}
+<h4>List of observatories</h4>
+<p>
+List of your registered observatories/instruments you can use for uploading the data for processing. 
+You should register an observatory in your account if you want a datapoint to be labeled with your name.
+<br>
+Here you can add a new observatory to your list if you are planning to upload images or instrumental photometry for it.
+You can choose one from the list of already registered observatories, or create a new one. 
+Note that different instrument (e.g. CCD) on the same telescope counts as a different observatory.
+<br>
+CPCS Hashtags are your unique login details per observatory, which can be used in 
+the <a href="http://gsaweb.ast.cam.ac.uk/followup/">Cambridge Photometric Calibration Server</a>.
+However, you can also upload your data to the CPCS directly from BHTOM instead.
+</p>
+
 <div class="row">
   <div class="col-md-12">
     <ul class="nav nav-tabs" id="tabs">
@@ -13,7 +27,7 @@
         <span class="nav-link active" data-target="#all" data-toggle="tab">All</span>
       </li>
       <li class="nav-item">
-        <span class="nav-link" data-target="#user" data-toggle="tab">User</span>
+        <span class="nav-link active" data-target="#user" data-toggle="tab">My Observatories</span>
       </li>
     </ul>
     <div class="tab-content">
@@ -23,7 +37,7 @@
             <tr>
               <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>Activation</th><th>Matching Radius</th>
               {% if request.user.is_superuser %}
-              <th>Update</th><th>Delete</th>
+              <th>CPCS Hashtag</th><th>Update</th><th>Delete</th>
               {% endif %}
             </tr>
           </thead>
@@ -36,6 +50,7 @@
               <td>{% if observatory_list.userActivation %} True {%else%} False{% endif %}</td>
                <td>{{ observatory_list.matchDist }} arcsec</td>
               {% if request.user.is_superuser %}
+              <td>{{ observatory_list.hashtag }}</td>
               <td>
                 <a href="{% url 'observatory_update' pk=observatory_list.id %}" title="Update observatory" class="btn  btn-primary">Edit</a>
               </td>
@@ -49,11 +64,11 @@
         </table>
       </div>
       <div class="tab-pane" id="user">
-           <a href="{% url 'instrument_create' %}" title="Create User observatory" class="btn btn-outline-primary">Add user observatory</a>
+           <a href="{% url 'instrument_create' %}" title="Create User observatory" class="btn btn-outline-primary">Add new observatory</a>
         <table class="table table-striped">
           <thead>
             <tr>
-              <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>Hashtag</th><th>Activation</th>
+              <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>CPCS Hashtag</th><th>Activation</th>
               {% if request.user.is_superuser %}
               <th>Update</th><th>Delete</th>
               {% endif %}
