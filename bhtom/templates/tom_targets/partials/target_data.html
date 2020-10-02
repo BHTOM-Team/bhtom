@@ -27,11 +27,9 @@
   {% endfor %}
 </dl>
 <dl class="row">
-{% for key, value in extras.items %}
-  {% if key in display_extras %}
+{% for key, value in target.extras.items %}
     <dt class="col-sm-6">{{ key }}</dt>
     <dd class="col-sm-6">{{ value }}</dd>
-  {% endif %}
 {% endfor %}
 </dl>
 <h4>Tags</h4>

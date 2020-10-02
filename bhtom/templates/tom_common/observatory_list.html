@@ -24,14 +24,14 @@ However, you can also upload your data to the CPCS directly from BHTOM instead.
   <div class="col-md-12">
     <ul class="nav nav-tabs" id="tabs">
       <li class="nav-item">
-        <span class="nav-link active" data-target="#all" data-toggle="tab">All</span>
+        <span class="nav-link" data-target="#all" data-toggle="tab">All</span>
       </li>
       <li class="nav-item">
         <span class="nav-link active" data-target="#user" data-toggle="tab">My Observatories</span>
       </li>
     </ul>
     <div class="tab-content">
-      <div class="tab-pane active" id="all">
+      <div class="tab-pane" id="all">
           <table class="table table-striped">
           <thead>
             <tr>
@@ -63,7 +63,7 @@ However, you can also upload your data to the CPCS directly from BHTOM instead.
           </tbody>
         </table>
       </div>
-      <div class="tab-pane" id="user">
+      <div class="tab-pane active" id="user">
            <a href="{% url 'instrument_create' %}" title="Create User observatory" class="btn btn-outline-primary">Add new observatory</a>
         <table class="table table-striped">
           <thead>
