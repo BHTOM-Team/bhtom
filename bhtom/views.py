@@ -841,16 +841,12 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
     def form_valid(self, form):
 
         user = self.request.user
-        dry_run = form.cleaned_data['dryRun']
         observatoryID = form.cleaned_data['observatory']
-        hashtag = form.cleaned_data['hashtag']
 
         try:
             instrument = Instrument.objects.create(
-                    dry_run=dry_run,
                     user_id=user,
                     observatory_id=observatoryID,
-                    hashtag=hashtag
                 )
             #instrument.save()
             observatory = Observatory.objects.get(id=observatoryID.id)

@@ -45,7 +45,10 @@ try:
     LT_PROPOSAL_USER = secret.LT_PROPOSAL_USER
     LT_PROPOSAL_PASS = secret.LT_PROPOSAL_PASS
     LT_PROPOSAL_HOST = secret.LT_PROPOSAL_HOST
-    LT_PROPOSAL_PORT = secret.LT_PROPOSAL_PORT    
+    LT_PROPOSAL_PORT = secret.LT_PROPOSAL_PORT
+    RECAPTCHA_PUBLIC_KEY = secret.RECAPTCHA_PUBLIC_KEY
+    RECAPTCHA_PRIVATE_KEY = secret.RECAPTCHA_PRIVATE_KEY
+
 except:
     LCO_APIKEY = os.environ['LCO_APIKEY']
     SECRET_KEY = os.environ['SECRET_KEY']
@@ -122,6 +125,7 @@ INSTALLED_APPS = [
     'datatools',
     'rest_framework',
     'tom_publications',
+    'captcha',
 ]
 
 SITE_ID = 2

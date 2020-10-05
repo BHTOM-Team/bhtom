@@ -7,6 +7,8 @@ from bhtom.models import Observatory, Instrument, Catalogs
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import UserCreationForm, UsernameField
 
+from captcha.fields import ReCaptchaField
+
 import logging
 logger = logging.getLogger(__name__)
 class InstrumentChoiceField(forms.ModelChoiceField):
@@ -165,26 +167,17 @@ class InstrumentCreationForm(forms.Form):
             required=True
         )
 
-
-    hashtag = forms.CharField(
-        label='hashtag',
-        required=False
-    )
-
-    dryRun = forms.BooleanField(
-        label='Dry Run (no data will be stored in the database)',
-        required=False
-    )
-
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
     groups = forms.ModelMultipleChoiceField(Group.objects.all().exclude(name='Public'),
                                             required=False, widget=forms.CheckboxSelectMultiple)
+    captcha = ReCaptchaField()
 
     class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'groups')
         field_classes = {'username': UsernameField}
+
 
     def save(self, commit=True):
         user = super(forms.ModelForm, self).save(commit=False)
