@@ -23,10 +23,11 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from bhtom.models import BHTomFits, Observatory, Instrument, Comments
+from bhtom.models import BHTomFits, Observatory, Instrument
 from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer, BHTomFitsStatusSerializer
 from bhtom.hooks import send_to_cpcs
-from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
+from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
+from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
 
 from django.http import HttpResponseServerError
 from django.views.generic.edit import FormView, DeleteView
@@ -727,7 +728,11 @@ class DataProductUploadView(FormView):
         ExpTime = form.cleaned_data['ExpTime']
         matchDist = form.cleaned_data['matchDist']
         dryRun = form.cleaned_data['dryRun']
-        comments = form.cleaned_data['comments']
+        comment = form.cleaned_data['comment']
+
+        if dp_type =='fits_file' and observatory.cpcsOnly == True:
+            messages.error(self.request, 'Used Observatory without ObsInfo')
+            return redirect(form.cleaned_data.get('referrer', '/'))
 
         successful_uploads = []
         for f in data_product_files:
@@ -739,14 +744,9 @@ class DataProductUploadView(FormView):
                 data_product_type=dp_type
             )
             dp.save()
-            if len(comments) > 0:
-                comments = Comments(
-                    dataproduct_id=dp.id,
-                    comments=comments,
-                )
-            comments.save()
+
             try:
-                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun, matchDist)
+                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun, matchDist, comment)
 
                 if dp.data_product_type == 'photometry':
                     run_data_processor(dp)
@@ -754,7 +754,6 @@ class DataProductUploadView(FormView):
                 successful_uploads.append(str(dp))
             except InvalidFileFormatException as iffe:
                 ReducedDatum.objects.filter(data_product=dp).delete()
-                comments.delete()
                 dp.delete()
                 messages.error(
                     self.request,
@@ -762,7 +761,6 @@ class DataProductUploadView(FormView):
                 )
             except Exception as e:
                 ReducedDatum.objects.filter(data_product=dp).delete()
-                comments.delete()
                 dp.delete()
                 messages.error(self.request, 'There was a problem processing your file: {0}'.format(str(dp)))
         if successful_uploads:
@@ -842,17 +840,22 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
 
         user = self.request.user
         observatoryID = form.cleaned_data['observatory']
+        insName = form.cleaned_data['insName']
+        comment = form.cleaned_data['comment']
 
         try:
             instrument = Instrument.objects.create(
                     user_id=user,
                     observatory_id=observatoryID,
+                    insName=insName,
+                    isActive=True,
+                    comment=comment
                 )
             #instrument.save()
             observatory = Observatory.objects.get(id=observatoryID.id)
 
             if (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits == None or observatory.fits == ''): #tylko obsInfo wysylamy maila
-                logger.info('Send mail')
+                logger.info('Send mail, ' + insName)
                 send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(user), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             elif (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits != None or observatory.fits != '') : #procesujemy fitsa
 
@@ -867,12 +870,12 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
                 logger.info('Send mail')
                 send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(instrument.insName), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             elif (observatory.obsInfo == None or observatory.obsInfo == '') and (observatory.fits != None or observatory.fits != ''):
-                logger.info('Send mai')
+                logger.info('Send mai, ' + insName)
                 send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(instrument.insName), settings.EMAIL_HOST_USER,
                           secret.RECIPIENTEMAIL, fail_silently=False)
             elif (observatory.obsInfo == None or observatory.obsInfo == '') and (
                     observatory.fits == None or observatory.fits == ''):
-                logger.info('Send mail')
+                logger.info('Send mail, ' + insName)
                 send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(instrument.insName), settings.EMAIL_HOST_USER,
                           secret.RECIPIENTEMAIL, fail_silently=False)
         except Exception as e:
@@ -946,17 +949,23 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
             lon = form.cleaned_data['lon']
             lat = form.cleaned_data['lat']
             matchDist = form.cleaned_data['matchDist']
+            cpcsOnly = form.cleaned_data['cpcsOnly']
 
             fits = self.request.FILES.get('fits')
             obsInfo = self.request.FILES.get('obsInfo')
-            logger.info(fits)
+            if cpcsOnly is True:
+                prefix = obsName+"_CpcsOnly"
+            else:
+                prefix = obsName
+
             observatory = Observatory.objects.create(
                     obsName=obsName,
                     lon=lon,
                     lat=lat,
                     matchDist=matchDist,
-                    userActivation=False,
-                    prefix=obsName,
+                    isVerified=False,
+                    prefix=prefix,
+                    cpcsOnly=cpcsOnly,
                     fits=fits,
                     obsInfo=obsInfo
             )
@@ -991,9 +1000,9 @@ class ObservatoryList(PermissionRequiredMixin, ListView):
 
         observatory_user_list = []
         for ins in instrument:
-            observatory_user_list.append([ins.id, ins.hashtag, Observatory.objects.get(id=ins.observatory_id.id)])
+            observatory_user_list.append([ins.id, ins.hashtag, ins.insName, ins.isActive, ins.comment,  Observatory.objects.get(id=ins.observatory_id.id)])
 
-        context['observatory_list'] = Observatory.objects.all()
+        context['observatory_list'] = Observatory.objects.filter(isVerified=True)
         context['observatory_user_list'] = observatory_user_list
 
         return context
@@ -1002,7 +1011,7 @@ class UpdateObservatory(PermissionRequiredMixin, UpdateView):
 
     permission_required = 'bhtom.change_observatory'
     template_name = 'tom_common/observatory_create.html'
-    form_class = ObservatoryCreationForm
+    form_class = ObservatoryUpdateForm
     success_url = reverse_lazy('observatory')
     model = Observatory
 

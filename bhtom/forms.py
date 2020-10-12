@@ -19,7 +19,10 @@ class InstrumentChoiceField(forms.ModelChoiceField):
 class ObservatoryChoiceField(forms.ModelChoiceField):
 
     def label_from_instance(self, obj):
-        return '{obsName}'.format(obsName=obj.obsName)
+        if obj.cpcsOnly == True:
+            return '{obsName} (Only Instrumental photometry file)'.format(obsName=obj.obsName)
+        else:
+            return '{obsName}'.format(obsName=obj.obsName)
 
 class FilterChoiceField(forms.ModelChoiceField):
 
@@ -117,7 +120,7 @@ class DataProductUploadForm(forms.Form):
 
         self.fields['observatory'] = ObservatoryChoiceField(
 
-            queryset=Observatory.objects.filter(id__in=insTab, userActivation=True),
+            queryset=Observatory.objects.filter(id__in=insTab, isVerified=True),
             widget=forms.Select(),
             required=False
         )
@@ -129,26 +132,54 @@ class DataProductUploadForm(forms.Form):
             label='Force filter'
         )
 
-        self.fields['comments'] = forms.CharField(
+        self.fields['comment'] = forms.CharField(
             widget=forms.Textarea,
             required=False,
-            label='Comments',
+            label='Comment',
         )
 
 class ObservatoryCreationForm(forms.ModelForm):
 
+    cpcsOnly = forms.BooleanField(
+        label='Only instrumental photometry file',
+        required=False
+    )
+
     class Meta:
         model = Observatory
-        fields = ('obsName', 'lon', 'lat', 'matchDist', 'fits', 'obsInfo')
+        fields = ('obsName', 'lon', 'lat', 'matchDist', 'cpcsOnly', 'fits', 'obsInfo', 'comment')
+
+class ObservatoryUpdateForm(forms.ModelForm):
+
+    cpcsOnly = forms.BooleanField(
+        label='Only instrumental photometry file',
+        required=False
+    )
+
+    class Meta:
+        model = Observatory
+        fields = ('obsName', 'lon', 'lat', 'matchDist', 'prefix', 'cpcsOnly', 'fits', 'obsInfo', 'comment')
 
 class InstrumentUpdateForm(forms.ModelForm):
 
     class Meta:
         model = Instrument
-        fields = ('hashtag', 'dry_run')
+        fields = ('insName', 'hashtag', 'comment')
 
 class InstrumentCreationForm(forms.Form):
 
+    insName = forms.CharField(
+        label="Instrument name",
+        required=True
+    )
+
+    observatory = forms.ChoiceField()
+
+    comment = forms.CharField(
+        widget=forms.Textarea,
+        label="Comment",
+        required=False
+    )
 
     def __init__(self, *args, **kwargs):
 
@@ -162,7 +193,7 @@ class InstrumentCreationForm(forms.Form):
 
         self.fields['observatory'] = ObservatoryChoiceField(
 
-            queryset=Observatory.objects.exclude(id__in=insTab),
+            queryset=Observatory.objects.exclude(id__in=insTab).filter(isVerified=True),
             widget=forms.Select(),
             required=True
         )

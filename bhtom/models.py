@@ -5,6 +5,7 @@ from django.contrib.postgres.fields import ArrayField
 class Observatory(models.Model):
 
     MATCHING_RADIUS = {
+
         ('1', '1 arcsec'),
         ('2', '2 arcsec'),
         ('4', '4 arcsec'),
@@ -15,17 +16,23 @@ class Observatory(models.Model):
     lon = models.FloatField(null=False, blank=False, verbose_name='Longitude')
     lat = models.FloatField(null=False, blank=False, verbose_name='Latitude')
     prefix = models.CharField(max_length=255, null=True, blank=True)
-    userActivation = models.BooleanField()
-    matchDist = models.CharField(max_length=10, choices=MATCHING_RADIUS, default='1 arcsec', verbose_name='Matching radius')
-    fits = models.FileField(upload_to='user_fits', null=True, blank=True, verbose_name='Sample fits')
+    cpcsOnly = models.BooleanField(default='False', verbose_name='Only instrumental photometry file')
     obsInfo = models.FileField(upload_to='ObsInfo', null=True, blank=True, verbose_name='Obs Info')
+    fits = models.FileField(upload_to='user_fits', null=True, blank=True, verbose_name='Sample fits')
+    matchDist = models.CharField(max_length=10, choices=MATCHING_RADIUS, default='1',
+                                 verbose_name='Matching radius')
+    comment = models.TextField(null=True, blank=True)
+    isVerified = models.BooleanField(default='False')
+
 
 class Instrument(models.Model):
+
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     observatory_id = models.ForeignKey(Observatory, on_delete=models.CASCADE)
     insName = models.CharField(max_length=255, verbose_name='Instrument name', null=True, blank=True)
-    dry_run = models.BooleanField(verbose_name='Dry Run (no data will be stored in the database)')
     hashtag = models.CharField(max_length=255, editable=True, null=False, blank=False)
+    isActive = models.BooleanField(default='True')
+    comment = models.TextField(null=True, blank=True)
 
 class BHTomFits(models.Model):
     FITS_STATUS = [
@@ -68,13 +75,10 @@ class BHTomFits(models.Model):
     matchDist = models.CharField(max_length=10, choices=MATCHING_RADIUS, default='2 arcsec',
                                  verbose_name='Matching radius')
     allow_upload = models.BooleanField(verbose_name='Dry Run (no data will be stored in the database)')
+    comment = models.TextField()
 
 class Catalogs(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.TextField(blank=False, editable=False)
     filters = ArrayField(models.CharField(max_length=10))
 
-class Comments(models.Model):
-    comments_id = models.AutoField(db_index=True, primary_key=True)
-    dataproduct_id = models.IntegerField(null=False, blank=False)
-    comments = models.TextField()

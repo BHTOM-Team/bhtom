@@ -24,10 +24,10 @@ However, you can also upload your data to the CPCS directly from BHTOM instead.
   <div class="col-md-12">
     <ul class="nav nav-tabs" id="tabs">
       <li class="nav-item">
-        <span class="nav-link" data-target="#all" data-toggle="tab">All</span>
+        <span class="nav-link active" data-target="#user" data-toggle="tab">My Observatories</span>
       </li>
       <li class="nav-item">
-        <span class="nav-link active" data-target="#user" data-toggle="tab">My Observatories</span>
+        <span class="nav-link" data-target="#all" data-toggle="tab">All</span>
       </li>
     </ul>
     <div class="tab-content">
@@ -35,27 +35,28 @@ However, you can also upload your data to the CPCS directly from BHTOM instead.
           <table class="table table-striped">
           <thead>
             <tr>
-              <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>Activation</th><th>Matching Radius</th>
+              <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>Prefix</th><th>Matching radius</th><th>Comment</th><th>Only Instrumental photometry file</th>
               {% if request.user.is_superuser %}
-              <th>CPCS Hashtag</th><th>Update</th><th>Delete</th>
+              <th>Update</th><th>Delete</th>
               {% endif %}
             </tr>
           </thead>
           <tbody>
-            {% for observatory_list in object_list %}
+            {% for observatory in observatory_list %}
             <tr>
-              <td>{{ observatory_list.obsName }}</td>
-              <td>{{ observatory_list.lon }}</td>
-              <td>{{ observatory_list.lat }}</td>
-              <td>{% if observatory_list.userActivation %} True {%else%} False{% endif %}</td>
-               <td>{{ observatory_list.matchDist }} arcsec</td>
+              <td>{{ observatory.obsName }}</td>
+              <td>{{ observatory.lon }}</td>
+              <td>{{ observatory.lat }}</td>
+              <td>{{ observatory.prefix }}</td>
+              <td>{{ observatory.matchDist }} arcsec</td>
+              <td>{{ observatory.comment }}</td>
+              <td>{{ observatory.cpcsOnly }}</td>
               {% if request.user.is_superuser %}
-              <td>{{ observatory_list.hashtag }}</td>
               <td>
-                <a href="{% url 'observatory_update' pk=observatory_list.id %}" title="Update observatory" class="btn  btn-primary">Edit</a>
+                <a href="{% url 'observatory_update' pk=observatory.id %}" title="Update observatory" class="btn  btn-primary">Edit</a>
               </td>
               <td>
-                <a href="{% url 'observatory_delete' pk=observatory_list.id %}" title="Delete observatory" class="btn  btn-danger">Delete</a>
+                <a href="{% url 'observatory_delete' pk=observatory.id %}" title="Delete observatory" class="btn  btn-danger">Delete</a>
               </td>
               {% endif %}
             </tr>
@@ -64,25 +65,26 @@ However, you can also upload your data to the CPCS directly from BHTOM instead.
         </table>
       </div>
       <div class="tab-pane active" id="user">
-           <a href="{% url 'instrument_create' %}" title="Create User observatory" class="btn btn-outline-primary">Add new observatory</a>
+           <a href="{% url 'instrument_create' %}" title="Add new observatory" class="btn btn-outline-primary">Add new observatory</a>
         <table class="table table-striped">
           <thead>
             <tr>
-              <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>CPCS Hashtag</th><th>Activation</th>
+              <th>Observatory Name</th><th>Instrument Name</th><th>Lon</th><th>Lat</th><th>CPCS Hashtag</th><th>Activation</th><th>Comment</th>
               {% if request.user.is_superuser %}
               <th>Update</th><th>Delete</th>
               {% endif %}
             </tr>
           </thead>
           <tbody>
-            {% for instrument_id, hashtag, observatory in observatory_user_list %}
+            {% for instrument_id, hashtag, insName, isActive, comment, observatory in observatory_user_list %}
             <tr>
               <td>{{ observatory.obsName }}</td>
+              <td>{{ insName }}</td>
               <td>{{ observatory.lon }}</td>
               <td>{{ observatory.lat }}</td>
               <td>{{ hashtag }}</td>
-
-              <td>{% if observatory.userActivation %} True {%else%} False{% endif %}</td>
+              <td>{% if isActive %} True {%else%} False{% endif %}</td>
+              <td><div title="{{comment}}">{{ comment|truncatechars:15 }}</div></td>
               <td>
                 <a href="{% url 'instrument_update' pk=instrument_id %}" title="Update User observatory" class="btn  btn-primary">Edit</a>
               </td>

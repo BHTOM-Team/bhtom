@@ -19,7 +19,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, allow_upload, matchDist):
+def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, dry_run, matchDist, comment):
 
     url = 'data/' + format(dp)
     logger.info('Running post upload hook for DataProduct: {}'.format(url))
@@ -34,11 +34,6 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
         else:
             matching_radius = observatory.matchDist
 
-        if Instrument.dry_run == '0':
-            dry_run = '0'
-        else:
-            dry_run = allow_upload
-
     if dp.data_product_type == 'fits_file' and observatory != None:
 
         with open(url, 'rb') as file:
@@ -47,7 +42,7 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
             try:
                 instance = BHTomFits.objects.create(instrument_id=instrument, dataproduct_id=dp.id, start_time=datetime.now(),
                                                     filter=observation_filter, allow_upload=dry_run, matchDist=matching_radius,
-                                                    )
+                                                    comment=comment)
 
                 response = requests.post(secret.CCDPHOTD_URL,  {'job_id': instance.file_id, 'instrument': observatory.obsName,
                                                                 'webhook_id': secret.CCDPHOTD_WEBHOOK_ID,
@@ -131,11 +126,11 @@ def send_to_cpcs(result, fits, eventID):
 def create_cpcs_user_profile(sender, instance, **kwargs):
 
     url_cpcs = secret.CPCS_URL + 'newuser'
+    observatory = Observatory.objects.get(id=instance.observatory_id.id)
 
-    if instance.hashtag == None or instance.hashtag == '':
+    if instance.hashtag == None or instance.hashtag == '' and observatory.cpcsOnly == False:
         try:
-            logger.info('Create_cpcs_user')
-            observatory = Observatory.objects.get(id=instance.observatory_id.id)
+
             response = requests.post(url_cpcs,
                                        {'obsName': instance.insName, 'lon': observatory.lon, 'lat': observatory.lat,
                                         'allow_upload': int(instance.dry_run),
@@ -143,17 +138,22 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
 
             if response.status_code == 200:
                 instance.hashtag = response.content.decode('utf-8').split(': ')[1]
-                logger.info('Send mail')
+                logger.info('Create_cpcs_user')
                 send_mail('Wygenerowano hastag', secret.EMAILTEXT_CREATE_HASTAG + str(instance.insName), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             else:
+                logger.error('Error from hastag')
+                send_mail('Error from hastag', secret.EMAILTEXT_ERROR_CREATE_HASTAG + str(instance.insName),
+                          settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+
+                instance.isActive = False
                 raise Exception(response.content.decode('utf-8')) from None
 
         except Exception as e:
-             logger.error('error: ' + str(e))
+             logger.error('Error: ' + str(e))
              return None
              #raise Exception(str(e)) from None
     else:
-        logger.info('Hastag exist: ' + instance.hashtag)
+        logger.info('Hastag exist or cpcs Only, ' + instance.insName)
 
 def target_post_save(target, created):
     logger.info('Target post save hook: %s created: %s', target, created)
