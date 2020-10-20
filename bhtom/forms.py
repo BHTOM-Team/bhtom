@@ -11,10 +11,6 @@ from captcha.fields import ReCaptchaField
 
 import logging
 logger = logging.getLogger(__name__)
-class InstrumentChoiceField(forms.ModelChoiceField):
-
-    def label_from_instance(self, obj):
-        return '{insName}'.format(insName=obj.insName)
 
 class ObservatoryChoiceField(forms.ModelChoiceField):
 

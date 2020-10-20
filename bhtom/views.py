@@ -840,14 +840,12 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
 
         user = self.request.user
         observatoryID = form.cleaned_data['observatory']
-        insName = form.cleaned_data['insName']
         comment = form.cleaned_data['comment']
 
         try:
             instrument = Instrument.objects.create(
                     user_id=user,
                     observatory_id=observatoryID,
-                    insName=insName,
                     isActive=True,
                     comment=comment
                 )

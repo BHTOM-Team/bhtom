@@ -122,7 +122,7 @@ def send_to_cpcs(result, fits, eventID):
         fits.status_message = 'Error: %s' % str(e)
         fits.save()
 
-@receiver(pre_save, sender=Instrument)
+#@receiver(pre_save, sender=Instrument)
 def create_cpcs_user_profile(sender, instance, **kwargs):
 
     url_cpcs = secret.CPCS_URL + 'newuser'
@@ -132,17 +132,17 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
         try:
 
             response = requests.post(url_cpcs,
-                                       {'obsName': instance.insName, 'lon': observatory.lon, 'lat': observatory.lat,
-                                        'allow_upload': int(instance.dry_run),
+                                       {'obsName': observatory.obsName, 'lon': observatory.lon, 'lat': observatory.lat,
+                                        'allow_upload': 1,
                                         'prefix': observatory.prefix, 'hashtag': secret.CPCS_Admin_Hashtag})
 
             if response.status_code == 200:
                 instance.hashtag = response.content.decode('utf-8').split(': ')[1]
                 logger.info('Create_cpcs_user')
-                send_mail('Wygenerowano hastag', secret.EMAILTEXT_CREATE_HASTAG + str(instance.insName), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+                send_mail('Wygenerowano hastag', secret.EMAILTEXT_CREATE_HASTAG + str(observatory.obsName), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             else:
                 logger.error('Error from hastag')
-                send_mail('Error from hastag', secret.EMAILTEXT_ERROR_CREATE_HASTAG + str(instance.insName),
+                send_mail('Error from hastag', secret.EMAILTEXT_ERROR_CREATE_HASTAG + str(observatory.obsName),
                           settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
 
                 instance.isActive = False
