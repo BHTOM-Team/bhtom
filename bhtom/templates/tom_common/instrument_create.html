@@ -24,8 +24,10 @@
   {% if object %}
     <button type="submit" class="btn btn-primary" title="Update">Update</button>
   {% else %}
-    <a href="{% url 'observatory_create' %}" title="Create new Observatory" class="btn btn-primary">Create new Observatory</a>
     <button type="submit" class="btn btn-primary" title="Add this Observatory to my list"> Add to my list</button>
+    <p>
+      <hr>
+    <a href="{% url 'observatory_create' %}" title="Create new Observatory (if not on the list)" class="btn btn-primary">Create new Observatory</a>
   {% endif %}
 
 {% endbuttons %}
