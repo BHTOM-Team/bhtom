@@ -853,7 +853,7 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
             observatory = Observatory.objects.get(id=observatoryID.id)
 
             if (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits == None or observatory.fits == ''): #tylko obsInfo wysylamy maila
-                logger.info('Send mail, ' + insName)
+                logger.info('Send mail, ' + observatoryID.obsName)
                 send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(user), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             elif (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits != None or observatory.fits != '') : #procesujemy fitsa
 
@@ -866,15 +866,15 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
                 dp.save()
                 run_hook('data_product_post_upload', dp, instrument, 'No', None, None, 1, 2)'''
                 logger.info('Send mail')
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(instrument.insName), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(observatoryID.obsName), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             elif (observatory.obsInfo == None or observatory.obsInfo == '') and (observatory.fits != None or observatory.fits != ''):
-                logger.info('Send mai, ' + insName)
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(instrument.insName), settings.EMAIL_HOST_USER,
+                logger.info('Send mai, ' + observatoryID.obsName)
+                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(observatoryID.obsName), settings.EMAIL_HOST_USER,
                           secret.RECIPIENTEMAIL, fail_silently=False)
             elif (observatory.obsInfo == None or observatory.obsInfo == '') and (
                     observatory.fits == None or observatory.fits == ''):
-                logger.info('Send mail, ' + insName)
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(instrument.insName), settings.EMAIL_HOST_USER,
+                logger.info('Send mail, ' + observatoryID.obsName)
+                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(observatoryID.obsName), settings.EMAIL_HOST_USER,
                           secret.RECIPIENTEMAIL, fail_silently=False)
         except Exception as e:
             logger.error('error: ' + str(e))
