@@ -164,14 +164,9 @@ class InstrumentUpdateForm(forms.ModelForm):
 
     class Meta:
         model = Instrument
-        fields = ('insName', 'hashtag', 'comment')
+        fields = ('hashtag', 'comment')
 
 class InstrumentCreationForm(forms.Form):
-
-    insName = forms.CharField(
-        label="Instrument name",
-        required=True
-    )
 
     observatory = forms.ChoiceField()
 

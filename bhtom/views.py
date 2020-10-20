@@ -1000,7 +1000,7 @@ class ObservatoryList(PermissionRequiredMixin, ListView):
 
         observatory_user_list = []
         for ins in instrument:
-            observatory_user_list.append([ins.id, ins.hashtag, ins.insName, ins.isActive, ins.comment,  Observatory.objects.get(id=ins.observatory_id.id)])
+            observatory_user_list.append([ins.id, ins.hashtag, ins.isActive, ins.comment,  Observatory.objects.get(id=ins.observatory_id.id)])
 
         context['observatory_list'] = Observatory.objects.filter(isVerified=True)
         context['observatory_user_list'] = observatory_user_list

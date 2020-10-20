@@ -69,17 +69,16 @@ However, you can also upload your data to the CPCS directly from BHTOM instead.
         <table class="table table-striped">
           <thead>
             <tr>
-              <th>Observatory Name</th><th>Instrument Name</th><th>Lon</th><th>Lat</th><th>CPCS Hashtag</th><th>Activation</th><th>Comment</th>
+              <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>CPCS Hashtag</th><th>Activation</th><th>Comment</th>
               {% if request.user.is_superuser %}
               <th>Update</th><th>Delete</th>
               {% endif %}
             </tr>
           </thead>
           <tbody>
-            {% for instrument_id, hashtag, insName, isActive, comment, observatory in observatory_user_list %}
+            {% for instrument_id, hashtag, isActive, comment, observatory in observatory_user_list %}
             <tr>
               <td>{{ observatory.obsName }}</td>
-              <td>{{ insName }}</td>
               <td>{{ observatory.lon }}</td>
               <td>{{ observatory.lat }}</td>
               <td>{{ hashtag }}</td>

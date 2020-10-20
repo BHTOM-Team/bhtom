@@ -29,7 +29,6 @@ class Instrument(models.Model):
 
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     observatory_id = models.ForeignKey(Observatory, on_delete=models.CASCADE)
-    insName = models.CharField(max_length=255, verbose_name='Instrument name', null=True, blank=True)
     hashtag = models.CharField(max_length=255, editable=True, null=False, blank=False)
     isActive = models.BooleanField(default='True')
     comment = models.TextField(null=True, blank=True)
