@@ -19,7 +19,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, dry_run, matchDist, comment):
+def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, dry_run, matchDist, comment, user):
 
     url = 'data/' + format(dp)
     logger.info('Running post upload hook for DataProduct: {}'.format(url))
@@ -27,7 +27,7 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
     if observatory != None:
 
         observatory = Observatory.objects.get(id=observatory.id)
-        instrument = Instrument.objects.get(observatory_id=observatory.id)
+        instrument = Instrument.objects.get(observatory_id=observatory.id, user_id=user)
 
         if matchDist != '0':
             matching_radius = matchDist

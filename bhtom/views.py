@@ -729,6 +729,7 @@ class DataProductUploadView(FormView):
         matchDist = form.cleaned_data['matchDist']
         dryRun = form.cleaned_data['dryRun']
         comment = form.cleaned_data['comment']
+        user = self.request.user
 
         if dp_type =='fits_file' and observatory.cpcsOnly == True:
             messages.error(self.request, 'Used Observatory without ObsInfo')
@@ -746,7 +747,7 @@ class DataProductUploadView(FormView):
             dp.save()
 
             try:
-                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun, matchDist, comment)
+                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun, matchDist, comment, user)
 
                 if dp.data_product_type == 'photometry':
                     run_data_processor(dp)
