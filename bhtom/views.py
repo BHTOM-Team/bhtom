@@ -762,6 +762,7 @@ class DataProductUploadView(FormView):
             except Exception as e:
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
+                logger.error(e)
                 messages.error(self.request, 'There was a problem processing your file: {0}'.format(str(dp)))
         if successful_uploads:
             messages.success(
