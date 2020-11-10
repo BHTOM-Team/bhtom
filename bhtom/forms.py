@@ -160,7 +160,7 @@ class InstrumentUpdateForm(forms.ModelForm):
 
     class Meta:
         model = Instrument
-        fields = ('hashtag', 'comment')
+        fields = ('comment',)
 
 class InstrumentCreationForm(forms.Form):
 

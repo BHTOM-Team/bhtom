@@ -31,8 +31,11 @@ from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, Instrume
 
 from django.http import HttpResponseServerError
 from django.views.generic.edit import FormView, DeleteView
+from django.views.generic import View
 from django.conf import settings
 from django.contrib import messages
+from django.core.cache.utils import make_template_fragment_key
+from django.core.cache import cache
 
 from django.contrib.auth.models import Group
 from django.core.management import call_command
@@ -1070,3 +1073,39 @@ class RegisterUser(CreateView):
                   secret.RECIPIENTEMAIL, fail_silently=False)
         messages.success(self.request, 'Successfully registered')
         return redirect(self.get_success_url())
+
+class DataProductFeatureView(View):
+    """
+    View that handles the featuring of ``DataProduct``s. A featured ``DataProduct`` is displayed on the
+    ``TargetDetailView``.
+    """
+    def get(self, request, *args, **kwargs):
+        """
+        Method that handles the GET requests for this view. Sets all other ``DataProduct``s to unfeatured in the
+        database, and sets the specified ``DataProduct`` to featured. Caches the featured image. Deletes previously
+        featured images from the cache.
+        """
+        product_id = kwargs.get('pk', None)
+        product = DataProduct.objects.get(pk=product_id)
+        try:
+            current_featured = DataProduct.objects.filter(
+                featured=True,
+                data_product_type=product.data_product_type,
+                target=product.target
+            )
+            for featured_image in current_featured:
+                featured_image.featured = False
+                featured_image.save()
+                featured_image_cache_key = make_template_fragment_key(
+                    'featured_image',
+                    str(featured_image.target.id)
+                )
+                cache.delete(featured_image_cache_key)
+        except DataProduct.DoesNotExist:
+            pass
+        product.featured = True
+        product.save()
+        return redirect(reverse(
+            'bhlist_detail',
+            kwargs={'pk': request.GET.get('target_id')})
+        )
