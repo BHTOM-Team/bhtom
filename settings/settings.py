@@ -414,6 +414,7 @@ OPEN_URLS = []
 
 HOOKS = {
 #    'target_post_save': 'tom_common.hooks.target_post_save',
+    'target_pre_save': 'bhtom.hooks.target_pre_save',
     'target_post_save': 'bhtom.hooks.target_post_save',
     'observation_change_state': 'tom_common.hooks.observation_change_state',
     'data_product_post_upload': 'bhtom.hooks.data_product_post_upload',
