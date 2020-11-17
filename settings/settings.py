@@ -60,6 +60,24 @@ except:
     TWITTER_ACCESSSECRET = os.environ['TWITTER_ACCESSSECRET']
     TOMEMAIL = os.environ['TOMEMAIL']
     TOMEMAILPASSWORD = os.environ['TOMEMAILPASSWORD']
+
+    
+    GEMINI_S_API_KEY = os.environ['GEMINI_S_API_KEY']
+    
+    GEMINI_N_API_KEY = os.environ['GEMINI_N_API_KEY']
+    
+    LT_PROPOSAL_ID = os.environ['LT_PROPOSAL_ID']
+    
+    LT_PROPOSAL_NAME = os.environ['LT_PROPOSAL_NAME']
+    
+    LT_PROPOSAL_USER = os.environ['LT_PROPOSAL_USER']
+    
+    LT_PROPOSAL_PASS = os.environ['LT_PROPOSAL_PASS']
+    
+    LT_PROPOSAL_HOST = os.environ['LT_PROPOSAL_HOST']
+    
+    LT_PROPOSAL_PORT = os.environ['LT_PROPOSAL_PORT']
+    
     #tns harvester reads it too, but SNEXBOT api key still needed - FIX?
     SNEXBOT_APIKEY =  os.environ['TNSBOT_APIKEY']
     black_tom_DB_NAME = os.environ['black_tom_DB_NAME']
@@ -396,6 +414,7 @@ OPEN_URLS = []
 
 HOOKS = {
 #    'target_post_save': 'tom_common.hooks.target_post_save',
+    'target_pre_save': 'bhtom.hooks.target_pre_save',
     'target_post_save': 'bhtom.hooks.target_post_save',
     'observation_change_state': 'tom_common.hooks.observation_change_state',
     'data_product_post_upload': 'bhtom.hooks.data_product_post_upload',
