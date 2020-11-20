@@ -88,7 +88,7 @@ def photometry_for_target(context, target):
         photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
         photometry_data[values['filter']].setdefault('error', []).append(values.get('error'))
     plot_data = [
-        go.Scatter(
+        go.Scattergl(
             x=filter_values['time'],
             y=filter_values['magnitude'], mode='markers',
             name=filter_name,
@@ -129,7 +129,7 @@ def spectroscopy_for_target(context, target, dataproduct=None):
                                       klass=ReducedDatum.objects.filter(data_product__in=spectral_dataproducts))
     for datum in datums:
         deserialized = SpectrumSerializer().deserialize(datum.value)
-        plot_data.append(go.Scatter(
+        plot_data.append(go.Scattergl(
             x=deserialized.wavelength.value,
             y=deserialized.flux.value,
             name=datetime.strftime(datum.timestamp, '%Y%m%d-%H:%M:%s')
