@@ -54,3 +54,11 @@ td.green {
 .table-hover tbody tr:hover {
     color: white!important;
 }
+
+.internal-tabs {
+    margin-left: 0;
+}
+
+.internal-tab-content {
+    padding: 0;
+}
