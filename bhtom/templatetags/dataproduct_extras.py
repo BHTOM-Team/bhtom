@@ -1,26 +1,24 @@
-from bhtom.models import BHTomFits, Instrument
+import base64
+import io
 import json
+import urllib
+from datetime import datetime
 
+import matplotlib.pyplot as plt
+import plotly.graph_objs as go
 from django import template
 from django.conf import settings
-from django.contrib.auth.models import Group
-from django.core.paginator import Paginator
-from django.shortcuts import reverse
-from datetime import datetime
 from guardian.shortcuts import get_objects_for_user
-
 from plotly import offline
-import plotly.graph_objs as go
-
-from tom_dataproducts.forms import DataProductUploadForm
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
-from tom_observations.models import ObservationRecord
-from tom_targets.models import Target
+
+from bhtom.models import BHTomFits, Instrument
 
 register = template.Library()
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 register = template.Library()
@@ -53,7 +51,8 @@ def detail_fits_upload(target, user):
 
     for fit in fits:
         try:
-            tabFits.append([fit.status.split('/')[-1], fit.status_message, format(DataProduct.objects.get(id=fit.dataproduct_id).data).split('/')[-1]])
+            tabFits.append([fit.status.split('/')[-1], fit.status_message,
+                            format(DataProduct.objects.get(id=fit.dataproduct_id).data).split('/')[-1]])
         except Exception as e:
             logger.error('error: ' + str(e))
 
@@ -62,6 +61,70 @@ def detail_fits_upload(target, user):
         'target': target
 
     }
+
+
+@register.inclusion_tag('tom_dataproducts/partials/photometry_for_target_static.html', takes_context=True)
+def photometry_for_target_static(context, target):
+    """
+    Renders a photometric plot for a target.
+
+    This templatetag requires all ``ReducedDatum`` objects with a data_type of ``photometry`` to be structured with the
+    following keys in the JSON representation: magnitude, error, filter
+    """
+
+    photometry_data = {}
+    if settings.TARGET_PERMISSIONS_ONLY:
+        datums = ReducedDatum.objects.filter(target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
+    else:
+        datums = get_objects_for_user(context['request'].user,
+                                      'tom_dataproducts.view_reduceddatum',
+                                      klass=ReducedDatum.objects.filter(
+                                          target=target,
+                                          data_type=settings.DATA_PRODUCT_TYPES['photometry'][0]))
+
+    for datum in datums:
+        values = json.loads(datum.value)
+        photometry_data.setdefault(values['filter'], {})
+        photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
+        photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
+        photometry_data[values['filter']].setdefault('error', []).append(values.get('error'))
+
+# #2A3F5F
+
+    figure: plt.Figure = plt.figure(figsize=(7, 6))
+    ax = figure.add_axes((0.15, 0.15, 0.75, 0.75))
+    ax.invert_yaxis()
+    ax.grid(color='white', linestyle='solid')
+    ax.set_facecolor('#E5ECF6')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+
+    ax.tick_params(axis='x', colors='#2A3F5F')
+    ax.tick_params(axis='y', colors="#2A3F5F")
+
+    for filter_name, filter_values in photometry_data.items():
+        ax.errorbar(x=filter_values['time'],
+                    y=filter_values['magnitude'],
+                    yerr=filter_values['error'],
+                    fmt='o',
+                    ms=2.5,
+                    capsize=1,
+                    elinewidth=1,
+                    markeredgewidth=1)
+
+    buf: io.BytesIO = io.BytesIO()
+    figure.savefig(buf, format='png')
+    buf.seek(0)
+    imsrc = base64.b64encode(buf.read())
+    imuri = 'data:image/png;base64,{}'.format(urllib.parse.quote(imsrc))
+
+    return {
+        'target': target,
+        'plot_path': imuri
+    }
+
 
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html', takes_context=True)
 def photometry_for_target(context, target):
@@ -88,7 +151,7 @@ def photometry_for_target(context, target):
         photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
         photometry_data[values['filter']].setdefault('error', []).append(values.get('error'))
     plot_data = [
-        go.Scatter(
+        go.Scattergl(
             x=filter_values['time'],
             y=filter_values['magnitude'], mode='markers',
             name=filter_name,
@@ -129,7 +192,7 @@ def spectroscopy_for_target(context, target, dataproduct=None):
                                       klass=ReducedDatum.objects.filter(data_product__in=spectral_dataproducts))
     for datum in datums:
         deserialized = SpectrumSerializer().deserialize(datum.value)
-        plot_data.append(go.Scatter(
+        plot_data.append(go.Scattergl(
             x=deserialized.wavelength.value,
             y=deserialized.flux.value,
             name=datetime.strftime(datum.timestamp, '%Y%m%d-%H:%M:%s')

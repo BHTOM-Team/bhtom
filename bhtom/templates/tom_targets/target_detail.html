@@ -3,6 +3,7 @@
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
+<link rel="stylesheet" href="{% static 'bhtom/css/main.css' %}">
 {% endblock %}
 {% bootstrap_javascript jquery='True' %}
 {% block content %}
@@ -75,20 +76,47 @@
         {% target_groups target %}
       </div>
       <div class="tab-pane active" id="photometry">
-        {% photometry_for_target target %}
+        <div class="row">
+          <div class="col-md-8">
+            <h4>Photometry</h4>
+          </div>
+          <div class="col-md-4">
+            <a href="{% url 'datatools:update-reduced-data-gaia' %}?target_id={{ target.id }}" class="btn btn-primary"
+               title="Update Light Curve">Check for new data</a>
+          </div>
+        </div>
+        <div class="row internal-tabs">
+          <ul class="nav nav-tabs" id="photometry-tabs">
+            <li class="nav-item">
+              <span class="nav-link active" data-target="#static-photometry" data-toggle="tab">Static plot</span>
+            </li>
+            <li class="nav-item">
+              <span class="nav-link" data-target="#interactive-photometry" data-toggle="tab">Interactive plot</span>
+            </li>
+          </ul>
+        </div>
+        <div class="tab-content internal-tab-content">
+          <div class="tab-pane active" id="static-photometry">
+            {% photometry_for_target_static target %}
+          </div>
+          <div class="tab-pane" id="interactive-photometry">
+            {% photometry_for_target target %}
+          </div>
+        </div>
 
-         {% comments_enabled as comments_are_enabled %}
+
+        {% comments_enabled as comments_are_enabled %}
         <hr/>
         <h5>Comments</h5>
-          {% if comments_are_enabled %}
-            {% render_comment_list for object %}
-            {% url 'bhlist_detail' object.id as next %}
-            {% if user.is_authenticated %}
-              {% render_comment_form for object %}
-            {% endif %}
-          {% endif %}
+        {% if comments_are_enabled %}
+        {% render_comment_list for object %}
+        {% url 'bhlist_detail' object.id as next %}
+        {% if user.is_authenticated %}
+        {% render_comment_form for object %}
+        {% endif %}
+        {% endif %}
 
-        </div>
+      </div>
       <div class="tab-pane" id="spectroscopy">
         {% spectroscopy_for_target target %}
 
