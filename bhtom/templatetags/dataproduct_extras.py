@@ -87,9 +87,8 @@ def photometry_for_target_static(context, target):
         photometry_data.setdefault(values['filter'], {})
         photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
         photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
-        photometry_data[values['filter']].setdefault('error', []).append(values.get('error'))
+        photometry_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
 
-# #2A3F5F
 
     figure: plt.Figure = plt.figure(figsize=(7, 6))
     ax = figure.add_axes((0.15, 0.15, 0.75, 0.75))
