@@ -63,6 +63,48 @@ def detail_fits_upload(target, user):
     }
 
 
+
+@register.inclusion_tag('tom_dataproducts/partials/spectroscopy_for_target.html', takes_context=True)
+def spectroscopy_for_target(context, target, dataproduct=None):
+    """
+    Renders a spectroscopic plot for a ``Target``. If a ``DataProduct`` is specified, it will only render a plot with
+    that spectrum.
+    """
+    spectral_dataproducts = DataProduct.objects.filter(target=target,
+                                                       data_product_type=settings.DATA_PRODUCT_TYPES['spectroscopy'][0])
+    if dataproduct:
+        spectral_dataproducts = DataProduct.objects.get(data_product=dataproduct)
+
+    plot_data = []
+    if settings.TARGET_PERMISSIONS_ONLY:
+        datums = ReducedDatum.objects.filter(data_product__in=spectral_dataproducts)
+    else:
+        datums = get_objects_for_user(context['request'].user,
+                                      'tom_dataproducts.view_reduceddatum',
+                                      klass=ReducedDatum.objects.filter(data_product__in=spectral_dataproducts))
+    for datum in datums:
+        deserialized = SpectrumSerializer().deserialize(datum.value)
+        plot_data.append(go.Scattergl(
+            x=deserialized.wavelength.value,
+            y=deserialized.flux.value,
+            name=datetime.strftime(datum.timestamp, '%Y%m%d-%H:%M:%s')
+        ))
+
+    layout = go.Layout(
+        height=600,
+        width=700,
+        xaxis=dict(
+            tickformat="d"
+        ),
+        yaxis=dict(
+            tickformat=".1eg"
+        )
+    )
+    return {
+        'target': target,
+        'plot': offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
+    }
+
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target_static.html', takes_context=True)
 def photometry_for_target_static(context, target):
     """
@@ -71,7 +113,6 @@ def photometry_for_target_static(context, target):
     This templatetag requires all ``ReducedDatum`` objects with a data_type of ``photometry`` to be structured with the
     following keys in the JSON representation: magnitude, error, filter
     """
-
     photometry_data = {}
     if settings.TARGET_PERMISSIONS_ONLY:
         datums = ReducedDatum.objects.filter(target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
@@ -122,92 +163,4 @@ def photometry_for_target_static(context, target):
     return {
         'target': target,
         'plot_path': imuri
-    }
-
-
-@register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html', takes_context=True)
-def photometry_for_target(context, target):
-    """
-    Renders a photometric plot for a target.
-
-    This templatetag requires all ``ReducedDatum`` objects with a data_type of ``photometry`` to be structured with the
-    following keys in the JSON representation: magnitude, error, filter
-    """
-    photometry_data = {}
-    if settings.TARGET_PERMISSIONS_ONLY:
-        datums = ReducedDatum.objects.filter(target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
-    else:
-        datums = get_objects_for_user(context['request'].user,
-                                      'tom_dataproducts.view_reduceddatum',
-                                      klass=ReducedDatum.objects.filter(
-                                        target=target,
-                                        data_type=settings.DATA_PRODUCT_TYPES['photometry'][0]))
-
-    for datum in datums:
-        values = json.loads(datum.value)
-        photometry_data.setdefault(values['filter'], {})
-        photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
-        photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
-        photometry_data[values['filter']].setdefault('error', []).append(values.get('error'))
-    plot_data = [
-        go.Scattergl(
-            x=filter_values['time'],
-            y=filter_values['magnitude'], mode='markers',
-            name=filter_name,
-            error_y=dict(
-                type='data',
-                array=filter_values['error'],
-                visible=True
-            )
-        ) for filter_name, filter_values in photometry_data.items()]
-    layout = go.Layout(
-        yaxis=dict(autorange='reversed'),
-        height=600,
-        width=700
-    )
-    return {
-        'target': target,
-        'plot': offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
-    }
-
-
-@register.inclusion_tag('tom_dataproducts/partials/spectroscopy_for_target.html', takes_context=True)
-def spectroscopy_for_target(context, target, dataproduct=None):
-    """
-    Renders a spectroscopic plot for a ``Target``. If a ``DataProduct`` is specified, it will only render a plot with
-    that spectrum.
-    """
-    spectral_dataproducts = DataProduct.objects.filter(target=target,
-                                                       data_product_type=settings.DATA_PRODUCT_TYPES['spectroscopy'][0])
-    if dataproduct:
-        spectral_dataproducts = DataProduct.objects.get(data_product=dataproduct)
-
-    plot_data = []
-    if settings.TARGET_PERMISSIONS_ONLY:
-        datums = ReducedDatum.objects.filter(data_product__in=spectral_dataproducts)
-    else:
-        datums = get_objects_for_user(context['request'].user,
-                                      'tom_dataproducts.view_reduceddatum',
-                                      klass=ReducedDatum.objects.filter(data_product__in=spectral_dataproducts))
-    for datum in datums:
-        deserialized = SpectrumSerializer().deserialize(datum.value)
-        plot_data.append(go.Scattergl(
-            x=deserialized.wavelength.value,
-            y=deserialized.flux.value,
-            name=datetime.strftime(datum.timestamp, '%Y%m%d-%H:%M:%s')
-        ))
-
-    layout = go.Layout(
-        height=600,
-        width=700,
-        xaxis=dict(
-            tickformat="d"
-        ),
-        yaxis=dict(
-            tickformat=".1eg"
-        )
-    )
-    return {
-        'target': target,
-        'plot': offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
     }

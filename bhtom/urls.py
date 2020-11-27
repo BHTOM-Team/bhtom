@@ -26,7 +26,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework import routers, permissions
 from bhtom import views
-from bhtom.views import DataProductUploadView, TargetDetailView, TargetFileDetailView
+from bhtom.views import DataProductUploadView, TargetDetailView, TargetInteractivePhotometryView, TargetFileDetailView
 from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView, TargetFileView
 from bhtom.views import DeleteObservatory, UpdateObservatory, ObservatoryList, CreateObservatory
 from bhtom.views import DeleteInstrument, UpdateInstrument, CreateInstrument
@@ -48,6 +48,7 @@ urlpatterns = [
     path('bhlist/<pk>/file/', TargetFileView.as_view(), name='bhlist_file'),
     path('bhlist/<pk>/file/<pk_fits>', TargetFileDetailView.as_view(), name='bhlist_file_detail'),
     path('bhlist/<pk>/', TargetDetailView.as_view(), name='bhlist_detail'),
+    path('bhlist/<pk>/iphotometry', TargetInteractivePhotometryView.as_view(), name='bhlist_i_photometry'),
     path('', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('dataUpload/', DataProductUploadView.as_view(), name='data_upload'),
