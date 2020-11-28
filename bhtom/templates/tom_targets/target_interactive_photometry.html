@@ -1,0 +1,8 @@
+{% load bootstrap4 tom_common_extras dataproduct_extras static cache photometry_tags %}
+<head>
+    <title>Photometry for {{target}}</title>
+</head>
+{% bootstrap_javascript jquery='True' %}
+{% block body %}
+    {% photometry_for_target target %}
+{% endblock %}
