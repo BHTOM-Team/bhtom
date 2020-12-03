@@ -3,6 +3,7 @@
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
+<link rel="stylesheet" href="{% static 'bhtom/css/main.css' %}">
 {% endblock %}
 {% bootstrap_javascript jquery='True' %}
 {% block content %}
@@ -75,36 +76,46 @@
         {% target_groups target %}
       </div>
       <div class="tab-pane active" id="photometry">
-        {% photometry_for_target target %}
+        <div class="row">
+          <div class="col-md-4">
+            <h4>Photometry</h4>
+          </div>
+          <div class="col-md-8">
+            <button onclick="open_photometry()" class="btn btn-info" role="button">Interactive photometry plot</button>
+            <a href="{% url 'datatools:update-reduced-data-gaia' %}?target_id={{ target.id }}" class="btn btn-primary"
+               title="Update Light Curve">Check for new data</a>
+          </div>
+        </div>
+        {% photometry_for_target_static target %}
 
-         {% comments_enabled as comments_are_enabled %}
+        {% comments_enabled as comments_are_enabled %}
         <hr/>
         <h5>Comments</h5>
-          {% if comments_are_enabled %}
-            {% render_comment_list for object %}
-            {% url 'bhlist_detail' object.id as next %}
-            {% if user.is_authenticated %}
-              {% render_comment_form for object %}
-            {% endif %}
-          {% endif %}
+        {% if comments_are_enabled %}
+        {% render_comment_list for object %}
+        {% url 'bhlist_detail' object.id as next %}
+        {% if user.is_authenticated %}
+        {% render_comment_form for object %}
+        {% endif %}
+        {% endif %}
 
-        </div>
+      </div>
       <div class="tab-pane" id="spectroscopy">
         {% spectroscopy_for_target target %}
 
          {% comments_enabled as comments_are_enabled %}
         <hr/>
         <h5>Comments</h5>
-          {% if comments_are_enabled %}
-            {% render_comment_list for object %}
-            {% url 'bhlist_detail' object.id as next %}
-            {% if user.is_authenticated %}
-              {% render_comment_form for object %}
-            {% endif %}
-          {% endif %}
+        {% if comments_are_enabled %}
+        {% render_comment_list for object %}
+        {% url 'bhlist_detail' object.id as next %}
+        {% if user.is_authenticated %}
+        {% render_comment_form for object %}
+        {% endif %}
+        {% endif %}
 
       </div>
-       <div class="tab-pane" id="data">
+      <div class="tab-pane" id="data">
         {% dataproduct_list_for_target object %}
       </div>
 
@@ -112,4 +123,10 @@
   </div>
 </div>
 {% endblock %}
-
+{% block extra_javascript %}
+<script type="text/javascript">
+  function open_photometry() {
+    window.open('{% url "bhlist_i_photometry" target.id %}', 'newwindow', 'width=800,height=700');
+  }
+</script>
+{% endblock %}

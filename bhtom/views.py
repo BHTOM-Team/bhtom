@@ -823,6 +823,17 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
             return redirect(reverse('bhlist_detail', args=(target_id,)))
         return super().get(request, *args, **kwargs)
 
+
+class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
+    permission_required = 'tom_targets.view_target'
+    template_name = 'tom_targets/target_interactive_photometry.html'
+    model = Target
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+
 class CreateInstrument(PermissionRequiredMixin, FormView):
     """
     View that handles manual upload of DataProducts. Requires authentication.

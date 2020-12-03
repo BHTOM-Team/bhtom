@@ -3,6 +3,7 @@ import requests
 import logging
 import uuid
 from .models import BHTomFits, Instrument, Observatory
+from .utils.coordinate_utils import fill_galactic_coordinates
 from tom_targets.models import Target
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
@@ -154,6 +155,13 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
              #raise Exception(str(e)) from None
     else:
         logger.info('Hastag exist or cpcs Only, ' + instance.insName)
+
+
+@receiver(pre_save, sender=Target)
+def target_pre_save(sender, instance, **kwargs):
+    fill_galactic_coordinates(instance)
+    logger.info('Target pre save hook: %s', str(instance))
+
 
 def target_post_save(target, created):
     logger.info('Target post save hook: %s created: %s', target, created)
