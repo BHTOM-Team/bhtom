@@ -122,7 +122,7 @@ def send_to_cpcs(result, fits, eventID):
         fits.status_message = 'Error: %s' % str(e)
         fits.save()
 
-#@receiver(pre_save, sender=Instrument)
+@receiver(pre_save, sender=Instrument)
 def create_cpcs_user_profile(sender, instance, **kwargs):
 
     url_cpcs = secret.CPCS_URL + 'newuser'
@@ -134,7 +134,7 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
             response = requests.post(url_cpcs,
                                        {'obsName': observatory.obsName, 'lon': observatory.lon, 'lat': observatory.lat,
                                         'allow_upload': 1,
-                                        'prefix': observatory.prefix, 'hashtag': secret.CPCS_Admin_Hashtag})
+                                        'prefix': 'dev_bhtom_'+observatory.prefix, 'hashtag': secret.CPCS_Admin_Hashtag})
 
             if response.status_code == 200:
                 instance.hashtag = response.content.decode('utf-8').split(': ')[1]
