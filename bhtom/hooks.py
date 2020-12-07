@@ -84,6 +84,7 @@ def send_to_cpcs(result, fits, eventID):
 
     url_cpcs = secret.CPCS_URL + 'upload'
     logger.info('Send file to cpcs')
+    logger.info(int(fits.allow_upload))
 
     try:
         with open(format(result), 'rb') as file:
@@ -93,10 +94,10 @@ def send_to_cpcs(result, fits, eventID):
                                           'forceFilter': fits.filter, 'hashtag': Instrument.objects.get(id=fits.instrument_id.id).hashtag,
                                             'outputFormat': 'json'}, files={'sexCat': file})
 
-        logger.info(response.content)
+        logger.info(json_data['mag'])
 
         if response.status_code == 201 or response.status_code == 200:
-
+            logger.info(int(fits.allow_upload))
             json_data = json.loads(response.text)
             fits.status = 'F'
             fits.status_message = 'Finished'
