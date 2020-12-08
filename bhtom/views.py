@@ -36,6 +36,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.cache.utils import make_template_fragment_key
 from django.core.cache import cache
+from django.core.files.storage import FileSystemStorage
+from django.core.files.storage import default_storage
 
 from django.contrib.auth.models import Group
 from django.core.management import call_command
@@ -48,6 +50,7 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django_filters.views import FilterView
+from django.core.files import File
 
 from django.http import HttpResponseRedirect
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -463,9 +466,10 @@ class TargetFileView(PermissionRequiredMixin, ListView):
                     logger.error(ccdphot_url)
                 else:
                     ccdphot_url = "/".join([target_name, "photometry", str(fit.photometry_file)])
+
                 tabFits.append([fit.file_id, fit.start_time,
                                 format(data_product.data), format(data_product.data).split('/')[-1],
-                                ccdphot_url, format(fit.photometry_file).split('/')[-1],
+                                ccdphot_url, format(ccdphot_url).split('/')[-1],
                                 filter, Observatory.objects.get(id=instrument.observatory_id.id).obsName,
                                 fit.status_message, fit.mjd, fit.expTime,
                                 DataProduct.objects.get(id=fit.dataproduct_id).data_product_type])
@@ -618,13 +622,14 @@ class result_fits(viewsets.ModelViewSet):
         file_id = request.query_params.get('job_id')
 
         try:
-            instance = BHTomFits.objects.get(file_id=file_id)
-
             if request.query_params.get('status') == 'D' or request.query_params.get('status') == 'F':
                 ccdphot_result = request.FILES["ccdphot_result_upload"]
+
+                instance = BHTomFits.objects.get(file_id=file_id)
+
+                instance.photometry_file = ccdphot_result
                 instance.status = 'R'
                 instance.cpcs_time = datetime.now()
-                instance.ccdphot_result = ccdphot_result.name
                 instance.status_message = 'Photometry result'
                 instance.mjd = request.query_params.get('fits_mjd')
                 instance.expTime = request.query_params.get('fits_exp')
@@ -635,7 +640,7 @@ class result_fits(viewsets.ModelViewSet):
                 ccdphot_result = request.FILES["ccdphot_result_upload"]
                 instance.status = 'E'
                 instance.cpcs_time = datetime.now()
-                instance.ccdphot_result = ccdphot_result.name
+                instance.photometry_file = ccdphot_result
                 if request.query_params.get('status_message'):
                     instance.status_message = request.query_params.get('status_message')
                 else:
@@ -645,24 +650,9 @@ class result_fits(viewsets.ModelViewSet):
             logger.error('error: ' + str(e))
             return HttpResponseServerError(e)
 
-        BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        #if instance.status == 'R':
 
-        target = Target.objects.get(id=DataProduct.objects.get(id=instance.dataproduct_id).target_id)
-
-        url_base = BASE + '/data/' + format(target.name) +'/photometry/'
-
-        if not os.path.exists(url_base):
-            os.makedirs(url_base)
-
-        url_resalt = os.path.join(url_base, ccdphot_result.name)
-
-        with open(url_resalt, 'wb') as file:
-            for chunk in ccdphot_result:
-                file.write(chunk)
-
-        if instance.status == 'R':
-
-            send_to_cpcs(url_resalt, instance, target.extra_fields['calib_server_name'])
+           # send_to_cpcs(url_resalt, instance, target.extra_fields['calib_server_name'])
 
         return Response(status=status.HTTP_201_CREATED)
 
@@ -823,7 +813,6 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
             return redirect(reverse('bhlist_detail', args=(target_id,)))
         return super().get(request, *args, **kwargs)
 
-
 class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
     permission_required = 'tom_targets.view_target'
     template_name = 'tom_targets/target_interactive_photometry.html'
@@ -832,7 +821,6 @@ class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
     def handle_no_permission(self):
         messages.error(self.request, 'You don\'t have permission to watch this site.')
         return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
-
 
 class CreateInstrument(PermissionRequiredMixin, FormView):
     """

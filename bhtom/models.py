@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
+from tom_targets.models import Target
+from tom_dataproducts.models import DataProduct
 
 class Observatory(models.Model):
 
@@ -24,7 +26,6 @@ class Observatory(models.Model):
     comment = models.TextField(null=True, blank=True)
     isVerified = models.BooleanField(default='False')
 
-
 class Instrument(models.Model):
 
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -32,6 +33,10 @@ class Instrument(models.Model):
     hashtag = models.CharField(max_length=255, editable=True, null=False, blank=False)
     isActive = models.BooleanField(default='True')
     comment = models.TextField(null=True, blank=True)
+
+def photometry_name(instance, filename):
+    return '/'.join([Target.objects.get(id=DataProduct.objects.get(id=instance.dataproduct_id).target_id).name,
+                     'photometry', filename])
 
 class BHTomFits(models.Model):
     FITS_STATUS = [
@@ -57,7 +62,7 @@ class BHTomFits(models.Model):
     status_message = models.TextField(default='Fits upload', blank=True, editable=False)
     mjd = models.FloatField(null=True, blank=True)
     expTime = models.FloatField(null=True, blank=True)
-    photometry_file = models.FileField(upload_to='photometry', null=True, blank=True, editable=False)
+    photometry_file = models.FileField(upload_to=photometry_name, null=True, blank=True)
     cpcs_plot = models.TextField(null=True, blank=True)
     mag = models.FloatField(null=True, blank=True)
     mag_err = models.FloatField(null=True, blank=True)
@@ -74,7 +79,7 @@ class BHTomFits(models.Model):
     matchDist = models.CharField(max_length=10, choices=MATCHING_RADIUS, default='2 arcsec',
                                  verbose_name='Matching radius')
     allow_upload = models.BooleanField(verbose_name='Dry Run (no data will be stored in the database)')
-    comment = models.TextField()
+    comment = models.TextField(null=True, blank=True)
 
 class Catalogs(models.Model):
     id = models.IntegerField(primary_key=True)

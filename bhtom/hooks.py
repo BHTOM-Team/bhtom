@@ -84,39 +84,45 @@ def send_to_cpcs(result, fits, eventID):
 
     url_cpcs = secret.CPCS_URL + 'upload'
     logger.info('Send file to cpcs')
-    logger.info(int(fits.allow_upload))
 
     try:
-        with open(format(result), 'rb') as file:
-
-            response = requests.post(url_cpcs, {'MJD': fits.mjd, 'EventID': eventID, 'expTime':  fits.expTime,
-                                          'matchDist': fits.matchDist, 'dryRun': int(fits.allow_upload),
-                                          'forceFilter': fits.filter, 'hashtag': Instrument.objects.get(id=fits.instrument_id.id).hashtag,
-                                            'outputFormat': 'json'}, files={'sexCat': file})
-
-        logger.info(json_data['mag'])
-
-        if response.status_code == 201 or response.status_code == 200:
-            logger.info(int(fits.allow_upload))
-            json_data = json.loads(response.text)
-            fits.status = 'F'
-            fits.status_message = 'Finished'
-            fits.cpcs_plot = json_data['image_link']
-            fits.mag = json_data['mag']
-            fits.mag_err = json_data['mag_err']
-            fits.ra = json_data['ra']
-            fits.dec = json_data['dec']
-            fits.zeropoint = json_data['zeropoint']
-            fits.outlier_fraction = json_data['outlier_fraction']
-            fits.scatter = json_data['scatter']
-            fits.npoints = json_data['npoints']
+        if eventID == None or eventID == '':
+            fits.status = 'E'
+            fits.status_message = 'CPCS target name missing or not yet on CPCS'
             fits.save()
         else:
+            with open(format(result), 'rb') as file:
 
-            error_message = 'Cpcs error: %s' % response.content.decode()
-            fits.status='E'
-            fits.status_message = error_message
-            fits.save()
+                response = requests.post(url_cpcs, {'MJD': fits.mjd, 'EventID': eventID, 'expTime':  fits.expTime,
+                                              'matchDist': fits.matchDist, 'dryRun': int(fits.allow_upload),
+                                              'forceFilter': fits.filter, 'hashtag': Instrument.objects.get(id=fits.instrument_id.id).hashtag,
+                                                'outputFormat': 'json'}, files={'sexCat': file})
+
+
+            if response.status_code == 201 or response.status_code == 200:
+
+                json_data = json.loads(response.text)
+                fits.status = 'F'
+                fits.status_message = 'Finished'
+                fits.cpcs_plot = json_data['image_link']
+                fits.mag = json_data['mag']
+                fits.mag_err = json_data['mag_err']
+                fits.ra = json_data['ra']
+                fits.dec = json_data['dec']
+                fits.zeropoint = json_data['zeropoint']
+                fits.outlier_fraction = json_data['outlier_fraction']
+                fits.scatter = json_data['scatter']
+                fits.npoints = json_data['npoints']
+                fits.save()
+
+                logger.info('mag: ' + fits.mag + ', mag_err: ' + fits.mag_err + ' ra: ' + fits.ra + ', dec:' + fits.dec
+                            + ', zeropoint: ' + fits.zeropoint + ', npoints: ' + fits.npoints + ', scatter: ' + fits.scatter)
+            else:
+
+                error_message = 'Cpcs error: %s' % response.content.decode()
+                fits.status='E'
+                fits.status_message = error_message
+                fits.save()
 
     except Exception as e:
         logger.error('error: ' + str(e))
@@ -155,7 +161,7 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
              return None
              #raise Exception(str(e)) from None
     else:
-        logger.info('Hastag exist or cpcs Only, ' + instance.insName)
+        logger.info('Hastag exist or cpcs Only')
 
 
 @receiver(pre_save, sender=Target)
