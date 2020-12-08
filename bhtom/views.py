@@ -26,12 +26,16 @@ from rest_framework.response import Response
 from bhtom.models import BHTomFits, Observatory, Instrument
 from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer, BHTomFitsStatusSerializer
 from bhtom.hooks import send_to_cpcs
-from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
+from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
+from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
 
 from django.http import HttpResponseServerError
 from django.views.generic.edit import FormView, DeleteView
+from django.views.generic import View
 from django.conf import settings
 from django.contrib import messages
+from django.core.cache.utils import make_template_fragment_key
+from django.core.cache import cache
 
 from django.contrib.auth.models import Group
 from django.core.management import call_command
@@ -727,6 +731,12 @@ class DataProductUploadView(FormView):
         ExpTime = form.cleaned_data['ExpTime']
         matchDist = form.cleaned_data['matchDist']
         dryRun = form.cleaned_data['dryRun']
+        comment = form.cleaned_data['comment']
+        user = self.request.user
+
+        if dp_type =='fits_file' and observatory.cpcsOnly == True:
+            messages.error(self.request, 'Used Observatory without ObsInfo')
+            return redirect(form.cleaned_data.get('referrer', '/'))
 
         successful_uploads = []
         for f in data_product_files:
@@ -738,8 +748,13 @@ class DataProductUploadView(FormView):
                 data_product_type=dp_type
             )
             dp.save()
+
             try:
+<<<<<<< HEAD
                 run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun, matchDist)
+=======
+                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun, matchDist, comment, user)
+>>>>>>> fabf7855d92c173887212d905b1315b1d3eda49b
 
                 if dp.data_product_type == 'photometry':
                     run_data_processor(dp)
@@ -755,6 +770,7 @@ class DataProductUploadView(FormView):
             except Exception as e:
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
+                logger.error(e)
                 messages.error(self.request, 'There was a problem processing your file: {0}'.format(str(dp)))
         if successful_uploads:
             messages.success(
@@ -811,6 +827,17 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
             return redirect(reverse('bhlist_detail', args=(target_id,)))
         return super().get(request, *args, **kwargs)
 
+
+class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
+    permission_required = 'tom_targets.view_target'
+    template_name = 'tom_targets/target_interactive_photometry.html'
+    model = Target
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'You don\'t have permission to watch this site.')
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+
 class CreateInstrument(PermissionRequiredMixin, FormView):
     """
     View that handles manual upload of DataProducts. Requires authentication.
@@ -832,22 +859,21 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
     def form_valid(self, form):
 
         user = self.request.user
-        dry_run = form.cleaned_data['dryRun']
         observatoryID = form.cleaned_data['observatory']
-        hashtag = form.cleaned_data['hashtag']
+        comment = form.cleaned_data['comment']
 
         try:
             instrument = Instrument.objects.create(
-                    dry_run=dry_run,
                     user_id=user,
                     observatory_id=observatoryID,
-                    hashtag=hashtag
+                    isActive=True,
+                    comment=comment
                 )
             #instrument.save()
             observatory = Observatory.objects.get(id=observatoryID.id)
 
             if (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits == None or observatory.fits == ''): #tylko obsInfo wysylamy maila
-                logger.info('Send mail')
+                logger.info('Send mail, ' + observatoryID.obsName)
                 send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(user), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             elif (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits != None or observatory.fits != '') : #procesujemy fitsa
 
@@ -860,15 +886,15 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
                 dp.save()
                 run_hook('data_product_post_upload', dp, instrument, 'No', None, None, 1, 2)'''
                 logger.info('Send mail')
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(instrument.insName), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(observatoryID.obsName), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             elif (observatory.obsInfo == None or observatory.obsInfo == '') and (observatory.fits != None or observatory.fits != ''):
-                logger.info('Send mai')
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(instrument.insName), settings.EMAIL_HOST_USER,
+                logger.info('Send mai, ' + observatoryID.obsName)
+                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(observatoryID.obsName), settings.EMAIL_HOST_USER,
                           secret.RECIPIENTEMAIL, fail_silently=False)
             elif (observatory.obsInfo == None or observatory.obsInfo == '') and (
                     observatory.fits == None or observatory.fits == ''):
-                logger.info('Send mail')
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(instrument.insName), settings.EMAIL_HOST_USER,
+                logger.info('Send mail, ' + observatoryID.obsName)
+                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(observatoryID.obsName), settings.EMAIL_HOST_USER,
                           secret.RECIPIENTEMAIL, fail_silently=False)
         except Exception as e:
             logger.error('error: ' + str(e))
@@ -941,17 +967,23 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
             lon = form.cleaned_data['lon']
             lat = form.cleaned_data['lat']
             matchDist = form.cleaned_data['matchDist']
+            cpcsOnly = form.cleaned_data['cpcsOnly']
 
             fits = self.request.FILES.get('fits')
             obsInfo = self.request.FILES.get('obsInfo')
-            logger.info(fits)
+            if cpcsOnly is True:
+                prefix = obsName+"_CpcsOnly"
+            else:
+                prefix = obsName
+
             observatory = Observatory.objects.create(
                     obsName=obsName,
                     lon=lon,
                     lat=lat,
                     matchDist=matchDist,
-                    userActivation=False,
-                    prefix=obsName,
+                    isVerified=False,
+                    prefix=prefix,
+                    cpcsOnly=cpcsOnly,
                     fits=fits,
                     obsInfo=obsInfo
             )
@@ -986,9 +1018,9 @@ class ObservatoryList(PermissionRequiredMixin, ListView):
 
         observatory_user_list = []
         for ins in instrument:
-            observatory_user_list.append([ins.id, ins.hashtag, Observatory.objects.get(id=ins.observatory_id.id)])
+            observatory_user_list.append([ins.id, ins.hashtag, ins.isActive, ins.comment,  Observatory.objects.get(id=ins.observatory_id.id)])
 
-        context['observatory_list'] = Observatory.objects.all()
+        context['observatory_list'] = Observatory.objects.filter(isVerified=True)
         context['observatory_user_list'] = observatory_user_list
 
         return context
@@ -997,7 +1029,7 @@ class UpdateObservatory(PermissionRequiredMixin, UpdateView):
 
     permission_required = 'bhtom.change_observatory'
     template_name = 'tom_common/observatory_create.html'
-    form_class = ObservatoryCreationForm
+    form_class = ObservatoryUpdateForm
     success_url = reverse_lazy('observatory')
     model = Observatory
 
@@ -1056,3 +1088,39 @@ class RegisterUser(CreateView):
                   secret.RECIPIENTEMAIL, fail_silently=False)
         messages.success(self.request, 'Successfully registered')
         return redirect(self.get_success_url())
+
+class DataProductFeatureView(View):
+    """
+    View that handles the featuring of ``DataProduct``s. A featured ``DataProduct`` is displayed on the
+    ``TargetDetailView``.
+    """
+    def get(self, request, *args, **kwargs):
+        """
+        Method that handles the GET requests for this view. Sets all other ``DataProduct``s to unfeatured in the
+        database, and sets the specified ``DataProduct`` to featured. Caches the featured image. Deletes previously
+        featured images from the cache.
+        """
+        product_id = kwargs.get('pk', None)
+        product = DataProduct.objects.get(pk=product_id)
+        try:
+            current_featured = DataProduct.objects.filter(
+                featured=True,
+                data_product_type=product.data_product_type,
+                target=product.target
+            )
+            for featured_image in current_featured:
+                featured_image.featured = False
+                featured_image.save()
+                featured_image_cache_key = make_template_fragment_key(
+                    'featured_image',
+                    str(featured_image.target.id)
+                )
+                cache.delete(featured_image_cache_key)
+        except DataProduct.DoesNotExist:
+            pass
+        product.featured = True
+        product.save()
+        return redirect(reverse(
+            'bhlist_detail',
+            kwargs={'pk': request.GET.get('target_id')})
+        )

@@ -1,7 +1,7 @@
 {% load tom_common_extras targets_extras %}
 <a href="{% url 'bhlist_update' pk=target.id %}" title="Update target" class="btn  btn-primary">Update</a>
 <a href="{% url 'bhlist_delete' pk=target.id %}" title="Delete target" class="btn  btn-warning">Delete</a>
-<a href="{% url 'bhlist_file' pk=target.id %}" title="Show more Fits details" class="btn btn-primary">Uploaded</a>
+<a href="{% url 'bhlist_file' pk=target.id %}" title="List all uploaded Fits" class="btn btn-primary">List Fits</a>
 <dl class="row">
   {% for target_name in target.names %}
     {% if forloop.first %}
@@ -27,11 +27,9 @@
   {% endfor %}
 </dl>
 <dl class="row">
-{% for key, value in target.extra_fields.items %}
-  {% if key in display_extras %}
+{% for key, value in extras.items %}
     <dt class="col-sm-6">{{ key }}</dt>
     <dd class="col-sm-6">{{ value }}</dd>
-  {% endif %}
 {% endfor %}
 </dl>
 <h4>Tags</h4>

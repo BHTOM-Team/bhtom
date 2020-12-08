@@ -3,6 +3,7 @@
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
+<link rel="stylesheet" href="{% static 'bhtom/css/main.css' %}">
 {% endblock %}
 {% bootstrap_javascript jquery='True' %}
 {% block content %}
@@ -25,29 +26,29 @@
   <div class="col-md-8">
     <ul class="nav nav-tabs" id="tabs">
       <li class="nav-item">
-        <span class="nav-link active" data-target="#observe" data-toggle="tab">Observe</span>
-      </li>
-      <li class="nav-item">
-        <span class="nav-link" data-target="#observations" data-toggle="tab">Observations</span>
-      </li>
-      <li class="nav-item">
-        <span class="nav-link" data-target="#upload" data-toggle="tab">Upload</span>
-      </li>
-      <li class="nav-item">
-        <span class="nav-link" data-target="#manage-groups" data-toggle="tab">Manage Groups</span>
-      </li>
-      <li class="nav-item">
-        <span class="nav-link" data-target="#photometry" data-toggle="tab">Photometry</span>
+        <span class="nav-link active" data-target="#photometry" data-toggle="tab">Photometry</span>
       </li>
       <li class="nav-item">
         <span class="nav-link" data-target="#spectroscopy" data-toggle="tab">Spectroscopy</span>
       </li>
       <li class="nav-item">
+        <span class="nav-link" data-target="#upload" data-toggle="tab">Upload</span>
+      </li>
+      <li class="nav-item">
+        <span class="nav-link" data-target="#observe" data-toggle="tab">Observe</span>
+      </li>
+      <li class="nav-item">
+        <span class="nav-link" data-target="#observations" data-toggle="tab">Observations</span>
+      </li>
+      <li class="nav-item">
         <span class="nav-link" data-target="#data" data-toggle="tab">Data</span>
+      </li>
+      <li class="nav-item">
+        <span class="nav-link" data-target="#manage-groups" data-toggle="tab">Manage Groups</span>
       </li>
     </ul>
     <div class="tab-content">
-      <div class="tab-pane active" id="observe">
+      <div class="tab-pane" id="observe">
         <h4>Observe</h4>
         {% observing_buttons object %}
         <hr/>
@@ -74,27 +75,58 @@
       <div class="tab-pane" id="manage-groups">
         {% target_groups target %}
       </div>
-      <div class="tab-pane" id="photometry">
-        {% photometry_for_target target %}
+      <div class="tab-pane active" id="photometry">
+        <div class="row">
+          <div class="col-md-4">
+            <h4>Photometry</h4>
+          </div>
+          <div class="col-md-8">
+            <button onclick="open_photometry()" class="btn btn-info" role="button">Interactive photometry plot</button>
+            <a href="{% url 'datatools:update-reduced-data-gaia' %}?target_id={{ target.id }}" class="btn btn-primary"
+               title="Update Light Curve">Check for new data</a>
+          </div>
         </div>
+        {% photometry_for_target_static target %}
+
+        {% comments_enabled as comments_are_enabled %}
+        <hr/>
+        <h5>Comments</h5>
+        {% if comments_are_enabled %}
+        {% render_comment_list for object %}
+        {% url 'bhlist_detail' object.id as next %}
+        {% if user.is_authenticated %}
+        {% render_comment_form for object %}
+        {% endif %}
+        {% endif %}
+
+      </div>
       <div class="tab-pane" id="spectroscopy">
         {% spectroscopy_for_target target %}
+
+         {% comments_enabled as comments_are_enabled %}
+        <hr/>
+        <h5>Comments</h5>
+        {% if comments_are_enabled %}
+        {% render_comment_list for object %}
+        {% url 'bhlist_detail' object.id as next %}
+        {% if user.is_authenticated %}
+        {% render_comment_form for object %}
+        {% endif %}
+        {% endif %}
+
       </div>
-       <div class="tab-pane" id="data">
+      <div class="tab-pane" id="data">
         {% dataproduct_list_for_target object %}
       </div>
-      {% comments_enabled as comments_are_enabled %}
-      <hr/>
-      <h5>Comments</h5>
-        {% if comments_are_enabled %}
-          {% render_comment_list for object %}
-          {% url 'bhlist_detail' object.id as next %}
-          {% if user.is_authenticated %}
-            {% render_comment_form for object %}
-          {% endif %}
-        {% endif %}
+
     </div>
   </div>
 </div>
 {% endblock %}
-
+{% block extra_javascript %}
+<script type="text/javascript">
+  function open_photometry() {
+    window.open('{% url "bhlist_i_photometry" target.id %}', 'newwindow', 'width=800,height=700');
+  }
+</script>
+{% endblock %}

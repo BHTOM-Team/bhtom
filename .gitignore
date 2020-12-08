@@ -107,7 +107,7 @@ venv.bak/
 #MY STUFF:
 secret_stuff.txt
 settings/local_settings.py
-
+run.sh
 runtime.txt
 
 gunicorn-access.log

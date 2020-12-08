@@ -7,15 +7,19 @@
 {% if object %}
 <form action="{% url 'observatory_update' object.id %}" enctype="multipart/form-data" method="POST">
 {% else %}
-  <p> Create your new Observatory. You can only upload your photometry (FITS/SExtractor) for the observatories/instruments listed here. 
-    <br>
+  <h4> Create a new Observatory. </h4>
+  <br>
     Please fill the form below, check BHTOM manual for details.
     Your entry has to be then activated by the Administrator. 
     </p>
     <p>
-      Prefix is a shortenned name to be used in hashtag generation.
       Matching radius is the expected astrometric accuracy of your observatory.
+      
       The sample fits file is necessary for new observatories for verification of the automatic photometric processing.
+
+      OBSINFO file describes the technical details of your observatory. The template for this text file can be downloaded from TBA or obtained from us.
+
+      Please refer to the BHTOM Manual or get in touch. 
     </p>
 <form action="{% url 'observatory_create' %}" enctype="multipart/form-data" method="POST">
 {% endif %}

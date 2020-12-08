@@ -26,11 +26,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework import routers, permissions
 from bhtom import views
-from bhtom.views import DataProductUploadView, TargetDetailView, TargetFileDetailView
+from bhtom.views import DataProductUploadView, TargetDetailView, TargetInteractivePhotometryView, TargetFileDetailView
 from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView, TargetFileView
 from bhtom.views import DeleteObservatory, UpdateObservatory, ObservatoryList, CreateObservatory
 from bhtom.views import DeleteInstrument, UpdateInstrument, CreateInstrument
-from bhtom.views import RegisterUser
+from bhtom.views import RegisterUser, DataProductFeatureView
 router = routers.DefaultRouter()
 router.register('upload', views.fits_upload)
 router.register('result', views.result_fits)
@@ -48,6 +48,7 @@ urlpatterns = [
     path('bhlist/<pk>/file/', TargetFileView.as_view(), name='bhlist_file'),
     path('bhlist/<pk>/file/<pk_fits>', TargetFileDetailView.as_view(), name='bhlist_file_detail'),
     path('bhlist/<pk>/', TargetDetailView.as_view(), name='bhlist_detail'),
+    path('bhlist/<pk>/iphotometry', TargetInteractivePhotometryView.as_view(), name='bhlist_i_photometry'),
     path('', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('dataUpload/', DataProductUploadView.as_view(), name='data_upload'),
@@ -59,6 +60,7 @@ urlpatterns = [
     path('observatory/<pk>/delete/', DeleteObservatory.as_view(), name='observatory_delete'),
     path('observatory/list/', ObservatoryList.as_view(), name='observatory'),
     path('user/create/', RegisterUser.as_view(), name='register_user'),
+    path('tom_dataproducts/data/<int:pk>/feature/', DataProductFeatureView.as_view(), name='bhtom_feature'),
     # The static helper below only works in development see
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
  ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

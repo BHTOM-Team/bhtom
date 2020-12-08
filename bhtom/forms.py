@@ -7,17 +7,18 @@ from bhtom.models import Observatory, Instrument, Catalogs
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import UserCreationForm, UsernameField
 
+from captcha.fields import ReCaptchaField
+
 import logging
 logger = logging.getLogger(__name__)
-class InstrumentChoiceField(forms.ModelChoiceField):
-
-    def label_from_instance(self, obj):
-        return '{insName}'.format(insName=obj.insName)
 
 class ObservatoryChoiceField(forms.ModelChoiceField):
 
     def label_from_instance(self, obj):
-        return '{obsName}'.format(obsName=obj.obsName)
+        if obj.cpcsOnly == True:
+            return '{obsName} (Only Instrumental photometry file)'.format(obsName=obj.obsName)
+        else:
+            return '{obsName}'.format(obsName=obj.obsName)
 
 class FilterChoiceField(forms.ModelChoiceField):
 
@@ -60,13 +61,14 @@ class DataProductUploadForm(forms.Form):
 
     data_product_type = forms.ChoiceField(
         choices=[v for k, v in settings.DATA_PRODUCT_TYPES.items()],
+        initial='photometry_cpcs',
         widget=forms.RadioSelect(attrs={'onclick' : "dataProductSelect();"}),
         required=True
     )
 
     MJD = forms.DecimalField(
         label="MJD OBS",
-        widget=forms.NumberInput(attrs={'id': 'mjd'}),
+        widget=forms.NumberInput(attrs={'id': 'mjd', 'disable': 'none'}),
         required=False
     )
 
@@ -108,6 +110,7 @@ class DataProductUploadForm(forms.Form):
 
         instrument = Instrument.objects.filter(user_id=user)
         insTab = []
+<<<<<<< HEAD
 
         for ins in instrument:
             insTab.append(ins.observatory_id.id)
@@ -124,22 +127,69 @@ class DataProductUploadForm(forms.Form):
                 widget=forms.Select(),
                 required=False,
                 label='Force filter'
+=======
+
+        for ins in instrument:
+            insTab.append(ins.observatory_id.id)
+
+        self.fields['observatory'] = ObservatoryChoiceField(
+
+            queryset=Observatory.objects.filter(id__in=insTab, isVerified=True),
+            widget=forms.Select(),
+            required=False
+        )
+
+        self.fields['filter'] = forms.ChoiceField(
+            choices=[v for v in filter.items()],
+            widget=forms.Select(),
+            required=False,
+            label='Force filter'
+        )
+
+        self.fields['comment'] = forms.CharField(
+            widget=forms.Textarea,
+            required=False,
+            label='Comment',
+>>>>>>> fabf7855d92c173887212d905b1315b1d3eda49b
         )
 
 class ObservatoryCreationForm(forms.ModelForm):
 
+    cpcsOnly = forms.BooleanField(
+        label='Only instrumental photometry file',
+        required=False
+    )
+
     class Meta:
         model = Observatory
-        fields = ('obsName', 'lon', 'lat', 'matchDist', 'fits', 'obsInfo')
+        fields = ('obsName', 'lon', 'lat', 'matchDist', 'cpcsOnly', 'fits', 'obsInfo', 'comment')
+
+class ObservatoryUpdateForm(forms.ModelForm):
+
+    cpcsOnly = forms.BooleanField(
+        label='Only instrumental photometry file',
+        required=False
+    )
+
+    class Meta:
+        model = Observatory
+        fields = ('obsName', 'lon', 'lat', 'matchDist', 'prefix', 'cpcsOnly', 'fits', 'obsInfo', 'comment')
 
 class InstrumentUpdateForm(forms.ModelForm):
 
     class Meta:
         model = Instrument
-        fields = ('hashtag', 'dry_run')
+        fields = ('comment',)
 
 class InstrumentCreationForm(forms.Form):
 
+    observatory = forms.ChoiceField()
+
+    comment = forms.CharField(
+        widget=forms.Textarea,
+        label="Comment",
+        required=False
+    )
 
     def __init__(self, *args, **kwargs):
 
@@ -153,31 +203,22 @@ class InstrumentCreationForm(forms.Form):
 
         self.fields['observatory'] = ObservatoryChoiceField(
 
-            queryset=Observatory.objects.exclude(id__in=insTab),
+            queryset=Observatory.objects.exclude(id__in=insTab).filter(isVerified=True),
             widget=forms.Select(),
             required=True
         )
-
-
-    hashtag = forms.CharField(
-        label='hashtag',
-        required=False
-    )
-
-    dryRun = forms.BooleanField(
-        label='Dry Run (no data will be stored in the database)',
-        required=False
-    )
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
     groups = forms.ModelMultipleChoiceField(Group.objects.all().exclude(name='Public'),
                                             required=False, widget=forms.CheckboxSelectMultiple)
+    captcha = ReCaptchaField()
 
     class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'groups')
         field_classes = {'username': UsernameField}
+
 
     def save(self, commit=True):
         user = super(forms.ModelForm, self).save(commit=False)
