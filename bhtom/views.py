@@ -441,20 +441,16 @@ class TargetFileView(PermissionRequiredMixin, ListView):
         return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def get_queryset(self):
-        """
-        Gets the set of ``DataProduct`` objects that the user has permission to view.
 
-        :returns: Set of ``DataProduct`` objects
-        :rtype: QuerySet
-        """
-        data_product = DataProduct.objects.filter(target_id=self.kwargs['pk'], data_product_type__in=['fits_file','photometry_cpcs']).values_list('id')
+        data_product = DataProduct.objects.filter(target_id=self.kwargs['pk'], data_product_type__in=['fits_file','photometry_cpcs'])
         fits = BHTomFits.objects.filter(dataproduct_id__in=data_product).order_by('-start_time')
         target_name = str(Target.objects.get(id=self.kwargs['pk']).name)
+        user = self.request.user
         tabFits = []
 
         for fit in fits:
             try:
-                data_product = DataProduct.objects.get(id=fit.dataproduct_id)
+                data_product = DataProduct.objects.get(id=fit.dataproduct_id.id)
                 instrument = Instrument.objects.get(id=fit.instrument_id.id)
 
                 if fit.filter == 'no':
@@ -465,14 +461,15 @@ class TargetFileView(PermissionRequiredMixin, ListView):
                     ccdphot_url = format(data_product.data)
                     logger.error(ccdphot_url)
                 else:
-                    ccdphot_url = "/".join([target_name, "photometry", str(fit.photometry_file)])
+                    ccdphot_url = str(fit.photometry_file)
 
                 tabFits.append([fit.file_id, fit.start_time,
                                 format(data_product.data), format(data_product.data).split('/')[-1],
                                 ccdphot_url, format(ccdphot_url).split('/')[-1],
                                 filter, Observatory.objects.get(id=instrument.observatory_id.id).obsName,
                                 fit.status_message, fit.mjd, fit.expTime,
-                                DataProduct.objects.get(id=fit.dataproduct_id).data_product_type])
+                                DataProduct.objects.get(id=fit.dataproduct_id.id).data_product_type,
+                                instrument.user_id.id])
 
             except Exception as e:
                 logger.error('error: ' + str(e))
@@ -480,12 +477,7 @@ class TargetFileView(PermissionRequiredMixin, ListView):
         return tabFits
 
     def get_context_data(self, *args, **kwargs):
-        """
-        Adds the ``DataProductUploadForm`` to the context and prepopulates the hidden fields.
 
-        :returns: context object
-        :rtype: dict
-        """
         context = super().get_context_data(*args, **kwargs)
         target = Target.objects.get(id=self.kwargs['pk'])
         context['target'] = target
@@ -508,11 +500,11 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
         fits = BHTomFits.objects.get(file_id=self.kwargs['pk_fits'])
         instrument = Instrument.objects.get(id=fits.instrument_id.id)
         observatory = Observatory.objects.get(id=instrument.observatory_id.id)
-        data_product = DataProduct.objects.get(id=fits.dataproduct_id)
+        data_product = DataProduct.objects.get(id=fits.dataproduct_id.id)
         tabFits = {}
+        filter = ''
 
         try:
-            data_product = DataProduct.objects.get(id=fits.dataproduct_id)
 
             if data_product.data_product_type == 'photometry_cpcs':
 
@@ -520,12 +512,13 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
                 tabFits['ccdphot'] = format(data_product.data).split('/')[-1]
             else:
 
-                tabFits['fits_url'] = format(data_product.data)
+                tabFits['fits_url'] = format("/".join(["/data", str(data_product.data)]))
                 tabFits['fits'] = format(data_product.data).split('/')[-1]
+
                 if fits.photometry_file != '':
-                    ccdphot_url = "/".join(["/data", target.name, "photometry", str(fits.photometry_file)])
-                    tabFits['ccdphot_url'] = format(ccdphot_url.photometry_file)
-                    tabFits['ccdphot'] = format(ccdphot_url.photometry_file).split('/')[-1]
+                    logger.info(str(fits.photometry_file))
+                    tabFits['ccdphot_url'] = format("/".join(["/data", str(fits.photometry_file)]))
+                    tabFits['ccdphot'] = format(str(fits.photometry_file).split('/')[-1])
 
             if fits.filter == 'no':
                 filter = 'Auto'
@@ -568,7 +561,16 @@ class fits_upload(viewsets.ModelViewSet):
             data_product_files = request.FILES.getlist("files")
             hashtag = request.data.get('hashtag')
             dp_type = request.data.get('data_product_type')
+            MJD = request.data.get('MJD')
+            ExpTime = request.data.get('ExpTime')
+            dryRun = request.data.get('dryRun')
+            matchDist = request.data.get('matchDist')
+            comment = request.data.get('comment')
+            dryRun = request.data.get('dryRun')
+
             instrument = Instrument.objects.get(hashtag=hashtag)
+            observatory = Observatory.objects.get(id=instrument.observatory_id.id)
+            user = User.objects.get(id=instrument.user_id.id)
             target_id = Target.objects.get(name=target)
 
             if instrument is None or target_id is None:
@@ -590,7 +592,9 @@ class fits_upload(viewsets.ModelViewSet):
             dp.save()
 
             try:
-               # run_hook('data_product_post_upload', dp, hashtag, observation_filter)
+
+                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun,
+                         matchDist, comment, user)
 
                 run_data_processor(dp)
                 successful_uploads.append(str(dp))
@@ -634,6 +638,7 @@ class result_fits(viewsets.ModelViewSet):
                 instance.mjd = request.query_params.get('fits_mjd')
                 instance.expTime = request.query_params.get('fits_exp')
                 instance.ccdphot_filter = request.query_params.get('fits_filter')
+
                 instance.save()
 
             else:
@@ -650,9 +655,12 @@ class result_fits(viewsets.ModelViewSet):
             logger.error('error: ' + str(e))
             return HttpResponseServerError(e)
 
-        #if instance.status == 'R':
-
-           # send_to_cpcs(url_resalt, instance, target.extra_fields['calib_server_name'])
+        if instance.status == 'R':
+            target = Target.objects.get(id=instance.dataproduct_id.target_id)
+            BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            url_base = BASE + '/data/' + format(target.name) + '/photometry/'
+            url_result = os.path.join(url_base, ccdphot_result.name)
+            send_to_cpcs(url_result, instance, target.extra_fields['calib_server_name'])
 
         return Response(status=status.HTTP_201_CREATED)
 
@@ -745,7 +753,7 @@ class DataProductUploadView(FormView):
                 if dp.data_product_type == 'photometry':
                     run_data_processor(dp)
 
-                successful_uploads.append(str(dp))
+                successful_uploads.append(str(dp).split('/')[-1])
             except InvalidFileFormatException as iffe:
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
@@ -761,7 +769,7 @@ class DataProductUploadView(FormView):
         if successful_uploads:
             messages.success(
                 self.request,
-                'Successfully uploaded: {0}'.format('\n'.join([p for p in successful_uploads]))
+                'Successfully uploaded: {0}. Your file is processing. This might take several minutes'.format('\n'.join([p for p in successful_uploads]))
             )
 
         return redirect(form.cleaned_data.get('referrer', '/'))

@@ -26,6 +26,12 @@ class Observatory(models.Model):
     comment = models.TextField(null=True, blank=True)
     isVerified = models.BooleanField(default='False')
 
+    def __str__(self):
+        return self.obsName
+
+    class Meta:
+        verbose_name_plural = "Obs info"
+
 class Instrument(models.Model):
 
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -34,9 +40,11 @@ class Instrument(models.Model):
     isActive = models.BooleanField(default='True')
     comment = models.TextField(null=True, blank=True)
 
+    def __str__(self):
+        return self.user_id.username
+
 def photometry_name(instance, filename):
-    return '/'.join([Target.objects.get(id=DataProduct.objects.get(id=instance.dataproduct_id).target_id).name,
-                     'photometry', filename])
+    return '/'.join([Target.objects.get(id=instance.dataproduct_id.target_id).name, 'photometry', filename])
 
 class BHTomFits(models.Model):
     FITS_STATUS = [
@@ -57,7 +65,7 @@ class BHTomFits(models.Model):
 
     file_id = models.AutoField(db_index=True, primary_key=True)
     instrument_id = models.ForeignKey(Instrument, on_delete=models.CASCADE)
-    dataproduct_id = models.IntegerField(null=False, blank=False)
+    dataproduct_id = models.ForeignKey(DataProduct, on_delete=models.CASCADE)
     status = models.CharField(max_length=1, choices=FITS_STATUS, default='C')
     status_message = models.TextField(default='Fits upload', blank=True, editable=False)
     mjd = models.FloatField(null=True, blank=True)
@@ -80,6 +88,9 @@ class BHTomFits(models.Model):
                                  verbose_name='Matching radius')
     allow_upload = models.BooleanField(verbose_name='Dry Run (no data will be stored in the database)')
     comment = models.TextField(null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = "BHTomFits"
 
 class Catalogs(models.Model):
     id = models.IntegerField(primary_key=True)

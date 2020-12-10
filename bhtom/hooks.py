@@ -39,9 +39,8 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
 
         with open(url, 'rb') as file:
             #fits_id = uuid.uuid4().hex
-
             try:
-                instance = BHTomFits.objects.create(instrument_id=instrument, dataproduct_id=dp.id, start_time=datetime.now(),
+                instance = BHTomFits.objects.create(instrument_id=instrument, dataproduct_id=dp, start_time=datetime.now(),
                                                     filter=observation_filter, allow_upload=dry_run, matchDist=matching_radius,
                                                     comment=comment)
 
@@ -67,7 +66,7 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
 
         target = Target.objects.get(id=dp.target_id)
         try:
-            instance = BHTomFits.objects.create(status='S', instrument_id=instrument, dataproduct_id=dp.id,
+            instance = BHTomFits.objects.create(status='S', instrument_id=instrument, dataproduct_id=dp,
                                      status_message='Sent to Calibration', start_time=datetime.now(),
                                      cpcs_time=datetime.now(), filter=observation_filter, photometry_file=url,
                                      mjd=MJD, expTime=expTime, allow_upload=dry_run,

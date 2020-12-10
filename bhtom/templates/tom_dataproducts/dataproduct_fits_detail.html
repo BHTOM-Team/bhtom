@@ -25,11 +25,11 @@
           <tbody>
           <tr>
             <td>Fits</td>
-            <td><a href="/data/{{ tabFits.fits_url }}">{{ tabFits.fits }}</a></td>
+            <td><a href="{{ tabFits.fits_url }}">{{ tabFits.fits }}</a></td>
           </tr>
           <tr>
             <td>Photometry</a></td>
-            <td><a href="/data/{{ tabFits.ccdphot_url }}"> {{ tabFits.ccdphot }}</a></td>
+            <td><a href="{{ tabFits.ccdphot_url }}"> {{ tabFits.ccdphot }}</a></td>
           </tr>
            <tr>
             <td>Observatory</a></td>
@@ -144,7 +144,7 @@
            <tr>
             <td>Thumbnail</a></td>
          <td>
-            {% include 'tom_dataproducts/partials/js9_button.html' with url="/data/" only %}
+            {% include 'tom_dataproducts/partials/js9_button.html' with url=tabFits.fits_url  only %}
           </td>
           </tr>
           </tbody>
