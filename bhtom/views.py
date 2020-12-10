@@ -546,6 +546,7 @@ class fits_upload(viewsets.ModelViewSet):
 
     queryset = BHTomFits.objects.all()
     serializer_class = BHTomFitsCreateSerializer
+
     permission_classes = [IsAuthenticatedOrReadOnlyOrCreation]
 
     def create(self, request, *args, **kwargs):
