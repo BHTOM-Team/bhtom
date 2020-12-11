@@ -1,7 +1,7 @@
-{% if perms.tom_targets.change_target %}
+{% if perms.tom_targets.add_target and perms.tom_targets.change_target %}
 <a href="{% url 'tom_targets:update' pk=target.id %}" title="Update target" class="btn  btn-primary">Update</a>
 {% endif %}
-{% if perms.tom_targets.change_target %}
+{% if perms.tom_targets.delete_target %}
 <a href="{% url 'tom_targets:delete' pk=target.id %}" title="Delete target" class="btn  btn-warning">Delete</a>
 {% endif %}
 {% if perms.bhtom.add_observatory and perms.bhtom.view_bhtomfits %}
