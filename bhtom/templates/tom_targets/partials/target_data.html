@@ -1,7 +1,13 @@
 {% load tom_common_extras targets_extras %}
+{% if perms.tom_targets.change_target %}
 <a href="{% url 'bhlist_update' pk=target.id %}" title="Update target" class="btn  btn-primary">Update</a>
+{% endif %}
+{% if perms.tom_targets.change_target %}
 <a href="{% url 'bhlist_delete' pk=target.id %}" title="Delete target" class="btn  btn-warning">Delete</a>
+{% endif %}
+{% if perms.bhtom.add_observatory and perms.bhtom.view_bhtomfits %}
 <a href="{% url 'bhlist_file' pk=target.id %}" title="List all uploaded Fits" class="btn btn-primary">List Fits</a>
+{% endif %}
 <dl class="row">
   {% for target_name in target.names %}
     {% if forloop.first %}
