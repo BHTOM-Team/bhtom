@@ -97,3 +97,10 @@ class Catalogs(models.Model):
     name = models.TextField(blank=False, editable=False)
     filters = ArrayField(models.CharField(max_length=10))
 
+class BHTomUser(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    is_activate = models.BooleanField(default='False')
+    latex_name = models.CharField(max_length=255, null=True, blank=True, verbose_name='LaTeX name')
+    latex_affiliation = models.CharField(max_length=255, null=True, blank=True, verbose_name='LaTeX affiliation')
+    address = models.CharField(max_length=255, null=True, blank=True, verbose_name='Address')
+    about_me = models.TextField(null=True, blank=True, verbose_name='About me')

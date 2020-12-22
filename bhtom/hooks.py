@@ -114,8 +114,9 @@ def send_to_cpcs(result, fits, eventID):
                 fits.npoints = json_data['npoints']
                 fits.save()
 
-                logger.info('mag: ' + fits.mag + ', mag_err: ' + fits.mag_err + ' ra: ' + fits.ra + ', dec:' + fits.dec
-                            + ', zeropoint: ' + fits.zeropoint + ', npoints: ' + fits.npoints + ', scatter: ' + fits.scatter)
+                logger.info('mag: ' + str(fits.mag) + ', mag_err: ' + str(fits.mag_err) + ' ra: ' + str(fits.ra)
+                            + ', dec:' + str(fits.dec) + ', zeropoint: ' + str(fits.zeropoint)
+                            + ', npoints: ' + str(fits.npoints) + ', scatter: ' + str(fits.scatter))
             else:
 
                 error_message = 'Cpcs error: %s' % response.content.decode()
