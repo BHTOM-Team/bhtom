@@ -342,7 +342,7 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
     """
     View that handles updating a target. Requires authorization.
     """
-    permission_required = 'tom_targets.change_target'
+    permission_required = ('tom_targets.add_target', 'tom_targets.change_target')
     model = Target
     fields = '__all__'
 
@@ -634,6 +634,7 @@ class fits_upload(viewsets.ModelViewSet):
 
     queryset = BHTomFits.objects.all()
     serializer_class = BHTomFitsCreateSerializer
+
     permission_classes = [IsAuthenticatedOrReadOnlyOrCreation]
 
     def create(self, request, *args, **kwargs):
