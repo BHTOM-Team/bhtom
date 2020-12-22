@@ -14,15 +14,10 @@ from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 
 from bhtom.models import BHTomFits, Instrument
-
-register = template.Library()
-
 import logging
 
-logger = logging.getLogger(__name__)
-
 register = template.Library()
-
+logger = logging.getLogger(__name__)
 
 @register.inclusion_tag('tom_dataproducts/partials/dataproduct_list_for_target.html', takes_context=True)
 def dataproduct_list_for_target(context, target):

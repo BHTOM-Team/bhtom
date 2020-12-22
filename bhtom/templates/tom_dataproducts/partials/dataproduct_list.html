@@ -15,14 +15,7 @@
 <div class="container">
     <div class="row">
         <div class="col-md-12">
-            <div class="row">
-              <div class="col-md-12">
-               <h1> Uploaded Files</h1>
-              </div>
-              <div class="col-md-12">
-                <h3>Target: {{target.name }}</h3>
-              </div>
-            </div>
+
             <ul class="nav nav-tabs" id="tabs">
               <li class="nav-item">
                 <span class="nav-link active" data-target="#all" data-toggle="tab">All</span>
@@ -51,7 +44,7 @@
                   </thead>
                   <tbody>
 
-                  {% for fit_id, time,  FileUrl, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type, user in object_list %}
+                  {% for fit_id, time,  FileUrl, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type, user in tabFits %}
 
                   <tr>
                    {% if type != 'photometry_cpcs' %}
@@ -98,7 +91,7 @@
 
                   </tbody>
                 </table>
-                {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+
               </div>
               <div class="tab-pane" id="user">
                 <table class="table">
@@ -119,7 +112,7 @@
                   </thead>
                   <tbody>
 
-                  {% for fit_id, time,  FileUrl, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type, fits_owner in object_list %}
+                  {% for fit_id, time,  FileUrl, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type, fits_owner in tabFits %}
 
                     {% if user.id == fits_owner %}
                       <tr>
@@ -167,7 +160,7 @@
 
                   </tbody>
                 </table>
-                {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+
               </div>
             </div>
         </div>

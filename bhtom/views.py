@@ -93,29 +93,28 @@ def computePriority(dt, priority, cadence):
         ret = dt/cadence
     return ret*priority
 
-
 class BlackHoleListView(PermissionRequiredMixin, FilterView):
 
-    permission_required = 'tom_targets.view_target'
     paginate_by = 20
     strict = False
     model = Target
     filterset_class = TargetFilter
 
     def handle_no_permission(self):
-        messages.error(self.request, secret.NOT_PERMISSION)
+
         if self.request.META.get('HTTP_REFERER') is None:
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-    def render_to_response(self, context, **response_kwargs):
-        if context is None:
+    def has_permission(self):
+        if not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
-            if self.request.META.get('HTTP_REFERER') is None:
-                return HttpResponseRedirect('/')
-            else:
-                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+            return False
+        elif not self.request.user.has_perm('tom_targets.view_target'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
 
     def get_queryset(self, *args, **kwargs):
 
@@ -159,9 +158,6 @@ class BlackHoleListView(PermissionRequiredMixin, FilterView):
 
     def get_context_data(self, *args, **kwargs):
 
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
-            return None
-
         context = super().get_context_data(*args, **kwargs)
         context['target_count'] = context['paginator'].count
         context['groupings'] = (TargetList.objects.all()
@@ -198,24 +194,24 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
     """
     View for creating a Target. Requires authentication.
     """
-    permission_required = 'tom_targets.change_target'
     model = Target
     fields = '__all__'
 
     def handle_no_permission(self):
-        messages.error(self.request, secret.NOT_PERMISSION)
+
         if self.request.META.get('HTTP_REFERER') is None:
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-    def render_to_response(self, context, **response_kwargs):
-        if context is None:
+    def has_permission(self):
+        if not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
-            if self.request.META.get('HTTP_REFERER') is None:
-                return HttpResponseRedirect('/')
-            else:
-                return
+            return False
+        elif not self.request.user.has_perm('tom_targets.add_target'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
 
     def get_default_target_type(self):
         """
@@ -273,8 +269,6 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
                   `extra_form`: ``FormSet``: Django formset with fields for arbitrary key/value pairs
         :rtype: dict
         """
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
-            return None
         context = super(TargetCreateView, self).get_context_data(**kwargs)
         context['type_choices'] = Target.TARGET_TYPES
         context['names_form'] = TargetNamesFormset(initial=[{'name': new_name}
@@ -347,19 +341,20 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
     fields = '__all__'
 
     def handle_no_permission(self):
-        messages.error(self.request, secret.NOT_PERMISSION)
+
         if self.request.META.get('HTTP_REFERER') is None:
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-    def render_to_response(self, context, **response_kwargs):
-        if context is None:
+    def has_permission(self):
+        if not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
-            if self.request.META.get('HTTP_REFERER') is None:
-                return HttpResponseRedirect('/')
-            else:
-                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+            return False
+        elif not self.request.user.has_perm('tom_targets.add_target', 'tom_targets.change_target'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
 
     def get_context_data(self, **kwargs):
         """
@@ -368,9 +363,6 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
         :returns: context object
         :rtype: dict
         """
-
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
-            return None
 
         extra_field_names = [extra['name'] for extra in settings.EXTRA_FIELDS]
         context = super().get_context_data(**kwargs)
@@ -459,24 +451,24 @@ class TargetDeleteView(PermissionRequiredMixin, DeleteView):
     """
     View for deleting a target. Requires authorization.
     """
-    permission_required = 'tom_targets.delete_target'
     success_url = reverse_lazy('bhlist')
     model = Target
 
     def handle_no_permission(self):
-        messages.error(self.request, secret.NOT_PERMISSION)
+
         if self.request.META.get('HTTP_REFERER') is None:
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-    def render_to_response(self, context, **response_kwargs):
-        if context is None:
+    def has_permission(self):
+        if not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
-            if self.request.META.get('HTTP_REFERER') is None:
-                return HttpResponseRedirect('/')
-            else:
-                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+            return False
+        elif not self.request.user.has_perm('tom_targets.delete_target'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
 
     def get_object(self, queryset=None):
         """ Hook to ensure object is owned by request.user. """
@@ -485,31 +477,12 @@ class TargetDeleteView(PermissionRequiredMixin, DeleteView):
 
         return obj
 
-    def get_context_data(self, **kwargs):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
-            return None
-
 class TargetFileView(PermissionRequiredMixin, ListView):
 
-    permission_required = 'tom_dataproducts.view_dataproduct'
     template_name = 'tom_dataproducts/dataproduct_list.html'
     model = BHTomFits
-    paginate_by = 25
 
-    def handle_no_permission(self):
-        messages.error(self.request, secret.NOT_PERMISSION)
-        if self.request.META.get('HTTP_REFERER') is None:
-            return HttpResponseRedirect('/')
-        else:
-            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-    def render_to_response(self, context, **response_kwargs):
-        if context is None:
-            messages.error(self.request, secret.NOT_ACTIVATE)
-            if self.request.META.get('HTTP_REFERER') is None:
-                return HttpResponseRedirect('/')
-            else:
-                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def get_queryset(self):
 
@@ -549,9 +522,6 @@ class TargetFileView(PermissionRequiredMixin, ListView):
 
     def get_context_data(self, *args, **kwargs):
 
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
-            return None
-
         context = super().get_context_data(*args, **kwargs)
         target = Target.objects.get(id=self.kwargs['pk'])
         context['target'] = target
@@ -559,29 +529,26 @@ class TargetFileView(PermissionRequiredMixin, ListView):
 
 class TargetFileDetailView(PermissionRequiredMixin, ListView):
 
-    permission_required = 'tom_dataproducts.view_dataproduct'
     template_name = 'tom_dataproducts/dataproduct_fits_detail.html'
     model = BHTomFits
 
     def handle_no_permission(self):
-        messages.error(self.request, secret.NOT_PERMISSION)
+
         if self.request.META.get('HTTP_REFERER') is None:
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-    def render_to_response(self, context, **response_kwargs):
-        if context is None:
+    def has_permission(self):
+        if not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
-            if self.request.META.get('HTTP_REFERER') is None:
-                return HttpResponseRedirect('/')
-            else:
-                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+            return False
+        elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
 
     def get_context_data(self, *args, **kwargs):
-
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
-            return None
 
         context = super().get_context_data(*args, **kwargs)
         target = Target.objects.get(id=self.kwargs['pk'])
@@ -873,28 +840,25 @@ class DataProductUploadView(FormView):
 
 class TargetDetailView(PermissionRequiredMixin, DetailView):
 
-    permission_required = 'tom_targets.view_target'
     model = Target
 
     def handle_no_permission(self):
-        messages.error(self.request, secret.NOT_PERMISSION)
+
         if self.request.META.get('HTTP_REFERER') is None:
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-    def render_to_response(self, context, **response_kwargs):
-        if context is None:
+    def has_permission(self):
+        if not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
-            if self.request.META.get('HTTP_REFERER') is None:
-                return HttpResponseRedirect('/')
-            else:
-                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+            return False
+        elif not self.request.user.has_perm('tom_targets.view_target'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
 
     def get_context_data(self, *args, **kwargs):
-
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
-            return None
 
         context = super().get_context_data(*args, **kwargs)
 
@@ -925,61 +889,55 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
         return super().get(request, *args, **kwargs)
 
 class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
-    permission_required = 'tom_targets.view_target'
+
     template_name = 'tom_targets/target_interactive_photometry.html'
     model = Target
 
     def handle_no_permission(self):
-        messages.error(self.request, secret.NOT_PERMISSION)
+
         if self.request.META.get('HTTP_REFERER') is None:
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-    def render_to_response(self, context, **response_kwargs):
-        if context is None:
-            messages.error(self.request, secret.NOT_ACTIVATE)
-            if self.request.META.get('HTTP_REFERER') is None:
-                return HttpResponseRedirect('/')
-            else:
-                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
-
-    def get_context_data(self, *args, **kwargs):
+    def has_permission(self):
         if not BHTomUser.objects.get(user=self.request.user).is_activate:
-            return None
+            messages.error(self.request, secret.NOT_ACTIVATE)
+            return False
+        elif not self.request.user.has_perm('tom_targets.view_target'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
 
 class CreateInstrument(PermissionRequiredMixin, FormView):
     """
     View that handles manual upload of DataProducts. Requires authentication.
     """
-    permission_required = 'bhtom.add_instrument'
+
     template_name = 'tom_common/instrument_create.html'
     form_class = InstrumentCreationForm
     success_url = reverse_lazy('observatory')
 
     def handle_no_permission(self):
-        messages.error(self.request, secret.NOT_PERMISSION)
+
         if self.request.META.get('HTTP_REFERER') is None:
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-    def render_to_response(self, context, **response_kwargs):
-        if context is None:
+    def has_permission(self):
+        if not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
-            if self.request.META.get('HTTP_REFERER') is None:
-                return HttpResponseRedirect('/')
-            else:
-                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+            return False
+        elif not self.request.user.has_perm('bhtom.add_instrument'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
 
     def get_form_kwargs(self):
         kwargs = super(CreateInstrument, self).get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
-
-    def get_context_data(self, *args, **kwargs):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
-            return None
 
     def form_valid(self, form):
 
@@ -1032,29 +990,25 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
 
 class DeleteInstrument(PermissionRequiredMixin, DeleteView):
 
-    permission_required = 'bhtom.delete_instrument'
     success_url = reverse_lazy('observatory')
     model = Instrument
     template_name = 'tom_common/instrument_delete.html'
 
     def handle_no_permission(self):
-        messages.error(self.request, secret.NOT_PERMISSION)
+
         if self.request.META.get('HTTP_REFERER') is None:
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-    def render_to_response(self, context, **response_kwargs):
-        if context is None:
-            messages.error(self.request, secret.NOT_ACTIVATE)
-            if self.request.META.get('HTTP_REFERER') is None:
-                return HttpResponseRedirect('/')
-            else:
-                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
-
-    def get_context_data(self, *args, **kwargs):
+    def has_permission(self):
         if not BHTomUser.objects.get(user=self.request.user).is_activate:
-            return None
+            messages.error(self.request, secret.NOT_ACTIVATE)
+            return False
+        elif not self.request.user.has_perm('bhtom.delete_instrument'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
 
     def get_object(self, queryset=None):
         obj = super(DeleteInstrument, self).get_object()
@@ -1068,30 +1022,26 @@ class DeleteInstrument(PermissionRequiredMixin, DeleteView):
 
 class UpdateInstrument(PermissionRequiredMixin, UpdateView):
 
-    permission_required = 'bhtom.change_instrument'
     template_name = 'tom_common/instrument_create.html'
     form_class = InstrumentUpdateForm
     success_url = reverse_lazy('observatory')
     model = Instrument
 
     def handle_no_permission(self):
-        messages.error(self.request, secret.NOT_PERMISSION)
+
         if self.request.META.get('HTTP_REFERER') is None:
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-    def render_to_response(self, context, **response_kwargs):
-        if context is None:
-            messages.error(self.request, secret.NOT_ACTIVATE)
-            if self.request.META.get('HTTP_REFERER') is None:
-                return HttpResponseRedirect('/')
-            else:
-                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
-
-    def get_context_data(self, *args, **kwargs):
+    def has_permission(self):
         if not BHTomUser.objects.get(user=self.request.user).is_activate:
-            return None
+            messages.error(self.request, secret.NOT_ACTIVATE)
+            return False
+        elif not self.request.user.has_perm('bhtom.change_instrument'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
 
     @transaction.atomic
     def form_valid(self, form):
@@ -1101,29 +1051,25 @@ class UpdateInstrument(PermissionRequiredMixin, UpdateView):
 
 class CreateObservatory(PermissionRequiredMixin, FormView):
 
-    permission_required = 'bhtom.add_observatory'
     template_name = 'tom_common/observatory_create.html'
     form_class = ObservatoryCreationForm
     success_url = reverse_lazy('observatory')
 
     def handle_no_permission(self):
-        messages.error(self.request, secret.NOT_PERMISSION)
+
         if self.request.META.get('HTTP_REFERER') is None:
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-    def render_to_response(self, context, **response_kwargs):
-        if context is None:
-            messages.error(self.request, secret.NOT_ACTIVATE)
-            if self.request.META.get('HTTP_REFERER') is None:
-                return HttpResponseRedirect('/')
-            else:
-                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
-
-    def get_context_data(self, *args, **kwargs):
+    def has_permission(self):
         if not BHTomUser.objects.get(user=self.request.user).is_activate:
-            return None
+            messages.error(self.request, secret.NOT_ACTIVATE)
+            return False
+        elif not self.request.user.has_perm('bhtom.add_observatory'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
 
     def form_valid(self, form):
 
@@ -1170,29 +1116,27 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
 
 class ObservatoryList(PermissionRequiredMixin, ListView):
 
-    permission_required = 'bhtom.add_observatory'
     template_name = 'tom_common/observatory_list.html'
     model = Observatory
     strict = False
 
     def handle_no_permission(self):
-        messages.error(self.request, secret.NOT_PERMISSION)
+
         if self.request.META.get('HTTP_REFERER') is None:
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-    def render_to_response(self, context, **response_kwargs):
-        if context is None:
+    def has_permission(self):
+        if not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
-            if self.request.META.get('HTTP_REFERER') is None:
-                return HttpResponseRedirect('/')
-            else:
-                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+            return False
+        elif not self.request.user.has_perm('bhtom.view_observatory'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
 
     def get_context_data(self, *args, **kwargs):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
-            return None
 
         context = super().get_context_data(*args, **kwargs)
         instrument = Instrument.objects.filter(user_id=self.request.user)
@@ -1208,30 +1152,26 @@ class ObservatoryList(PermissionRequiredMixin, ListView):
 
 class UpdateObservatory(PermissionRequiredMixin, UpdateView):
 
-    permission_required = 'bhtom.change_observatory'
     template_name = 'tom_common/observatory_create.html'
     form_class = ObservatoryUpdateForm
     success_url = reverse_lazy('observatory')
     model = Observatory
 
     def handle_no_permission(self):
-        messages.error(self.request, secret.NOT_PERMISSION)
+
         if self.request.META.get('HTTP_REFERER') is None:
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-    def render_to_response(self, context, **response_kwargs):
-        if context is None:
-            messages.error(self.request, secret.NOT_ACTIVATE)
-            if self.request.META.get('HTTP_REFERER') is None:
-                return HttpResponseRedirect('/')
-            else:
-                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
-
-    def get_context_data(self, *args, **kwargs):
+    def has_permission(self):
         if not BHTomUser.objects.get(user=self.request.user).is_activate:
-            return None
+            messages.error(self.request, secret.NOT_ACTIVATE)
+            return False
+        elif not self.request.user.has_perm('bhtom.change_observatory'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
 
     @transaction.atomic
     def form_valid(self, form):
@@ -1241,34 +1181,30 @@ class UpdateObservatory(PermissionRequiredMixin, UpdateView):
 
 class DeleteObservatory(PermissionRequiredMixin, DeleteView):
 
-    permission_required = 'bhtom.delete_observatory'
     success_url = reverse_lazy('observatory')
     model = Observatory
     template_name = 'tom_common/observatory_delete.html'
 
     def handle_no_permission(self):
-        messages.error(self.request, secret.NOT_PERMISSION)
+
         if self.request.META.get('HTTP_REFERER') is None:
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-    def render_to_response(self, context, **response_kwargs):
-        if context is None:
+    def has_permission(self):
+        if not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
-            if self.request.META.get('HTTP_REFERER') is None:
-                return HttpResponseRedirect('/')
-            else:
-                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+            return False
+        elif not self.request.user.has_perm('bhtom.delete_observatory'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
 
     def get_object(self, queryset=None):
 
         obj = super(DeleteObservatory, self).get_object()
         return obj
-
-    def get_context_data(self, *args, **kwargs):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
-            return None
 
     @transaction.atomic
     def form_valid(self, form):
