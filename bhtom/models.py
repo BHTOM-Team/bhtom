@@ -87,6 +87,7 @@ class BHTomFits(models.Model):
     matchDist = models.CharField(max_length=10, choices=MATCHING_RADIUS, default='2 arcsec',
                                  verbose_name='Matching radius')
     allow_upload = models.BooleanField(verbose_name='Dry Run (no data will be stored in the database)')
+    followupId = models.IntegerField(null=True, blank=True)
     comment = models.TextField(null=True, blank=True)
 
     class Meta:
@@ -104,3 +105,8 @@ class BHTomUser(models.Model):
     latex_affiliation = models.CharField(max_length=255, null=True, blank=True, verbose_name='LaTeX affiliation')
     address = models.CharField(max_length=255, null=True, blank=True, verbose_name='Address')
     about_me = models.TextField(null=True, blank=True, verbose_name='About me')
+
+class BHTomData(models.Model):
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    dataproduct_id = models.ForeignKey(DataProduct, on_delete=models.CASCADE)
+    comment = models.TextField(null=True, blank=True)

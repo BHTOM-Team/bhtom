@@ -62,7 +62,7 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
                 logger.error('error: ' + str(e))
                 instance.delete()
                 raise Exception(str(e))
-    if dp.data_product_type == 'photometry_cpcs' and observatory != None and MJD != None and expTime != None:
+    elif dp.data_product_type == 'photometry_cpcs' and observatory != None and MJD != None and expTime != None:
 
         target = Target.objects.get(id=dp.target_id)
         try:
@@ -74,6 +74,13 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
 
             send_to_cpcs(url, instance, target.extra_fields['calib_server_name'])
 
+        except Exception as e:
+            logger.error('error: ' + str(e))
+            instance.delete()
+            raise Exception(str(e))
+    elif dp.data_product_type == 'spectroscopy' or dp.data_product_type == 'photometry':
+        try:
+            instance = BHTomData.objects.create(user_id=user, comment=comment)
         except Exception as e:
             logger.error('error: ' + str(e))
             instance.delete()
@@ -112,6 +119,7 @@ def send_to_cpcs(result, fits, eventID):
                 fits.outlier_fraction = json_data['outlier_fraction']
                 fits.scatter = json_data['scatter']
                 fits.npoints = json_data['npoints']
+                fits.followupId = json_data['followup_id']
                 fits.save()
 
                 logger.info('mag: ' + str(fits.mag) + ', mag_err: ' + str(fits.mag_err) + ' ra: ' + str(fits.ra)
@@ -172,3 +180,16 @@ def target_pre_save(sender, instance, **kwargs):
 
 def target_post_save(target, created):
     logger.info('Target post save hook: %s created: %s', target, created)
+
+def delete_point_cpcs(instance):
+
+    url_cpcs = secret.CPCS_URL + 'delpoint'
+    response = requests.post(url_cpcs, {'followupid': instance.followupId,
+                                        'hashtag': Instrument.objects.get(id=fits.instrument_id.id).hashtag,
+                                        'outputFormat': 'json'})
+
+    if response.status_code == 201 or response.status_code == 200:
+        logger.info('Successfully deleted ')
+    else:
+
+        error_message = 'Cpcs error: %s' % response.content.decode()

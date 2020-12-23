@@ -477,56 +477,6 @@ class TargetDeleteView(PermissionRequiredMixin, DeleteView):
 
         return obj
 
-class TargetFileView(PermissionRequiredMixin, ListView):
-
-    template_name = 'tom_dataproducts/dataproduct_list.html'
-    model = BHTomFits
-
-
-
-    def get_queryset(self):
-
-        data_product = DataProduct.objects.filter(target_id=self.kwargs['pk'], data_product_type__in=['fits_file','photometry_cpcs'])
-        fits = BHTomFits.objects.filter(dataproduct_id__in=data_product).order_by('-start_time')
-        target_name = str(Target.objects.get(id=self.kwargs['pk']).name)
-        user = self.request.user
-        tabFits = []
-
-        for fit in fits:
-            try:
-                data_product = DataProduct.objects.get(id=fit.dataproduct_id.id)
-                instrument = Instrument.objects.get(id=fit.instrument_id.id)
-
-                if fit.filter == 'no':
-                    filter = 'Auto'
-                else:
-                    filter = fit.filter
-                if data_product.data_product_type == 'photometry_cpcs':
-                    ccdphot_url = format(data_product.data)
-                    logger.error(ccdphot_url)
-                else:
-                    ccdphot_url = str(fit.photometry_file)
-
-                tabFits.append([fit.file_id, fit.start_time,
-                                format(data_product.data), format(data_product.data).split('/')[-1],
-                                ccdphot_url, format(ccdphot_url).split('/')[-1],
-                                filter, Observatory.objects.get(id=instrument.observatory_id.id).obsName,
-                                fit.status_message, fit.mjd, fit.expTime,
-                                DataProduct.objects.get(id=fit.dataproduct_id.id).data_product_type,
-                                instrument.user_id.id])
-
-            except Exception as e:
-                logger.error('error: ' + str(e))
-
-        return tabFits
-
-    def get_context_data(self, *args, **kwargs):
-
-        context = super().get_context_data(*args, **kwargs)
-        target = Target.objects.get(id=self.kwargs['pk'])
-        context['target'] = target
-        return context
-
 class TargetFileDetailView(PermissionRequiredMixin, ListView):
 
     template_name = 'tom_dataproducts/dataproduct_fits_detail.html'
@@ -588,6 +538,7 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
         context['Observatory'] = observatory
         context['data_product'] = data_product
         context['tabFits'] = tabFits
+        context['cpcs_plot'] = None
 
         return context
 
@@ -682,10 +633,10 @@ class result_fits(viewsets.ModelViewSet):
         file_id = request.query_params.get('job_id')
 
         try:
+            instance = BHTomFits.objects.get(file_id=file_id)
+
             if request.query_params.get('status') == 'D' or request.query_params.get('status') == 'F':
                 ccdphot_result = request.FILES["ccdphot_result_upload"]
-
-                instance = BHTomFits.objects.get(file_id=file_id)
 
                 instance.photometry_file = ccdphot_result
                 instance.status = 'R'

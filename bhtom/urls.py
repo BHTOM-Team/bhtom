@@ -27,7 +27,7 @@ from django.conf.urls.static import static
 from rest_framework import routers, permissions
 from bhtom import views
 from bhtom.views import DataProductUploadView, TargetDetailView, TargetInteractivePhotometryView, TargetFileDetailView
-from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView, TargetFileView
+from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView
 from bhtom.views import DeleteObservatory, UpdateObservatory, ObservatoryList, CreateObservatory
 from bhtom.views import DeleteInstrument, UpdateInstrument, CreateInstrument
 from bhtom.views import RegisterUser, DataProductFeatureView, UserUpdateView
@@ -45,7 +45,6 @@ urlpatterns = [
     path('bhlist/create/', TargetCreateView.as_view(), name='bhlist_create'),
     path('bhlist/<int:pk>/update/', TargetUpdateView.as_view(), name='bhlist_update'),
     path('bhlist/<int:pk>/delete/', TargetDeleteView.as_view(), name='bhlist_delete'),
-    path('bhlist/<int:pk>/file/', TargetFileView.as_view(), name='bhlist_file'),
     path('bhlist/<int:pk>/file/<pk_fits>', TargetFileDetailView.as_view(), name='bhlist_file_detail'),
     path('bhlist/<int:pk>/', TargetDetailView.as_view(), name='bhlist_detail'),
     path('bhlist/<int:pk>/iphotometry', TargetInteractivePhotometryView.as_view(), name='bhlist_i_photometry'),

@@ -19,21 +19,6 @@ import logging
 register = template.Library()
 logger = logging.getLogger(__name__)
 
-@register.inclusion_tag('tom_dataproducts/partials/dataproduct_list_for_target.html', takes_context=True)
-def dataproduct_list_for_target(context, target):
-    """
-    Given a ``Target``, returns a list of ``DataProduct`` objects associated with that ``Target``
-    """
-    if settings.TARGET_PERMISSIONS_ONLY:
-        target_products_for_user = target.dataproduct_set.all()
-    else:
-        target_products_for_user = get_objects_for_user(
-            context['request'].user, 'tom_dataproducts.view_dataproduct', klass=target.dataproduct_set.all())
-    return {
-        'products': target_products_for_user,
-        'target': target
-    }
-
 @register.inclusion_tag('tom_dataproducts/partials/detail_fits_upload.html')
 def detail_fits_upload(target, user):
     """
