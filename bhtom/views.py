@@ -517,7 +517,7 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
 
         context = super().get_context_data(*args, **kwargs)
         target = Target.objects.get(id=self.kwargs['pk'])
-        fits = BHTomFits.objects.get(file_id=self.kwargs['pk_fits'])
+        fits = BHTomFits.objects.get(file_id=self.kwargs['pk_fit'])
         instrument = Instrument.objects.get(id=fits.instrument_id.id)
         observatory = Observatory.objects.get(id=instrument.observatory_id.id)
         data_product = DataProduct.objects.get(id=fits.dataproduct_id.id)
