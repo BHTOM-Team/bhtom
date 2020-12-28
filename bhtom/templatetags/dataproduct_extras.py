@@ -113,8 +113,13 @@ def photometry_for_target_static(context, target):
 
     figure: plt.Figure = plt.figure(figsize=(7, 6))
     ax = figure.add_axes((0.15, 0.15, 0.75, 0.75))
+
+    ax.xaxis_date()
+    figure.autofmt_xdate()
+
     ax.invert_yaxis()
     ax.grid(color='white', linestyle='solid')
+
     ax.set_facecolor('#E5ECF6')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
