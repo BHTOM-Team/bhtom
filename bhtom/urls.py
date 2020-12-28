@@ -27,9 +27,9 @@ from django.conf.urls.static import static
 from rest_framework import routers, permissions
 from bhtom import views
 from bhtom.views import DataProductUploadView, TargetDetailView, TargetInteractivePhotometryView, TargetFileDetailView
-from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView
+from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView, TargetGroupingView
 from bhtom.views import DeleteObservatory, UpdateObservatory, ObservatoryList, CreateObservatory
-from bhtom.views import DeleteInstrument, UpdateInstrument, CreateInstrument
+from bhtom.views import DeleteInstrument, UpdateInstrument, CreateInstrument, DataProductDeleteView
 from bhtom.views import RegisterUser, DataProductFeatureView, UserUpdateView
 router = routers.DefaultRouter()
 router.register('upload', views.fits_upload)
@@ -45,9 +45,13 @@ urlpatterns = [
     path('bhlist/create/', TargetCreateView.as_view(), name='bhlist_create'),
     path('bhlist/<int:pk>/update/', TargetUpdateView.as_view(), name='bhlist_update'),
     path('bhlist/<int:pk>/delete/', TargetDeleteView.as_view(), name='bhlist_delete'),
-    path('bhlist/<int:pk>/file/<pk_fits>', TargetFileDetailView.as_view(), name='bhlist_file_detail'),
+
+    path('bhlist/<int:pk>/file/<int:pk_fit>', TargetFileDetailView.as_view(), name='bhlist_file_detail'),
     path('bhlist/<int:pk>/', TargetDetailView.as_view(), name='bhlist_detail'),
     path('bhlist/<int:pk>/iphotometry', TargetInteractivePhotometryView.as_view(), name='bhlist_i_photometry'),
+    path('bhlist/grouping/', TargetGroupingView.as_view(), name='targetgrouping'),
+    path('bhlist/<int:pk_target>/file/<int:pk>/delete/', DataProductDeleteView.as_view(), name='data_delete'),
+
     path('', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('dataUpload/', DataProductUploadView.as_view(), name='data_upload'),

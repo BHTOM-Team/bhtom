@@ -57,7 +57,7 @@
       {% endif %}
       {% if perms.tom_targets.view_target %}
        <li class="nav-item">
-        <span class="nav-link" data-target="#fits" data-toggle="tab">Fits</span>
+        <span class="nav-link" data-target="#data" data-toggle="tab">Data</span>
       </li>
       {% endif %}
     </ul>
@@ -100,13 +100,13 @@
       {% if perms.tom_targets.view_target %}
       <div class="tab-pane active" id="photometry">
         <div class="row">
-          <div class="col-md-4">
+          <div class="col-md-3">
             <h4>Photometry</h4>
           </div>
-          <div class="col-md-8">
-            <button onclick="open_photometry()" class="btn btn-info" role="button">Interactive photometry plot</button>
+          <div class="col-md-6">
+            <button onclick="open_photometry()" class="btn btn-info" role="button" style="float:right; margin-right:-4px">Interactive photometry plot</button>
             <a href="{% url 'datatools:update-reduced-data-gaia' %}?target_id={{ target.id }}" class="btn btn-primary"
-               title="Update Light Curve">Check for new data</a>
+               title="Update Light Curve" style="float:right; margin-right:10px">Check for new data</a>
           </div>
         </div>
         {% photometry_for_target_static target %}
@@ -115,11 +115,11 @@
         <hr/>
         <h5>Comments</h5>
         {% if comments_are_enabled %}
-        {% render_comment_list for object %}
-        {% url 'bhlist_detail' object.id as next %}
-        {% if user.is_authenticated %}
-        {% render_comment_form for object %}
-        {% endif %}
+          {% render_comment_list for object %}
+          {% url 'bhlist_detail' object.id as next %}
+          {% if user.is_authenticated %}
+           {% render_comment_form for object %}
+          {% endif %}
         {% endif %}
 
       </div>
@@ -143,7 +143,7 @@
       {% endif %}
 
       {% if perms.tom_targets.view_target %}
-      <div class="tab-pane" id="fits">
+      <div class="tab-pane" id="data">
          {% dataproduct_list object %}
       </div>
       {% endif %}

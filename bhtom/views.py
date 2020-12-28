@@ -25,7 +25,7 @@ from rest_framework.response import Response
 
 from bhtom.models import BHTomFits, Observatory, Instrument, BHTomUser
 from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer, BHTomFitsStatusSerializer
-from bhtom.hooks import send_to_cpcs
+from bhtom.hooks import send_to_cpcs, delete_point_cpcs
 from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
 from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
 
@@ -108,7 +108,10 @@ class BlackHoleListView(PermissionRequiredMixin, FilterView):
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def has_permission(self):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
             return False
         elif not self.request.user.has_perm('tom_targets.view_target'):
@@ -205,7 +208,10 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def has_permission(self):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
             return False
         elif not self.request.user.has_perm('tom_targets.add_target'):
@@ -348,7 +354,10 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def has_permission(self):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
             return False
         elif not self.request.user.has_perm('tom_targets.add_target', 'tom_targets.change_target'):
@@ -462,7 +471,10 @@ class TargetDeleteView(PermissionRequiredMixin, DeleteView):
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def has_permission(self):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
             return False
         elif not self.request.user.has_perm('tom_targets.delete_target'):
@@ -490,7 +502,10 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def has_permission(self):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
             return False
         elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
@@ -801,7 +816,10 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def has_permission(self):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
             return False
         elif not self.request.user.has_perm('tom_targets.view_target'):
@@ -852,7 +870,10 @@ class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def has_permission(self):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
             return False
         elif not self.request.user.has_perm('tom_targets.view_target'):
@@ -877,7 +898,10 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def has_permission(self):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
             return False
         elif not self.request.user.has_perm('bhtom.add_instrument'):
@@ -953,7 +977,10 @@ class DeleteInstrument(PermissionRequiredMixin, DeleteView):
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def has_permission(self):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
             return False
         elif not self.request.user.has_perm('bhtom.delete_instrument'):
@@ -986,7 +1013,10 @@ class UpdateInstrument(PermissionRequiredMixin, UpdateView):
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def has_permission(self):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
             return False
         elif not self.request.user.has_perm('bhtom.change_instrument'):
@@ -1014,7 +1044,10 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def has_permission(self):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
             return False
         elif not self.request.user.has_perm('bhtom.add_observatory'):
@@ -1079,7 +1112,10 @@ class ObservatoryList(PermissionRequiredMixin, ListView):
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def has_permission(self):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
             return False
         elif not self.request.user.has_perm('bhtom.view_observatory'):
@@ -1116,7 +1152,10 @@ class UpdateObservatory(PermissionRequiredMixin, UpdateView):
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def has_permission(self):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
             return False
         elif not self.request.user.has_perm('bhtom.change_observatory'):
@@ -1144,7 +1183,10 @@ class DeleteObservatory(PermissionRequiredMixin, DeleteView):
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
     def has_permission(self):
-        if not BHTomUser.objects.get(user=self.request.user).is_activate:
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
             return False
         elif not self.request.user.has_perm('bhtom.delete_observatory'):
@@ -1260,3 +1302,78 @@ class DataProductFeatureView(View):
             'bhlist_detail',
             kwargs={'pk': request.GET.get('target_id')})
         )
+
+class TargetGroupingView(PermissionRequiredMixin, ListView):
+
+    def handle_no_permission(self):
+
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def has_permission(self):
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
+            messages.error(self.request, secret.NOT_ACTIVATE)
+            return False
+        elif not self.request.user.has_perm('tom_targets.view_targetlist'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
+
+    template_name = 'tom_targets/target_grouping.html'
+    model = TargetList
+    paginate_by = 25
+
+class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
+
+    model = DataProduct
+    template_name = 'tom_dataproducts/data_delete.html'
+
+    def handle_no_permission(self):
+
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def has_permission(self):
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
+            messages.error(self.request, secret.NOT_ACTIVATE)
+            return False
+        elif not self.request.user.has_perm('tom_dataproducts.delete_dataproduct'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
+
+    def get_object(self, queryset=None):
+
+        obj = super(DataProductDeleteView, self).get_object()
+        return obj
+
+    def get_context_data(self, *args, **kwargs):
+
+        context = super().get_context_data(*args, **kwargs)
+        obj = super(DataProductDeleteView, self).get_object()
+        context['dataName'] = format(obj.data).split('/')[-1]
+
+        return context
+
+    def get_success_url(self):
+        messages.success(self.request, 'Successfully delete')
+        return reverse_lazy('bhlist_detail', kwargs={'pk': self.kwargs['pk_target']})
+
+    def delete(self, request, *args, **kwargs):
+
+        if self.get_object().data_product_type == 'photometry_cpcs' or self.get_object().data_product_type == 'fits_file':
+            delete_point_cpcs(self.get_object())
+        ReducedDatum.objects.filter(data_product=self.get_object()).delete()
+        self.get_object().data.delete()
+
+        return super().delete(request, *args, **kwargs)

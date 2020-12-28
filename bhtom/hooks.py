@@ -183,13 +183,19 @@ def target_post_save(target, created):
 
 def delete_point_cpcs(instance):
 
+    logger.info('Delete in cpcs: %s', instance.data)
     url_cpcs = secret.CPCS_URL + 'delpoint'
-    response = requests.post(url_cpcs, {'followupid': instance.followupId,
-                                        'hashtag': Instrument.objects.get(id=fits.instrument_id.id).hashtag,
-                                        'outputFormat': 'json'})
+    fit = BHTomFits.objects.get(dataproduct_id=instance)
 
-    if response.status_code == 201 or response.status_code == 200:
-        logger.info('Successfully deleted ')
-    else:
+    try:
+        response = requests.post(url_cpcs, {'followupid': fit.followupId,
+                                            'hashtag': Instrument.objects.get(id=fit.instrument_id.id).hashtag,
+                                            'outputFormat': 'json'})
 
-        error_message = 'Cpcs error: %s' % response.content.decode()
+        if response.status_code == 201 or response.status_code == 200:
+            logger.info('Successfully deleted ')
+        else:
+            error_message = 'Cpcs error: %s' % response.content.decode()
+            logger.info(error_message)
+    except Exception as e:
+        logger.error('error: ' + str(e))

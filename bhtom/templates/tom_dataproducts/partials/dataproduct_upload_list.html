@@ -1,4 +1,5 @@
 {% load bootstrap4 static targets_extras cache %}
+
 {% bootstrap_javascript jquery='True' %}
 {% block content %}
 {% include 'tom_dataproducts/partials/js9_scripts.html' %}
@@ -21,12 +22,7 @@
                     <th>File</th>
                     <th>Photometry</th>
                     <th>Type</th>
-                    <th>Filter</th>
                     <th>Observatory</th>
-                    <th>Status</th>
-                    <th>MJD</th>
-                    <th>Exp</th>
-                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -56,42 +52,10 @@
                        <td><div title="{{type}}">{{ type }}</div></td>
                    {% endif %}
 
-                   {% if Filter != None %}
-                        <td><div title="{{Filter}}">{{ Filter }}</div></td>
-                   {% else %}
-                       <td></td>
-                   {% endif %}
-
                    {% if Observatory != None %}
                         <td><div title="{{Observatory}}">{{ Observatory }}</div></td>
                    {% else %}
                        <td></td>
-                   {% endif %}
-
-                    {% if Status != None %}
-                        <td><div title="{{Status}}">{{ Status|truncatechars:22 }}</div></td>
-                   {% else %}
-                       <td></td>
-                   {% endif %}
-
-                   {% if MJD != None %}
-                       <td><div title="{{MJD}}">{{ MJD|floatformat:4 }}</div></td>
-                   {% else %}
-                       <td></td>
-                   {% endif %}
-
-                   {% if expTime != None %}
-                        <td><div title="{{expTime}}">{{ expTime }}</div></td>
-                   {% else %}
-                        <td></td>
-                   {% endif %}
-
-                    {% if type == 'fits_file' or type == 'photometry_cpcs' %}
-                       <td>
-                         <a href="{% url 'bhlist_file_detail' pk=target.id pk_fits=Fit_id%}" title="Show details" class="btn btn-primary">Detail</a>
-                       </td>
-                    {% else %}
-                        <td></td>
                    {% endif %}
                 </tr>
 
@@ -109,11 +73,10 @@
                       <th>File</th>
                       <th>Photometry</th>
                       <th>Type</th>
-                      <th>Filter</th>
                       <th>Observatory</th>
                       <th>Status</th>
-                      <th>MJD</th>
-                      <th>Exp</th>
+                      <th>Filter</th>
+                      <th></th>
                       <th></th>
                     </tr>
                   </thead>
@@ -129,60 +92,52 @@
                              <td><span class="btn btn-secondary active featured">Featured</span></td>
                             {% endif %}
 
-                       {% if type != 'photometry_cpcs' %}
-                        <td><div title="{{File}}"><a href="/data/{{ FileUrl }}">{{ File|truncatechars:15 }}</a></div></td>
-                        {% else %}
-                          <td></td>
-                        {% endif %}
-                        <td><div title="{{Photometry}}"><a href="/data/{{ PhotometryUrl }}">{{ Photometry|truncatechars:15 }}</a></div></td>
+                            {% if type != 'photometry_cpcs' %}
+                                <td><div title="{{File}}"><a href="/data/{{ FileUrl }}">{{ File|truncatechars:15 }}</a></div></td>
+                            {% else %}
+                              <td></td>
+                            {% endif %}
 
-                       {% if type == 'fits_file' %}
-                          <td><div title="Fits image">Fits image</div></td>
-                        {% elif type == 'photometry_cpcs' %}
-                          <td><div title="	Instrumental photometry">Instrumental photometry</div></td>
-                        {% else %}
-                        <td><div title="{{type}}">{{ type }}</div></td>
-                         {% endif %}
+                           <td><div title="{{Photometry}}"><a href="/data/{{ PhotometryUrl }}">{{ Photometry|truncatechars:15 }}</a></div></td>
 
+                           {% if type == 'fits_file' %}
+                              <td><div title="Fits image">Fits image</div></td>
+                           {% elif type == 'photometry_cpcs' %}
+                              <td><div title="	Instrumental photometry">Instrumental photometry</div></td>
+                           {% else %}
+                               <td><div title="{{type}}">{{ type }}</div></td>
+                           {% endif %}
 
-                         {% if Filter != None %}
-                        <td><div title="{{Filter}}">{{ Filter }}</div></td>
-                   {% else %}
-                       <td></td>
-                   {% endif %}
+                           {% if Observatory != None %}
+                                <td><div title="{{Observatory}}">{{ Observatory }}</div></td>
+                           {% else %}
+                               <td></td>
+                           {% endif %}
 
-                   {% if Observatory != None %}
-                        <td><div title="{{Observatory}}">{{ Observatory }}</div></td>
-                   {% else %}
-                       <td></td>
-                   {% endif %}
+                           {% if Status != None %}
+                                <td><div title="{{Status}}">{{ Status|truncatechars:22 }}</div></td>
+                           {% else %}
+                               <td></td>
+                           {% endif %}
 
-                    {% if Status != None %}
-                        <td><div title="{{Status}}">{{ Status|truncatechars:22 }}</div></td>
-                   {% else %}
-                       <td></td>
-                   {% endif %}
+                           {% if Filter != None %}
+                                <td><div title="{{Filter}}">{{ Filter }}</div></td>
+                           {% else %}
+                               <td></td>
+                           {% endif %}
 
-                   {% if MJD != None %}
-                       <td><div title="{{MJD}}">{{ MJD|floatformat:4 }}</div></td>
-                   {% else %}
-                       <td></td>
-                   {% endif %}
+                            {% if type == 'fits_file' or type == 'photometry_cpcs' %}
+                               <td>
+                                 <a href="{% url 'bhlist_file_detail' pk=target.id pk_fit=Fit_id%}" title="Show details" class="btn btn-primary">Detail</a>
+                               </td>
+                            {% else %}
+                                <td></td>
+                           {% endif %}
 
-                   {% if expTime != None %}
-                        <td><div title="{{expTime}}">{{ expTime }}</div></td>
-                   {% else %}
-                        <td></td>
-                   {% endif %}
+                          <td>
+                              <a href="{% url 'data_delete'  pk=Data_id pk_target=target.id %}" title="Delete data" class="btn  btn-danger">Delete</a>
 
-                    {% if type == 'fits_file' or type == 'photometry_cpcs' %}
-                       <td>
-                         <a href="{% url 'bhlist_file_detail' pk=target.id pk_fits=Fit_id%}" title="Show details" class="btn btn-primary">Detail</a>
-                       </td>
-                    {% else %}
-                        <td></td>
-                   {% endif %}
-
+                          </td>
 
                       </tr>
                     {% endif %}
@@ -190,11 +145,7 @@
 
 
                   </tbody>
-                </table>
-
-              </div>
-
-
+            </table>
 
      </div>
 </div>

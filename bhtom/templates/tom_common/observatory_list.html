@@ -70,9 +70,7 @@ However, you can also upload your data to the CPCS directly from BHTOM instead.
           <thead>
             <tr>
               <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>CPCS Hashtag</th><th>Activation</th><th>Comment</th>
-              {% if request.user.is_superuser %}
               <th>Update</th><th>Delete</th>
-              {% endif %}
             </tr>
           </thead>
           <tbody>
