@@ -75,7 +75,6 @@
                       <th>Type</th>
                       <th>Observatory</th>
                       <th>Status</th>
-                      <th>Filter</th>
                       <th></th>
                       <th></th>
                     </tr>
@@ -98,7 +97,11 @@
                               <td></td>
                             {% endif %}
 
-                           <td><div title="{{Photometry}}"><a href="/data/{{ PhotometryUrl }}">{{ Photometry|truncatechars:15 }}</a></div></td>
+                            {% if Photometry != None %}
+                                <td><div title="{{Photometry}}"><a href="/data/{{ PhotometryUrl }}">{{ Photometry|truncatechars:10 }}</a></div></td>
+                            {% else %}
+                                <td></td>
+                            {% endif %}
 
                            {% if type == 'fits_file' %}
                               <td><div title="Fits image">Fits image</div></td>
@@ -116,12 +119,6 @@
 
                            {% if Status != None %}
                                 <td><div title="{{Status}}">{{ Status|truncatechars:22 }}</div></td>
-                           {% else %}
-                               <td></td>
-                           {% endif %}
-
-                           {% if Filter != None %}
-                                <td><div title="{{Filter}}">{{ Filter }}</div></td>
                            {% else %}
                                <td></td>
                            {% endif %}

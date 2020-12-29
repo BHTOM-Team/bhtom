@@ -34,7 +34,7 @@ def detail_fits_upload(target, user):
             tabFits.append([fit.status.split('/')[-1], fit.status_message,
                             format(DataProduct.objects.get(id=fit.dataproduct_id).data).split('/')[-1]])
         except Exception as e:
-            logger.error('error: ' + str(e))
+            logger.error('detail_fits_upload error: ' + str(e))
 
     return {
         'fits': tabFits,

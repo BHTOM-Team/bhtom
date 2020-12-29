@@ -23,11 +23,16 @@ def dataproduct_list(context, target):
     tabData = []
 
     for data in data_product:
+        filter, fit_id, status_message, mjd, expTime, observatory, data_user = None, None, None, None, None, None, None
+        fit, data_user, ccdphot_url, ccdphot_name = None, None, None, None
+
+        if data.data_product_type == 'photometry_cpcs' or data.data_product_type == 'fits_file':
+            try:
+                fit = BHTomFits.objects.get(dataproduct_id=data)
+            except BHTomFits.DoesNotExist:
+                fit = None
 
         try:
-            filter, fit_id, status_message, mjd, expTime, observatory, data_user = None, None, None, None, None, None, None
-
-            fit = BHTomFits.objects.get(dataproduct_id=data)
 
             if fit is not None:
                 instrument = Instrument.objects.get(id=fit.instrument_id.id)
@@ -44,22 +49,26 @@ def dataproduct_list(context, target):
                 expTime = fit.expTime
                 data_user = instrument.user_id.id
             else:
-                bhtomData = BHTomData.objects.get(dataproduct_id=data)
-                data_user = bhtomData.user_id
+                try:
+                    data = BHTomData.objects.get(dataproduct_id=data)
+                    data_user = data.user_id
+                except BHTomData.DoesNotExist:
+                    data_user = -1
 
             if data.data_product_type == 'photometry_cpcs':
                 ccdphot_url = format(data.data)
-                logger.error(ccdphot_url)
-            else:
+                ccdphot_name = format(ccdphot_url).split('/')[-1]
+            elif data.data_product_type == 'fits_file' and fit is not None:
                 ccdphot_url = str(fit.photometry_file)
+                ccdphot_name = format(ccdphot_url).split('/')[-1]
 
             tabData.append([fit_id, data.id, format(data.data), format(data.data).split('/')[-1],
-                            ccdphot_url, format(ccdphot_url).split('/')[-1], filter,
+                            ccdphot_url, ccdphot_name, filter,
                             observatory, status_message, mjd, expTime,
                             data.data_product_type, data.featured, data_user])
 
         except Exception as e:
-            logger.error('error: ' + str(e))
+            logger.error('dataproduct_list error: ' + str(e) + str(data.data))
 
     return {
         'tabData': tabData,

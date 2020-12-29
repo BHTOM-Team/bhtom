@@ -152,7 +152,11 @@
   </div>
 {% if fits.cpcs_plot != None %}
      <div class="col-md-2">
-    <img src="data:image/png;base64,{{ fits.cpcs_plot }}"/>
+        {% if fits.allow_upload == True %}
+            <img src="data:image/png;base64,{{ fits.cpcs_plot }}"/>
+         {% else %}
+            <img src="{{ cpcs_plot }}"/>
+        {% endif %}
      </div>
 {% endif %}
 </div>

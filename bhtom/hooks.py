@@ -59,7 +59,7 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
                     instance.save()
 
             except Exception as e:
-                logger.error('error: ' + str(e))
+                logger.error('data_product_post_upload-fits_file error: ' + str(e))
                 instance.delete()
                 raise Exception(str(e))
     elif dp.data_product_type == 'photometry_cpcs' and observatory != None and MJD != None and expTime != None:
@@ -75,14 +75,14 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
             send_to_cpcs(url, instance, target.extra_fields['calib_server_name'])
 
         except Exception as e:
-            logger.error('error: ' + str(e))
+            logger.error('data_product_post_upload-photometry_cpcs error: ' + str(e))
             instance.delete()
             raise Exception(str(e))
     elif dp.data_product_type == 'spectroscopy' or dp.data_product_type == 'photometry':
         try:
             instance = BHTomData.objects.create(user_id=user, comment=comment)
         except Exception as e:
-            logger.error('error: ' + str(e))
+            logger.error('data_product_post_upload error: ' + str(e))
             instance.delete()
             raise Exception(str(e))
 
@@ -133,7 +133,7 @@ def send_to_cpcs(result, fits, eventID):
                 fits.save()
 
     except Exception as e:
-        logger.error('error: ' + str(e))
+        logger.error('send_to_cpcs error: ' + str(e))
         fits.status = 'E'
         fits.status_message = 'Error: %s' % str(e)
         fits.save()
@@ -165,7 +165,7 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
                 raise Exception(response.content.decode('utf-8')) from None
 
         except Exception as e:
-             logger.error('Error: ' + str(e))
+             logger.error('create_cpcs_user_profile error: ' + str(e))
              return None
              #raise Exception(str(e)) from None
     else:
@@ -198,4 +198,4 @@ def delete_point_cpcs(instance):
             error_message = 'Cpcs error: %s' % response.content.decode()
             logger.info(error_message)
     except Exception as e:
-        logger.error('error: ' + str(e))
+        logger.error('delete_point_cpcs error: ' + str(e))

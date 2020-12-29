@@ -6,6 +6,7 @@ import os
 import os.path
 import numpy as np
 import logging
+import requests
 
 from tom_targets.views import TargetCreateView
 from tom_targets.templatetags.targets_extras import target_extra_field
@@ -29,7 +30,7 @@ from bhtom.hooks import send_to_cpcs, delete_point_cpcs
 from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
 from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
 
-from django.http import HttpResponseServerError
+from django.http import HttpResponseServerError, Http404
 from django.views.generic.edit import FormView, DeleteView
 from django.views.generic import View
 from django.conf import settings
@@ -516,16 +517,41 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
     def get_context_data(self, *args, **kwargs):
 
         context = super().get_context_data(*args, **kwargs)
-        target = Target.objects.get(id=self.kwargs['pk'])
-        fits = BHTomFits.objects.get(file_id=self.kwargs['pk_fit'])
+
+        try:
+            target = Target.objects.get(id=self.kwargs['pk'])
+            fits = BHTomFits.objects.get(file_id=self.kwargs['pk_fit'])
+        except Exception as e:
+            raise Http404
+
         instrument = Instrument.objects.get(id=fits.instrument_id.id)
+
+       # if instrument.user_id.id != self.request.user.id:
+       #     raise Http404
+
         observatory = Observatory.objects.get(id=instrument.observatory_id.id)
         data_product = DataProduct.objects.get(id=fits.dataproduct_id.id)
         tabFits = {}
         filter = ''
+        cpcs_plot = None
 
+        if fits.cpcs_plot is not None and fits.cpcs_plot != '':
+            if fits.allow_upload == True:
+
+                logger.info('Get plot from cpcs')
+                url_cpcs = fits.cpcs_plot
+                response = requests.get(url_cpcs, {'hashtag': instrument.hashtag})
+                if response.status_code == 200:
+                    BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                    url_base = BASE + '/data/png/'+format(fits.followupId)+'.png'
+                    with open(url_base, 'wb') as f:
+                        f.write(response.content)
+                    context['cpcs_plot'] = '/data/png/'+format(fits.followupId)+'.png'
+                else:
+                    context['cpcs_plot'] = None
+            else:
+                context['cpcs_plot'] = fits.cpcs_plot
         try:
-
             if data_product.data_product_type == 'photometry_cpcs':
 
                 tabFits['ccdphot_url'] = format(data_product.data)
@@ -536,7 +562,6 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
                 tabFits['fits'] = format(data_product.data).split('/')[-1]
 
                 if fits.photometry_file != '':
-                    logger.info(str(fits.photometry_file))
                     tabFits['ccdphot_url'] = format("/".join(["/data", str(fits.photometry_file)]))
                     tabFits['ccdphot'] = format(str(fits.photometry_file).split('/')[-1])
 
@@ -545,7 +570,7 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
             else:
                 filter = fits.filter
         except Exception as e:
-            logger.error('error: ' + str(e))
+            logger.error('TargetFileDetailView error: ' + str(e))
 
         context['target'] = target
         context['fits'] = fits
@@ -553,7 +578,6 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
         context['Observatory'] = observatory
         context['data_product'] = data_product
         context['tabFits'] = tabFits
-        context['cpcs_plot'] = None
 
         return context
 
@@ -599,7 +623,7 @@ class fits_upload(viewsets.ModelViewSet):
                 return Response(status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            logger.error('error: ' + str(e))
+            logger.error('fits_upload error: ' + str(e))
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         successful_uploads = []
@@ -674,7 +698,7 @@ class result_fits(viewsets.ModelViewSet):
                     instance.status_message = 'Photometry error'
                 instance.save()
         except Exception as e:
-            logger.error('error: ' + str(e))
+            logger.error('result_fits error: ' + str(e))
             return HttpResponseServerError(e)
 
         if instance.status == 'R':
@@ -955,7 +979,7 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
                 send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(observatoryID.obsName), settings.EMAIL_HOST_USER,
                           secret.RECIPIENTEMAIL, fail_silently=False)
         except Exception as e:
-            logger.error('error: ' + str(e))
+            logger.error('CreateInstrument error: ' + str(e))
             messages.error(self.request, 'Error with creating the instrument')
             instrument.delete()
             return redirect(self.get_success_url())
@@ -1091,7 +1115,7 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
             send_mail('Stworzono nowe obserwatorium', secret.EMAILTEXT_CREATE_OBSERVATORY + str(obsName), settings.EMAIL_HOST_USER,
                       secret.RECIPIENTEMAIL, fail_silently=False)
         except Exception as e:
-            logger.error('error: ' + str(e))
+            logger.error('CreateObservatory error: ' + str(e))
             messages.error(self.request, 'Error with creating the instrument %s' % obsName)
             observatory.delete()
             return redirect(self.get_success_url())
@@ -1371,7 +1395,9 @@ class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
 
-        if self.get_object().data_product_type == 'photometry_cpcs' or self.get_object().data_product_type == 'fits_file':
+        fit = BHTomFits.objects.get(dataproduct_id=self.get_object())
+        if self.get_object().data_product_type == 'photometry_cpcs' or self.get_object().data_product_type == 'fits_file'\
+                and fit.status == 'F':
             delete_point_cpcs(self.get_object())
         ReducedDatum.objects.filter(data_product=self.get_object()).delete()
         self.get_object().data.delete()
