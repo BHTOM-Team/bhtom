@@ -533,10 +533,9 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
         data_product = DataProduct.objects.get(id=fits.dataproduct_id.id)
         tabFits = {}
         filter = ''
-        cpcs_plot = None
 
         if fits.cpcs_plot is not None and fits.cpcs_plot != '':
-            if fits.allow_upload == True:
+            if fits.allow_upload == False:
 
                 logger.info('Get plot from cpcs')
                 url_cpcs = fits.cpcs_plot
