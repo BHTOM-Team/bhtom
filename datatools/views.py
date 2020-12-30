@@ -29,6 +29,27 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
     View that handles the updating of reduced data tied to a ``DataProduct`` that was automatically ingested from a
     broker. Requires authentication.
     """
+    permission_required = 'tom_targets.view_target'
+
+    def handle_no_permission(self):
+        messages.error(self.request, secret.NOT_PERMISSION)
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def render_to_response(self, context, **response_kwargs):
+        if context is None:
+            messages.error(self.request, secret.NOT_ACTIVATE)
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def get_context_data(self, *args, **kwargs):
+        if not BHTomUser.objects.get(user=self.request.user).is_activate:
+            return None
+
     def get(self, request, *args, **kwargs):
         """
         Method that handles the GET requests for this view. Calls the management command to update the reduced data and

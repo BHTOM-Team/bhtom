@@ -25,7 +25,7 @@
           <tbody>
           <tr>
             <td>Fits</td>
-            <td><a href="/data/{{ tabFits.fits_url }}">{{ tabFits.fits }}</a></td>
+            <td><a href="{{ tabFits.fits_url }}">{{ tabFits.fits }}</a></td>
           </tr>
           <tr>
             <td>Photometry</a></td>
@@ -75,7 +75,7 @@
           </tr>
           <tr>
             <td>Calib Filter</a></td>
-           <td>{{ fits.filter }}</td>
+           <td>{{ filter }}</td>
           </tr>
           <tr>
             <td>FITS Filter</a></td>
@@ -137,9 +137,14 @@
           </tr>
 
            <tr>
+            <td>Comment</a></td>
+              <td>{{ fits.comment }}</td>
+          </tr>
+
+           <tr>
             <td>Thumbnail</a></td>
          <td>
-            {% include 'tom_dataproducts/partials/js9_button.html' with url="/data/" only %}
+            {% include 'tom_dataproducts/partials/js9_button.html' with url=tabFits.fits_url  only %}
           </td>
           </tr>
           </tbody>
@@ -147,9 +152,13 @@
   </div>
 {% if fits.cpcs_plot != None %}
      <div class="col-md-2">
-    <img src="data:image/png;base64,{{ fits.cpcs_plot }}"/>
+        {% if fits.allow_upload == True %}
+            <img src="data:image/png;base64,{{ fits.cpcs_plot }}"/>
+         {% else %}
+            <img src="{{ cpcs_plot }}"/>
+        {% endif %}
      </div>
-     {% endif %}
+{% endif %}
 </div>
 
 
