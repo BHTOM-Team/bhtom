@@ -795,8 +795,8 @@ class DataProductUploadView(FormView):
             try:
                 run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun, matchDist, comment, user)
 
-                if dp.data_product_type == 'photometry':
-                    run_data_processor(dp)
+                #if dp.data_product_type == 'photometry':
+                run_data_processor(dp)
 
                 successful_uploads.append(str(dp).split('/')[-1])
             except InvalidFileFormatException as iffe:

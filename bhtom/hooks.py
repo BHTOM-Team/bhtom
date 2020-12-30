@@ -124,6 +124,8 @@ def send_to_cpcs(result, fits, eventID):
                 fits.scatter = json_data['scatter']
                 fits.npoints = json_data['npoints']
                 fits.followupId = json_data['followup_id']
+                fits.cpsc_filter = json_data['filter']
+                fits.survey = json_data['survey']
                 fits.save()
 
                 logger.info('mag: ' + str(fits.mag) + ', mag_err: ' + str(fits.mag_err) + ' ra: ' + str(fits.ra)
