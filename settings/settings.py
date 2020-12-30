@@ -456,3 +456,4 @@ except ImportError:
 #TOM Toolkit 1.4 requires
 TARGET_PERMISSIONS_ONLY = True
 
+SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
