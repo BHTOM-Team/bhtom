@@ -24,6 +24,9 @@ from guardian.shortcuts import get_objects_for_user
 
 from tom_common.hints import add_hint
 
+from bhtom.models import BHTomUser
+
+
 class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
     """
     View that handles the updating of reduced data tied to a ``DataProduct`` that was automatically ingested from a
@@ -56,11 +59,14 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
         adds a hint using the messages framework about automation.
         """
         target_id = request.GET.get('target_id', None)
+        print(target_id)
         out = StringIO()
         if target_id:
             call_command('updatereduceddata_gaia', target_id=target_id, stdout=out)
+            call_command('updatereduceddata_aavso', target_id=target_id, stdout=out)
         else:
             call_command('updatereduceddata_gaia', stdout=out)
+            call_command('updatereduceddata_aavso', stdout=out)
         messages.info(request, out.getvalue())
         # add_hint(request, mark_safe(
         #                   'Did you know updating observation statuses can be automated? Learn how in '

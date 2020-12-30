@@ -4,6 +4,8 @@
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
 <link rel="stylesheet" href="{% static 'bhtom/css/main.css' %}">
+<link rel="stylesheet" href="{% static 'bhtom/css/data-menu.css' %}">
+<link rel="stylesheet" href="{% static 'bhtom/css/plots.css' %}">
 {% endblock %}
 {% bootstrap_javascript jquery='True' %}
 {% block content %}
@@ -99,17 +101,23 @@
       {% endif %}
       {% if perms.tom_targets.view_target %}
       <div class="tab-pane active" id="photometry">
-        <div class="row">
-          <div class="col-md-3">
+        <div class="row menu-row">
+          <div class="col-md-6">
             <h4>Photometry</h4>
           </div>
-          <div class="col-md-7">
+          <div class="col-md-6">
             <button onclick="open_photometry()" class="btn btn-info" role="button" style="float:right; margin-right:-4px">Interactive photometry plot</button>
             <a href="{% url 'datatools:update-reduced-data-gaia' %}?target_id={{ target.id }}" class="btn btn-primary"
                title="Update Light Curve" style="float:right; margin-right:10px">Check for new data</a>
           </div>
         </div>
-        {% photometry_for_target_static target %}
+        <div class="row">
+          <div class="col-md-12">
+            <div class="plot-container">
+              {% photometry_for_target_static target form.aavso_data.value %}
+            </div>
+          </div>
+        </div>
 
         {% if perms.tom_dataproducts.add_dataproduct %}
           <div class="row">
@@ -134,7 +142,9 @@
       {% endif %}
       {% if perms.tom_targets.view_target %}
       <div class="tab-pane" id="spectroscopy">
-        {% spectroscopy_for_target target %}
+        <div class="plot-container">
+          {% spectroscopy_for_target target %}
+        </div>
 
         {% if perms.tom_dataproducts.add_dataproduct %}
           <div class="row">

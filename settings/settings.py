@@ -456,4 +456,6 @@ except ImportError:
 #TOM Toolkit 1.4 requires
 TARGET_PERMISSIONS_ONLY = True
 
+AAVSO_DATA_FETCH_URL = "https://www.aavso.org/vsx/index.php"
+
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
