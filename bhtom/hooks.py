@@ -112,7 +112,6 @@ def send_to_cpcs(result, fits, eventID):
             if response.status_code == 201 or response.status_code == 200:
 
                 json_data = json.loads(response.text)
-                logger.info(json_data)
                 fits.status = 'F'
                 fits.status_message = 'Finished'
                 fits.cpcs_plot = json_data['image_link']
