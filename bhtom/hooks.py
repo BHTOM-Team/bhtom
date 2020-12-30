@@ -1,21 +1,24 @@
 import os
 import requests
 import logging
-import uuid
+
+from django.conf import settings
+
 from .models import BHTomFits, Instrument, Observatory, BHTomData, BHTomUser
 from .utils.coordinate_utils import fill_galactic_coordinates
+from .utils.spectroscopy_dataproduct_utils import SpectroscopyASCIIExtraData,\
+    get_facility_and_obs_time_for_spectroscopy_file
 from tom_targets.models import Target
 from tom_dataproducts.models import DataProduct
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from django.contrib import messages
 from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 from django.utils import timezone
 import json
 
 from django.core.mail import send_mail
-from settings import settings
+from typing import Optional
 
 try:
     from settings import local_settings as secret
@@ -84,6 +87,14 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
             raise Exception(str(e))
     elif dp.data_product_type == 'spectroscopy' or dp.data_product_type == 'photometry':
         try:
+            if dp.data_product_type == 'spectroscopy':
+                # Check if spectroscopy ASCII file contains facility and observation date in the comments
+                extra_data: Optional[SpectroscopyASCIIExtraData] = get_facility_and_obs_time_for_spectroscopy_file(dp)
+                if extra_data:
+                    # If there are information in the comments, then update the DataProduct
+                    dp.extra_data = extra_data.to_json_str()
+                    dp.save(update_fields=["extra_data"])
+
             instance = BHTomData.objects.create(user_id=user, dataproduct_id=dp, comment=comment)
         except Exception as e:
             logger.error('data_product_post_upload error: ' + str(e))
@@ -124,6 +135,8 @@ def send_to_cpcs(result, fits, eventID):
                 fits.scatter = json_data['scatter']
                 fits.npoints = json_data['npoints']
                 fits.followupId = json_data['followup_id']
+                fits.cpsc_filter = json_data['filter']
+                fits.survey = json_data['survey']
                 fits.save()
 
                 logger.info('mag: ' + str(fits.mag) + ', mag_err: ' + str(fits.mag_err) + ' ra: ' + str(fits.ra)

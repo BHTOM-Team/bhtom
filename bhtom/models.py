@@ -89,6 +89,9 @@ class BHTomFits(models.Model):
     allow_upload = models.BooleanField(verbose_name='Dry Run (no data will be stored in the database)')
     followupId = models.IntegerField(null=True, blank=True)
     data_stored = models.BooleanField(default='False')
+    survey = models.CharField(max_length=255, null=True, blank=True)
+    cpsc_filter = models.CharField(max_length=10, null=True, blank=True)
+
     comment = models.TextField(null=True, blank=True)
 
     class Meta:
