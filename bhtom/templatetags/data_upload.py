@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import plotly.graph_objs as go
 from django import template
 from django.conf import settings
+
 from guardian.shortcuts import get_objects_for_user
 from plotly import offline
 from tom_dataproducts.models import DataProduct, ReducedDatum
@@ -24,17 +25,23 @@ def dataproduct_list(context, target):
 
     for data in data_product:
         filter, fit_id, status_message, mjd, expTime, observatory, data_user = None, None, None, None, None, None, None
-        fit, data_user, ccdphot_url, ccdphot_name = None, None, None, None
+        fit, data_user, ccdphot_url, ccdphot_name, data_stored, bhtomData = None, None, None, None, False, None
 
         if data.data_product_type == 'photometry_cpcs' or data.data_product_type == 'fits_file':
             try:
                 fit = BHTomFits.objects.get(dataproduct_id=data)
             except BHTomFits.DoesNotExist:
                 fit = None
+        else:
+            try:
+                bhtomData = BHTomData.objects.get(dataproduct_id=data.id)
+            except BHTomData.DoesNotExist:
+                bhtomData = None
 
         try:
 
             if fit is not None:
+
                 instrument = Instrument.objects.get(id=fit.instrument_id.id)
                 observatory = Observatory.objects.get(id=instrument.observatory_id.id).obsName
 
@@ -48,11 +55,11 @@ def dataproduct_list(context, target):
                 mjd = fit.mjd
                 expTime = fit.expTime
                 data_user = instrument.user_id.id
+                data_stored = fit.data_stored
             else:
-                try:
-                    bhtom_data = BHTomData.objects.get(dataproduct_id=data)
-                    data_user = bhtom_data.user_id
-                except BHTomData.DoesNotExist:
+                if bhtomData is not None:
+                    data_user = bhtomData.user_id.id
+                else:
                     data_user = -1
 
             if data.data_product_type == 'photometry_cpcs':
@@ -62,13 +69,14 @@ def dataproduct_list(context, target):
                 ccdphot_url = str(fit.photometry_file)
                 ccdphot_name = format(ccdphot_url).split('/')[-1]
 
+
             tabData.append([fit_id, data.id, format(data.data), format(data.data).split('/')[-1],
                             ccdphot_url, ccdphot_name, filter,
                             observatory, status_message, mjd, expTime,
-                            data.data_product_type, data.featured, data_user])
+                            data.data_product_type, data.featured, data_user, data_stored])
 
         except Exception as e:
-            logger.error('dataproduct_list error: ' + str(e) + str(data.data))
+            logger.error('dataproduct_list error: ' + str(e))
 
     return {
         'tabData': tabData,

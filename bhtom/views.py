@@ -112,9 +112,9 @@ class BlackHoleListView(PermissionRequiredMixin, FilterView):
         if not self.request.user.is_authenticated:
             messages.error(self.request, secret.NOT_AUTHENTICATED)
             return False
-        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
-            return False
+ #       elif not BHTomUser.objects.get(user=self.request.user).is_activate:
+ #           messages.error(self.request, secret.NOT_ACTIVATE)
+  #          return False
         elif not self.request.user.has_perm('tom_targets.view_target'):
             messages.error(self.request, secret.NOT_PERMISSION)
             return False
@@ -1394,10 +1394,11 @@ class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
 
-        fit = BHTomFits.objects.get(dataproduct_id=self.get_object())
-        if self.get_object().data_product_type == 'photometry_cpcs' or self.get_object().data_product_type == 'fits_file'\
-                and fit.status == 'F':
-            delete_point_cpcs(self.get_object())
+
+        if self.get_object().data_product_type == 'photometry_cpcs' or self.get_object().data_product_type == 'fits_file':
+            fit = BHTomFits.objects.get(dataproduct_id=self.get_object())
+            if fit.status == 'F':
+                delete_point_cpcs(self.get_object())
         ReducedDatum.objects.filter(data_product=self.get_object()).delete()
         self.get_object().data.delete()
 
