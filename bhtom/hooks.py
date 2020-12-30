@@ -2,12 +2,15 @@ import os
 import requests
 import logging
 import uuid
-from .models import BHTomFits, Instrument, Observatory
+from .models import BHTomFits, Instrument, Observatory, BHTomData
 from .utils.coordinate_utils import fill_galactic_coordinates
 from tom_targets.models import Target
+from tom_dataproducts.models import DataProduct
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from datetime import datetime
+from django.contrib import messages
+from datetime import datetime, timedelta
+from django.utils import timezone
 import json
 
 from django.core.mail import send_mail
@@ -42,7 +45,7 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
             try:
                 instance = BHTomFits.objects.create(instrument_id=instrument, dataproduct_id=dp, start_time=datetime.now(),
                                                     filter=observation_filter, allow_upload=dry_run, matchDist=matching_radius,
-                                                    comment=comment)
+                                                    comment=comment, data_stored=True)
 
                 response = requests.post(secret.CCDPHOTD_URL,  {'job_id': instance.file_id, 'instrument': observatory.obsName,
                                                                 'webhook_id': secret.CCDPHOTD_WEBHOOK_ID,
@@ -59,7 +62,7 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
                     instance.save()
 
             except Exception as e:
-                logger.error('data_product_post_upload-fits_file error: ' + str(e))
+                logger.error('data_product_post_upload_fits_file error: ' + str(e))
                 instance.delete()
                 raise Exception(str(e))
     elif dp.data_product_type == 'photometry_cpcs' and observatory != None and MJD != None and expTime != None:
@@ -70,7 +73,7 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
                                      status_message='Sent to Calibration', start_time=datetime.now(),
                                      cpcs_time=datetime.now(), filter=observation_filter, photometry_file=url,
                                      mjd=MJD, expTime=expTime, allow_upload=dry_run,
-                                     matchDist=matching_radius)
+                                     matchDist=matching_radius, data_stored=True)
 
             send_to_cpcs(url, instance, target.extra_fields['calib_server_name'])
 
@@ -80,7 +83,7 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
             raise Exception(str(e))
     elif dp.data_product_type == 'spectroscopy' or dp.data_product_type == 'photometry':
         try:
-            instance = BHTomData.objects.create(user_id=user, comment=comment)
+            instance = BHTomData.objects.create(user_id=user, dataproduct_id=dp, comment=comment)
         except Exception as e:
             logger.error('data_product_post_upload error: ' + str(e))
             instance.delete()
@@ -177,7 +180,6 @@ def target_pre_save(sender, instance, **kwargs):
     fill_galactic_coordinates(instance)
     logger.info('Target pre save hook: %s', str(instance))
 
-
 def target_post_save(target, created):
     logger.info('Target post save hook: %s created: %s', target, created)
 
@@ -199,3 +201,22 @@ def delete_point_cpcs(instance):
             logger.info(error_message)
     except Exception as e:
         logger.error('delete_point_cpcs error: ' + str(e))
+
+@receiver(post_save, sender=BHTomFits)
+def BHTomFits_pre_save(sender, instance, **kwargs):
+
+    time_threshold = timezone.now() - timedelta(minutes=secret.DAYS_DELETE_FILES)
+    fits = BHTomFits.objects.filter(start_time__lte=time_threshold).exclude(data_stored=False)
+
+    BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    url_base = BASE + '/data/'
+
+    for fit in fits:
+        data = DataProduct.objects.get(id=fit.dataproduct_id.id)
+        if data:
+            url_result = os.path.join(url_base, str(data.data))
+            if os.path.exists(url_result) and data.data is not None:
+
+                fit.data_stored = False
+                fit.save()
+                os.remove(url_result)

@@ -88,6 +88,7 @@ class BHTomFits(models.Model):
                                  verbose_name='Matching radius')
     allow_upload = models.BooleanField(verbose_name='Dry Run (no data will be stored in the database)')
     followupId = models.IntegerField(null=True, blank=True)
+    data_stored = models.BooleanField(default='False')
     comment = models.TextField(null=True, blank=True)
 
     class Meta:
