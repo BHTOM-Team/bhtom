@@ -2,13 +2,14 @@ import os
 import requests
 import logging
 import uuid
-from .models import BHTomFits, Instrument, Observatory, BHTomData
+from .models import BHTomFits, Instrument, Observatory, BHTomData, BHTomUser
 from .utils.coordinate_utils import fill_galactic_coordinates
 from tom_targets.models import Target
 from tom_dataproducts.models import DataProduct
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.contrib import messages
+from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 from django.utils import timezone
 import json
@@ -220,3 +221,19 @@ def BHTomFits_pre_save(sender, instance, **kwargs):
                 fit.data_stored = False
                 fit.save()
                 os.remove(url_result)
+
+@receiver(pre_save, sender=BHTomUser)
+def BHTomUser_post_save(sender, instance, **kwargs):
+
+    bHTomUser_old = BHTomUser.objects.get(id=instance.pk)
+    user_email = None
+
+    if bHTomUser_old.is_activate == False and instance.is_activate == True:
+        try:
+            user_email = User.objects.get(id=instance.user.id)
+        except BHTomFits.DoesNotExist:
+            user_email = None
+
+        if user_email is not None:
+            send_mail(secret.EMAILTET_ACTIVATEUSER_TITLE, secret.EMAILTET_ACTIVATEUSER_TITLE,
+                    settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)

@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import plotly.graph_objs as go
 from django import template
 from django.conf import settings
+
 from guardian.shortcuts import get_objects_for_user
 from plotly import offline
 from tom_dataproducts.models import DataProduct, ReducedDatum
@@ -24,13 +25,18 @@ def dataproduct_list(context, target):
 
     for data in data_product:
         filter, fit_id, status_message, mjd, expTime, observatory, data_user = None, None, None, None, None, None, None
-        fit, data_user, ccdphot_url, ccdphot_name, data_stored = None, None, None, None, False
+        fit, data_user, ccdphot_url, ccdphot_name, data_stored, bhtomData = None, None, None, None, False, None
 
         if data.data_product_type == 'photometry_cpcs' or data.data_product_type == 'fits_file':
             try:
                 fit = BHTomFits.objects.get(dataproduct_id=data)
             except BHTomFits.DoesNotExist:
                 fit = None
+        else:
+            try:
+                bhtomData = BHTomData.objects.get(dataproduct_id=data.id)
+            except BHTomData.DoesNotExist:
+                bhtomData = None
 
         try:
 
@@ -51,11 +57,9 @@ def dataproduct_list(context, target):
                 data_user = instrument.user_id.id
                 data_stored = fit.data_stored
             else:
-
-                try:
-                    bhtomData = BHTomData.objects.get(dataproduct_id=data)
+                if bhtomData is not None:
                     data_user = bhtomData.user_id.id
-                except bhtomData.DoesNotExist:
+                else:
                     data_user = -1
 
             if data.data_product_type == 'photometry_cpcs':
