@@ -50,8 +50,8 @@ def dataproduct_list(context, target):
                 data_user = instrument.user_id.id
             else:
                 try:
-                    data = BHTomData.objects.get(dataproduct_id=data)
-                    data_user = data.user_id
+                    bhtom_data = BHTomData.objects.get(dataproduct_id=data)
+                    data_user = bhtom_data.user_id
                 except BHTomData.DoesNotExist:
                     data_user = -1
 

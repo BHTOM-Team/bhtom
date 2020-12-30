@@ -1,11 +1,9 @@
-import os
 import requests
 import logging
-import uuid
-from .models import BHTomFits, Instrument, Observatory
+from .models import BHTomFits, Instrument, Observatory, BHTomData
 from .utils.coordinate_utils import fill_galactic_coordinates
 from tom_targets.models import Target
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from datetime import datetime
 import json
@@ -80,7 +78,7 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
             raise Exception(str(e))
     elif dp.data_product_type == 'spectroscopy' or dp.data_product_type == 'photometry':
         try:
-            instance = BHTomData.objects.create(user_id=user, comment=comment)
+            instance = BHTomData.objects.create(user_id=user, comment=comment, dataproduct_id=dp)
         except Exception as e:
             logger.error('data_product_post_upload error: ' + str(e))
             instance.delete()
