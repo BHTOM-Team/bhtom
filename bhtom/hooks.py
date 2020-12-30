@@ -224,3 +224,18 @@ def BHTomFits_pre_save(sender, instance, **kwargs):
                 fit.save()
                 os.remove(url_result)
 
+@receiver(pre_save, sender=BHTomUser)
+def BHTomUser_post_save(sender, instance, **kwargs):
+
+    bHTomUser_old = BHTomUser.objects.get(id=instance.pk)
+    user_email = None
+
+    if bHTomUser_old.is_activate == False and instance.is_activate == True:
+        try:
+            user_email = User.objects.get(id=instance.user.id)
+        except BHTomFits.DoesNotExist:
+            user_email = None
+
+        if user_email is not None:
+            send_mail(secret.EMAILTET_ACTIVATEUSER_TITLE, secret.EMAILTET_ACTIVATEUSER_TITLE,
+                    settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)
