@@ -47,3 +47,7 @@ td.green {
 .table-hover tbody tr:hover {
     color: white!important;
 }
+
+@media (min-width: 1200px)!import
+.container {
+    max-width: 1500px;

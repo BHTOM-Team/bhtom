@@ -14,30 +14,10 @@ from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 
 from bhtom.models import BHTomFits, Instrument
-
-register = template.Library()
-
 import logging
 
-logger = logging.getLogger(__name__)
-
 register = template.Library()
-
-
-@register.inclusion_tag('tom_dataproducts/partials/dataproduct_list_for_target.html', takes_context=True)
-def dataproduct_list_for_target(context, target):
-    """
-    Given a ``Target``, returns a list of ``DataProduct`` objects associated with that ``Target``
-    """
-    if settings.TARGET_PERMISSIONS_ONLY:
-        target_products_for_user = target.dataproduct_set.all()
-    else:
-        target_products_for_user = get_objects_for_user(
-            context['request'].user, 'tom_dataproducts.view_dataproduct', klass=target.dataproduct_set.all())
-    return {
-        'products': target_products_for_user,
-        'target': target
-    }
+logger = logging.getLogger(__name__)
 
 @register.inclusion_tag('tom_dataproducts/partials/detail_fits_upload.html')
 def detail_fits_upload(target, user):
@@ -54,7 +34,7 @@ def detail_fits_upload(target, user):
             tabFits.append([fit.status.split('/')[-1], fit.status_message,
                             format(DataProduct.objects.get(id=fit.dataproduct_id).data).split('/')[-1]])
         except Exception as e:
-            logger.error('error: ' + str(e))
+            logger.error('detail_fits_upload error: ' + str(e))
 
     return {
         'fits': tabFits,
@@ -133,8 +113,13 @@ def photometry_for_target_static(context, target):
 
     figure: plt.Figure = plt.figure(figsize=(7, 6))
     ax = figure.add_axes((0.15, 0.15, 0.75, 0.75))
+
+    ax.xaxis_date()
+    figure.autofmt_xdate()
+
     ax.invert_yaxis()
     ax.grid(color='white', linestyle='solid')
+
     ax.set_facecolor('#E5ECF6')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)

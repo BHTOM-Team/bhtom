@@ -12,7 +12,7 @@ class BHTomFitsResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BHTomFits
-        fields = '__all__'
+        fields = ('photometry_file', 'status', 'cpcs_time', 'status_message', 'mjd', 'expTime', 'ccdphot_filter')
 
 class BHTomFitsStatusSerializer(serializers.ModelSerializer):
     class Meta:

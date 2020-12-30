@@ -2,14 +2,20 @@
 {% load bootstrap4 %}
 {% block title %}Create user{% endblock %}
 {% block content %}
-
+{% if object %}
+<form action="{% url 'user-update' object.id %}" method="POST">
+{% else %}
 <form action="{% url 'register_user' %}" method="POST">
-
+{% endif %}
 {% csrf_token %}
 {% bootstrap_form form %}
 {% buttons %}
   <button type="submit" class="btn btn-primary">
-    Create User
+    {% if object %}
+      Update
+    {% else %}
+      Create User
+    {% endif %}
   </button>
 {% endbuttons %}
 </form>

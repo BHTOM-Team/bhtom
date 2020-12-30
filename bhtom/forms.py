@@ -3,7 +3,7 @@ from django.conf import settings
 
 from tom_targets.models import Target
 from tom_observations.models import ObservationRecord
-from bhtom.models import Observatory, Instrument, Catalogs
+from bhtom.models import Observatory, Instrument, Catalogs, BHTomUser
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import UserCreationForm, UsernameField
 
@@ -35,7 +35,7 @@ class FilterChoiceField(forms.ModelChoiceField):
 class DataProductUploadForm(forms.Form):
 
     MATCHING_RADIUS = {
-        ('0', 'Auto'),
+        ('0', 'Default for the Observatory'),
         ('1', '1 arcsec'),
         ('2', '2 arcsec'),
         ('4', '4 arcsec'),
@@ -110,24 +110,6 @@ class DataProductUploadForm(forms.Form):
 
         instrument = Instrument.objects.filter(user_id=user)
         insTab = []
-<<<<<<< HEAD
-
-        for ins in instrument:
-            insTab.append(ins.observatory_id.id)
-
-        self.fields['observatory'] = ObservatoryChoiceField(
-
-            queryset=Observatory.objects.filter(id__in=insTab, userActivation=True),
-            widget=forms.Select(),
-            required=True
-        )
-
-        self.fields['filter'] = forms.ChoiceField(
-                choices=[v for v in filter.items()],
-                widget=forms.Select(),
-                required=False,
-                label='Force filter'
-=======
 
         for ins in instrument:
             insTab.append(ins.observatory_id.id)
@@ -150,7 +132,6 @@ class DataProductUploadForm(forms.Form):
             widget=forms.Textarea,
             required=False,
             label='Comment',
->>>>>>> fabf7855d92c173887212d905b1315b1d3eda49b
         )
 
 class ObservatoryCreationForm(forms.ModelForm):
@@ -212,21 +193,50 @@ class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
     groups = forms.ModelMultipleChoiceField(Group.objects.all().exclude(name='Public'),
                                             required=False, widget=forms.CheckboxSelectMultiple)
-    captcha = ReCaptchaField()
+    latex_name = forms.CharField(required=False)
+    latex_affiliation = forms.CharField(required=False)
+    address = forms.CharField(required=False)
+    about_me = forms.CharField(
+        widget=forms.Textarea,
+        label="About_me",
+        required=False
+    )
+
+   # captcha = ReCaptchaField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].label = "Login*"
+        self.fields['email'].label = "Email*"
+        self.fields['password1'].label = "Password*"
+        self.fields['password2'].label = "Password confirmation*"
 
     class Meta:
         model = User
-        fields = ('username', 'first_name', 'last_name', 'email', 'groups')
+        fields = ('username', 'first_name', 'last_name', 'email', 'latex_name', 'latex_affiliation',
+                  'address', 'password1', 'password2', 'groups', 'about_me')
         field_classes = {'username': UsernameField}
-
 
     def save(self, commit=True):
         user = super(forms.ModelForm, self).save(commit=False)
         if self.cleaned_data['password1']:
             user.set_password(self.cleaned_data["password1"])
         if commit:
-            user.is_active = False
+            user.is_active = True
             user.save()
             self.save_m2m()
+
+            dp, created = BHTomUser.objects.get_or_create(user=user)
+            dp.user = user
+            dp.latex_name = self.cleaned_data['latex_name']
+            dp.latex_affiliation = self.cleaned_data['latex_affiliation']
+            dp.address = self.cleaned_data['address']
+            dp.about_me = self.cleaned_data['about_me']
+
+            logger.info("Update/create user: %s" % user.username)
+            if created:
+                dp.is_activate = False
+
+            dp.save()
 
         return user
