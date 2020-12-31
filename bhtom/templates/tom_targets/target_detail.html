@@ -111,6 +111,14 @@
         </div>
         {% photometry_for_target_static target %}
 
+        {% if perms.tom_dataproducts.add_dataproduct %}
+          <div class="row">
+            <div class="col-md-12">
+              <button onclick="download_photometry()" class="btn btn-info" role="button">Download photometry data</button>
+            </div>
+          </div>
+        {% endif %}
+
         {% comments_enabled as comments_are_enabled %}
         <hr/>
         <h5>Comments</h5>
@@ -127,6 +135,14 @@
       {% if perms.tom_targets.view_target %}
       <div class="tab-pane" id="spectroscopy">
         {% spectroscopy_for_target target %}
+
+        {% if perms.tom_dataproducts.add_dataproduct %}
+          <div class="row">
+            <div class="col-md-12">
+              <button onclick="download_spectroscopy()" class="btn btn-info" role="button">Download spectroscopy data</button>
+            </div>
+          </div>
+        {% endif %}
 
          {% comments_enabled as comments_are_enabled %}
         <hr/>
@@ -156,6 +172,12 @@
 <script type="text/javascript">
   function open_photometry() {
     window.open('{% url "bhlist_i_photometry" target.id %}', 'newwindow', 'width=800,height=700');
+  }
+  function download_photometry() {
+    window.open('{% url "bhlist_download_photometry_data" target.id %}')
+  }
+  function download_spectroscopy() {
+    window.open('{% url "bhlist_download_spectroscopy_data" target.id %}')
   }
 </script>
 {% endblock %}
