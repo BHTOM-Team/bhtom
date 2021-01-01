@@ -4,6 +4,3 @@
 {% if perms.tom_targets.delete_target %}
 <a href="{% url 'tom_targets:delete' pk=target.id %}" title="Delete target" class="btn  btn-warning">Delete</a>
 {% endif %}
-{% if perms.bhtom.add_observatory and perms.bhtom.view_bhtomfits %}
-<a href="{% url 'bhlist_file' pk=target.id %}" title="List all uploaded Fits" class="btn btn-primary">List Fits</a>
-{% endif %}

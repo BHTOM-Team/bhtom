@@ -18,27 +18,25 @@ from tom_common.hints import add_hint
 
 from tom_dataproducts.data_processor import run_data_processor
 from tom_dataproducts.exceptions import InvalidFileFormatException
-from tom_dataproducts.models import ReducedDatum, DataProduct, DataProductGroup
+from tom_dataproducts.models import ReducedDatum, DataProduct
 
 from rest_framework import viewsets, status
-from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
 from bhtom.models import BHTomFits, Observatory, Instrument, BHTomUser
-from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer, BHTomFitsStatusSerializer
+from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer
 from bhtom.hooks import send_to_cpcs, delete_point_cpcs
 from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
 from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
 
 from django.http import HttpResponseServerError, Http404
-from django.views.generic.edit import FormView, DeleteView
+from django.views.generic.edit import FormView
 from django.views.generic import View
 from django.conf import settings
 from django.contrib import messages
 from django.core.cache.utils import make_template_fragment_key
 from django.core.cache import cache
-from django.core.files.storage import FileSystemStorage
-from django.core.files.storage import default_storage
 
 from django.contrib.auth.models import User, Group
 from django.contrib.auth import update_session_auth_hash
@@ -52,11 +50,11 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django_filters.views import FilterView
-from django.core.files import File
 
 from django.http import HttpResponseRedirect
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
-from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
+from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
+
 
 try:
     from settings import local_settings as secret
@@ -879,6 +877,53 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
                               ' the docs.</a>'))
             return redirect(reverse('bhlist_detail', args=(target_id,)))
         return super().get(request, *args, **kwargs)
+
+
+class TargetDownloadPhotometryDataView(PermissionRequiredMixin, View):
+
+    permission_required = 'tom_dataproducts.add_dataproduct'
+
+    def get(self, request, *args, **kwargs):
+        import os
+        from django.http import FileResponse
+        from bhtom.utils.photometry_and_spectroscopy_data_utils import save_photometry_data_for_target_to_csv_file
+
+        target_id: int = kwargs.get('pk', None)
+        logger.info(f'Generating photometry CSV file for target with id={target_id}...')
+
+        try:
+            tmp, filename = save_photometry_data_for_target_to_csv_file(target_id)
+            return FileResponse(open(tmp.name, 'rb'),
+                                as_attachment=True,
+                                filename=filename)
+        except Exception as e:
+            logger.error(f'Error while generating photometry CSV file for target with id={target_id}: {e}')
+        finally:
+            os.remove(tmp.name)
+
+
+class TargetDownloadSpectroscopyDataView(PermissionRequiredMixin, View):
+
+    permission_required = 'tom_dataproducts.add_dataproduct'
+
+    def get(self, request, *args, **kwargs):
+        import os
+        from django.http import FileResponse
+        from bhtom.utils.photometry_and_spectroscopy_data_utils import save_spectroscopy_data_for_target_to_csv_file
+
+        target_id: int = kwargs.get('pk', None)
+        logger.info(f'Generating spectroscopy CSV file for target with id={target_id}...')
+
+        try:
+            tmp, filename = save_spectroscopy_data_for_target_to_csv_file(target_id)
+            return FileResponse(open(tmp.name, 'rb'),
+                                as_attachment=True,
+                                filename=filename)
+        except Exception as e:
+            logger.error(f'Error while generating spectroscopy CSV file for target with id={target_id}: {e}')
+        finally:
+            os.remove(tmp.name)
+
 
 class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
 
