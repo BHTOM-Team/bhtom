@@ -61,6 +61,7 @@ notebook==6.0.2
 numba==0.47.0
 numpy==1.18.2
 oauthlib==3.1.0
+pandas==1.2.0
 pandocfilters==1.4.2
 parso==0.5.2
 pexpect==4.8.0
