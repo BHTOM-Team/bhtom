@@ -17,7 +17,7 @@ class Command(BaseCommand):
             try:
                 target: Target = Target.objects.get(pk=target_id)
                 update_aavso_for_single_target(target)
-                return ('Light curve of %s updated') % (target.name)
+                return ('Updated AAVSO data for %s') % (target.name)
             except Exception as e:
                 return "There was a problem updating %s: %s" % (getattr(target, 'name', ""), e)
         else:
@@ -36,4 +36,3 @@ def update_aavso_for_single_target(target: Target) -> str:
         return "Didn't update photometry data of %s because dont_update_me=True" % target.name
 
     fetch_aavso_photometry(target)
-

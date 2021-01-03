@@ -10,7 +10,9 @@ from tom_targets.models import Target
 
 from django.core.cache import cache
 
-accepted_valid_flags: List[str] = ['V', 'Z']
+accepted_valid_flags: List[str] = ['V']
+filters: List[str] = ['V', 'I', 'R']
+source_name: str = 'AAVSO'
 
 
 def fetch_aavso_photometry(target: Target,
@@ -20,13 +22,11 @@ def fetch_aavso_photometry(target: Target,
     target_name: str = target.name
     target_id: int = target.pk
 
-    cache_key: str = f'{target_id}_aavso'
-
     params = {
         "view": "api.delim",
         "ident": target_name,
         "tojd": to_time.jd,
-        "fromjd": cache.get(cache_key, 0),
+        "fromjd": check_last_jd(target_id),
         "delimiter": delimiter
     }
     result = req.get(settings.AAVSO_DATA_FETCH_URL, params=params)
@@ -34,7 +34,7 @@ def fetch_aavso_photometry(target: Target,
 
     if status_code and getattr(result, 'text', None):
         buffer: StringIO = StringIO(str(result.text))
-        result_df: pd.DataFrame = filter_data(pd.read_csv(buffer, sep=delimiter, index_col=False))
+        result_df: pd.DataFrame = filter_data(pd.read_csv(buffer, sep=delimiter, index_col=False, error_bad_lines=False))
 
         for i, row in result_df.iterrows():
             save_row_to_db(target_id, row, settings.AAVSO_DATA_FETCH_URL)
@@ -46,16 +46,39 @@ def fetch_aavso_photometry(target: Target,
         return None, status_code
 
 
+def check_last_jd(target_id: int) -> float:
+
+    print(f'Checking last JD for {target_id}...')
+
+    cache_key: str = f'{target_id}_aavso'
+    cached_jd = cache.get(cache_key)
+    if not cached_jd:
+        print(f'No cached JD. Checking in the database...')
+
+        last_timestamp = ReducedDatum.objects\
+            .filter(target_id=target_id,
+                    source_name=source_name)\
+            .order_by('-timestamp')
+        if last_timestamp.exists():
+            print(f'Last saved timestamp: {last_timestamp}')
+            return Time(last_timestamp).jd
+        else:
+            print(f'No AAVSO data has been saved.')
+            return 0
+    print(f'Last cached JD: {cached_jd}')
+    return cached_jd
+
+
 def filter_data(df: pd.DataFrame) -> pd.DataFrame:
-    return df.loc[df.obsType == 'CCD'].loc[df.val.isin(accepted_valid_flags)]
+    return df.loc[df.obsType == 'CCD']\
+        .loc[df.val.isin(accepted_valid_flags)]\
+        .loc[df.band.isin(filters)]
 
 
 def save_row_to_db(target_id: int, row: pd.Series, url: str):
-    from datetime import datetime
-
     return ReducedDatum.objects.get_or_create(
         data_type="photometry",
-        source_name="AAVSO",
+        source_name=source_name,
         source_location=url,
         timestamp=Time(row["JD"], format="jd").to_datetime(),
         value=to_json_value(row),
