@@ -16,6 +16,7 @@ source_name: str = 'AAVSO'
 
 
 def fetch_aavso_photometry(target: Target,
+                           from_time: Optional[Time] = None,
                            to_time: Time = Time.now(),
                            delimiter: str = ",") -> Tuple[Optional[pd.DataFrame], Optional[int]]:
 
@@ -26,7 +27,7 @@ def fetch_aavso_photometry(target: Target,
         "view": "api.delim",
         "ident": target_name,
         "tojd": to_time.jd,
-        "fromjd": check_last_jd(target_id),
+        "fromjd": from_time.jd if from_time else 0,
         "delimiter": delimiter
     }
     result = req.get(settings.AAVSO_DATA_FETCH_URL, params=params)
@@ -44,29 +45,6 @@ def fetch_aavso_photometry(target: Target,
         return result_df, result.status_code
     else:
         return None, status_code
-
-
-def check_last_jd(target_id: int) -> float:
-
-    print(f'Checking last JD for {target_id}...')
-
-    cache_key: str = f'{target_id}_aavso'
-    cached_jd = cache.get(cache_key)
-    if not cached_jd:
-        print(f'No cached JD. Checking in the database...')
-
-        last_timestamp = ReducedDatum.objects\
-            .filter(target_id=target_id,
-                    source_name=source_name)\
-            .order_by('-timestamp')
-        if last_timestamp.exists():
-            print(f'Last saved timestamp: {last_timestamp}')
-            return Time(last_timestamp).jd
-        else:
-            print(f'No AAVSO data has been saved.')
-            return 0
-    print(f'Last cached JD: {cached_jd}')
-    return cached_jd
 
 
 def filter_data(df: pd.DataFrame) -> pd.DataFrame:
