@@ -392,6 +392,7 @@ EXTRA_FIELDS = [
     {'name': 'gaia_alert_name', 'type': 'string'},
     {'name': 'calib_server_name', 'type': 'string'},
     {'name': 'ztf_alert_name', 'type': 'string'},
+    {'name': 'aavso_name', 'type': 'string'},
     {'name': 'gaiadr2_id', 'type': 'string'},
     {'name': 'classification', 'type': 'string'},
     {'name': 'tweet', 'type': 'boolean'},
