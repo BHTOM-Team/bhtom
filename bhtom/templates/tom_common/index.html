@@ -5,8 +5,10 @@
 <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
 {% endblock %}
 {% block content %}
+{% if user.is_authenticated %}
 <div class="row">
   <div class="col-md-8">
+{% endif %}
     <h2 class="text-center">Black Hole TOM v.1.1</h2>
    <p class="text-center"><img src="https://www.redshift-live.com/binaries/asset/image/22596/image/A_simulated_black_hole_against_the_background_of_the_Milky_Way.jpg" class="img-fluid mx-auto"></p>
 <!---    <p class="text-center"><img src="{% static 'img/BlackHoleImage.png' %}" class="img-fluid max-auto"></p> -->
@@ -25,7 +27,7 @@
     photometric and spectroscopic data of time-domain targets, and for requesting and managing follow-up observations
     obtained with a network of telescopes.
     </p>
-<p>
+    <p>
     Version 1.1 (Dec.2020): processing of fits images (PSF or aperture photometry) is now available, along with photometric calibrations using Cambridge Photometric Calibration Server.   
     </p>
     <p class="text-center"; style="font-size:18px">
@@ -40,6 +42,24 @@
         <img src="http://www.astrouw.edu.pl/~wyrzykow/logo-uniwarsaw.png" class="img-fluid mx-auto">      
       </p> 
 
+  </div>
+{% if user.is_authenticated %}
+      <div class="col-md-4">
+    <div class="card">
+      <div class="card-header">
+        Latest Comments
+      </div>
+      {% recent_comments %}
+    </div>
+    <br/>
+    <div class="card">
+      <div class="card-header">
+        Latest Targets
+      </div>
+      {% recent_targets %}
+  </div>
+</div>
 
-
+</div>
+{% endif %}
 {% endblock %}
