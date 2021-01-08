@@ -279,9 +279,12 @@ def update_gaia_lc(target, gaia_name):
                 mjd0=np.array(datajson['mjd'])
                 mag0=np.array(datajson['mag'])
                 magerr0=np.array(datajson['magerr'])
-                filter0=np.array(datajson['filter'])
+                filter0=np.array(datajson['filter']) 
+                catalog0=np.array(datajson['catalog']) #filter+catalog is the full info
                 caliberr0=np.array(datajson['caliberr'])
                 obs0 = np.array(datajson['observatory'])
+                id0 = np.array(datajson['id'])
+                # filtering out observations which are limits (flagged with error=-1 in CPCS)
                 w=np.where((magerr0 != -1))
 
                 jd=mjd0[w]+2400000.5
@@ -289,14 +292,18 @@ def update_gaia_lc(target, gaia_name):
                 magerr=np.sqrt(magerr0[w]*magerr0[w] + caliberr0[w]*caliberr0[w]) #adding calibration err in quad
                 filter=filter0[w]
                 obs=obs0[w]
+                catalog = catalog0[w]
+                ids=id0[w]
 
                 for i in reversed(range(len(mag))):
                     try:
                         datum_mag = float(mag[i])
                         datum_jd = Time(float(jd[i]), format='jd', scale='utc')
-                        datum_f = filter[i]
+                        datum_f = filter[i]+"("+catalog[i]+")"
                         datum_err = float(magerr[i])
                         datum_source = obs[i]
+                        sourcelink = ('http://gsaweb.ast.cam.ac.uk/followup/get_alert_lc_data?alert_name=ivo:%%2F%%2F%s'%nam)+"&"+str(ids[i])
+
                         value = {
                             'magnitude': datum_mag,
                             'filter': datum_f,
@@ -306,7 +313,7 @@ def update_gaia_lc(target, gaia_name):
                             timestamp=datum_jd.to_datetime(timezone=TimezoneInfo()),
                             value=json.dumps(value),
                             source_name=datum_source,
-                            source_location=page,
+                            source_location=sourcelink,
                             data_type='photometry',
                             target=target)
                         rd.save()
