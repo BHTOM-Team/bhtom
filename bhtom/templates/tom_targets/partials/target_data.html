@@ -32,13 +32,18 @@
 <dl class="row">
 {% for key, value in extras.items %}
     <dt class="col-sm-6">{{ key }}</dt>
+    {% if key == 'Sun_separation' %} <!-- Do the same also Galactic coords here but trim to 6 digits -->
+    <dd class="col-sm-6">{{ value|floatformat:1}}</dd>
+    {% else %}
     <dd class="col-sm-6">{{ value }}</dd>
+    {% endif %}
 {% endfor %}
 </dl>
-<h4>Tags</h4>
+<!-- LW.01.2021: Never used those, commening out: 
+  <h4>Tags</h4>
 <dl class="row">
 {% for key, value in target.tags.items %}
   <dt class="col-sm-6">{{ key }}</dt>
   <dd class="col-sm-6">{{ value }}</dd>
 {% endfor %}
-</dl>
+</dl> -->
