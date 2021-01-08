@@ -49,7 +49,7 @@ insert into bhtom_catalogs values (7,'VSTATLAS',ARRAY['u','g','r','i','z']);
 
 Adres for send fits to bhtom:  /upload/
 
-Sending parameters in 'data': hashtag, target(name),filter, data_product_type (photometry, fits_file, spectroscopy, image_file) 
+Sending parameters in 'data': hashtag, target(name),filter, data_product_type (photometry, fits_file, spectroscopy, image_file), MJD, ExpTime
 
 Sending file in 'files'
 

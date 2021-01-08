@@ -594,33 +594,50 @@ class fits_upload(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
 
         self.check_permissions(request)
+        observatory, MJD, ExpTime, dryRun, matchDist, comment = None, None, None, None, None, None
 
         try:
             observation_filter = request.data.get('filter')
-        except:
+        except Exception as e:
             observation_filter = None
         try:
-            target = request.data.get('target')
-            data_product_files = request.FILES.getlist("files")
             hashtag = request.data.get('hashtag')
-            dp_type = request.data.get('data_product_type')
-            MJD = request.data.get('MJD')
-            ExpTime = request.data.get('ExpTime')
-            dryRun = request.data.get('dryRun')
-            matchDist = request.data.get('matchDist')
-            comment = request.data.get('comment')
-            dryRun = request.data.get('dryRun')
-
             instrument = Instrument.objects.get(hashtag=hashtag)
-            observatory = Observatory.objects.get(id=instrument.observatory_id.id)
-            user = User.objects.get(id=instrument.user_id.id)
+        except Instrument.DoesNotExist:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        try:
+            target = request.data.get('target')
             target_id = Target.objects.get(name=target)
+        except Target.DoesNotExist:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        try:
+            dp_type = request.data.get('data_product_type')
+            if dp_type == 'photometry':
+                dp_type = 'photometry_cpcs'
+            user = User.objects.get(id=instrument.user_id.id)
+            data_product_files = request.FILES.getlist("files")
 
-            if instrument is None or target_id is None:
+            if data_product_files is None:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
 
+            if dp_type == 'fits_file' or dp_type == 'photometry_cpcs':
+                matchDist = request.data.get('matchDist')
+                comment = request.data.get('comment')
+                dryRun = request.data.get('dryRun')
+                observatory = Observatory.objects.get(id=instrument.observatory_id.id)
+
+                if matchDist is None:
+                    matchDist = 0
+                if dryRun is None:
+                    dryRun = 0
+            if dp_type == 'photometry_cpcs':
+                MJD = request.data.get('MJD')
+                ExpTime = request.data.get('ExpTime')
+                if MJD is None or ExpTime is None:
+                    return Response(status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
-            logger.error('fits_upload error: ' + str(e))
+            logger.error('data upload error: ' + str(e))
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         successful_uploads = []
@@ -635,7 +652,6 @@ class fits_upload(viewsets.ModelViewSet):
             dp.save()
 
             try:
-
                 run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun,
                          matchDist, comment, user)
 
