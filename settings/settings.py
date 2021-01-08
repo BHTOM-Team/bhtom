@@ -392,6 +392,7 @@ EXTRA_FIELDS = [
     {'name': 'gaia_alert_name', 'type': 'string'},
     {'name': 'calib_server_name', 'type': 'string'},
     {'name': 'ztf_alert_name', 'type': 'string'},
+    {'name': 'aavso_name', 'type': 'string'},
     {'name': 'gaiadr2_id', 'type': 'string'},
     {'name': 'classification', 'type': 'string'},
     {'name': 'tweet', 'type': 'boolean'},
@@ -455,5 +456,7 @@ except ImportError:
 
 #TOM Toolkit 1.4 requires
 TARGET_PERMISSIONS_ONLY = True
+
+AAVSO_DATA_FETCH_URL = "https://www.aavso.org/vsx/index.php"
 
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']

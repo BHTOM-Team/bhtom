@@ -86,7 +86,7 @@ def spectroscopy_for_target(context, target, dataproduct=None):
     }
 
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target_static.html', takes_context=True)
-def photometry_for_target_static(context, target):
+def photometry_for_target_static(context, target, include_aavso):
     """
     Renders a photometric plot for a target.
 
@@ -111,8 +111,8 @@ def photometry_for_target_static(context, target):
         photometry_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
 
 
-    figure: plt.Figure = plt.figure(figsize=(7, 6))
-    ax = figure.add_axes((0.15, 0.15, 0.75, 0.75))
+    figure: plt.Figure = plt.figure(figsize=(9, 6))
+    ax = figure.add_axes((0.1, 0.1, 0.7, 0.8))
 
     ax.xaxis_date()
     figure.autofmt_xdate()
@@ -137,7 +137,10 @@ def photometry_for_target_static(context, target):
                     ms=2.5,
                     capsize=1,
                     elinewidth=1,
-                    markeredgewidth=1)
+                    markeredgewidth=1,
+                    label=filter_name)
+
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', frameon=True)
 
     buf: io.BytesIO = io.BytesIO()
     figure.savefig(buf, format='png')
