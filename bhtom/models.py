@@ -2,10 +2,10 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from tom_targets.models import Target
-from tom_dataproducts.models import DataProduct
+from tom_dataproducts.models import DataProduct, ReducedDatum
+
 
 class Observatory(models.Model):
-
     MATCHING_RADIUS = {
 
         ('1', '1 arcsec'),
@@ -32,8 +32,8 @@ class Observatory(models.Model):
     class Meta:
         verbose_name_plural = "Obs info"
 
-class Instrument(models.Model):
 
+class Instrument(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     observatory_id = models.ForeignKey(Observatory, on_delete=models.CASCADE)
     hashtag = models.CharField(max_length=255, editable=True, null=False, blank=False)
@@ -43,8 +43,10 @@ class Instrument(models.Model):
     def __str__(self):
         return self.user_id.username
 
+
 def photometry_name(instance, filename):
     return '/'.join([Target.objects.get(id=instance.dataproduct_id.target_id).name, 'photometry', filename])
+
 
 class BHTomFits(models.Model):
     FITS_STATUS = [
@@ -97,10 +99,12 @@ class BHTomFits(models.Model):
     class Meta:
         verbose_name_plural = "BHTomFits"
 
+
 class Catalogs(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.TextField(blank=False, editable=False)
     filters = ArrayField(models.CharField(max_length=10))
+
 
 class BHTomUser(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -110,7 +114,13 @@ class BHTomUser(models.Model):
     address = models.CharField(max_length=255, null=True, blank=True, verbose_name='Address')
     about_me = models.TextField(null=True, blank=True, verbose_name='About me')
 
+
 class BHTomData(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     dataproduct_id = models.ForeignKey(DataProduct, on_delete=models.CASCADE)
     comment = models.TextField(null=True, blank=True)
+
+
+class ReducedDatumExtraData(models.Model):
+    reduced_datum = models.ForeignKey(ReducedDatum, on_delete=models.CASCADE, primary_key=True)
+    extra_data = models.TextField(null=True, blank=True)
