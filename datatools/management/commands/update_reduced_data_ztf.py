@@ -18,7 +18,7 @@ class Command(UpdateReducedDataCommand):
                                   "Didn't update ZTF data of %s because dont_update_me is set to True" % target.name)
 
         if ztf_name:
-            update_ztf_lc(target)
+            update_ztf_lc(target, user_id)
             return encode_message(MessageStatus.SUCCESS,
                                   f'Updated ZTF data for {ztf_name}')
         else:

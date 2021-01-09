@@ -18,7 +18,7 @@ class Command(UpdateReducedDataCommand):
                                   "Didn't update Gaia Alerts data of %s because dont_update_me is set to True" % target.name)
 
         if gaia_name:
-            update_gaia_lc(target, gaia_name)
+            update_gaia_lc(target, user_id)
             return encode_message(MessageStatus.SUCCESS,
                                   f'Updated Gaia Alerts data for {gaia_name}')
         else:

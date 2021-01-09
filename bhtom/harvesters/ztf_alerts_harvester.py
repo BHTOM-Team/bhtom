@@ -11,6 +11,9 @@ from typing import Dict, List, Optional
 # from tom_targets.templatetags.targets_extras import target_extra_field
 
 ### how to pass those variables from settings?
+from bhtom.models import ReducedDatumExtraData
+from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointExtraData
+
 try:
     from settings import local_settings as secret
 except ImportError:
@@ -30,6 +33,7 @@ except:
 
 
 MARS_URL: str = 'https://mars.lco.global/'
+ZTF_OBSERVATORY_NAME: str = 'Palomar'
 logger: logging.Logger = logging.getLogger(__name__)
 filters: Dict[int, str] = {1: 'g_ZTF', 2: 'r_ZTF', 3: 'i_ZTF'}
 
@@ -38,7 +42,7 @@ filters: Dict[int, str] = {1: 'g_ZTF', 2: 'r_ZTF', 3: 'i_ZTF'}
 # this also updates the SUN separation
 # if update_me == false, only the SUN position gets updated, not the LC
 
-def update_ztf_lc(target):
+def update_ztf_lc(target, requesting_user_id):
     ##deciding whether to update the light curves or not
     dontupdateme = "None"
     try:
@@ -90,6 +94,14 @@ def update_ztf_lc(target):
                     data_type='photometry',
                     target=target)
                 rd.save()
+                rd_extra_data, _ = ReducedDatumExtraData.objects.update_or_create(
+                    reduced_datum=rd,
+                    defaults={'extra_data': ObservationDatapointExtraData(facility_name=ZTF_OBSERVATORY_NAME,
+                                                                          owner_id=requesting_user_id).to_json_str()
+                             }
+                )
+
+
 
         jdlast = np.array(jdarr).max()
 

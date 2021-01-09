@@ -6,8 +6,8 @@ from bhtom.harvesters.cpcs_alerts_harvester import update_cpcs_lc
 
 class Command(UpdateReducedDataCommand):
 
-    help = 'Downloads data for ZTF Alerts'
-    source_name = 'ZTF'
+    help = 'Downloads data for CPCS'
+    source_name = 'CPCS'
 
     def update_function(self, target, user_id) -> str:
         dont_update_me: str = target.extra_fields.get('dont_update_me')
