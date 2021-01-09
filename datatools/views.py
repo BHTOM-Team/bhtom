@@ -61,16 +61,23 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
         from datatools.management.commands.utils.result_messages import MessageStatus, decode_message
 
         target_id = request.GET.get('target_id', None)
-        # user_id = request.user.id
+        user_id = request.user.id
 
         gaia_out: StringIO = StringIO()
-        # aavso_out: StringIO = StringIO()
+        aavso_out: StringIO = StringIO()
+        ztf_out: StringIO = StringIO()
+        cpcs_out: StringIO = StringIO()
+
         if target_id:
-            call_command('updatereduceddata_gaia', target_id=target_id, stdout=gaia_out)
-            # call_command('updatereduceddata_aavso', target_id=target_id, stdout=aavso_out, user_id=user_id)
+            call_command('updatereduceddata_gaia', target_id=target_id, stdout=gaia_out, user_id=user_id)
+            call_command('updatereduceddata_aavso', target_id=target_id, stdout=aavso_out, user_id=user_id)
+            call_command('update_reduced_data_ztf', target_id=target_id, stdout=ztf_out, user_id=user_id)
+            call_command('update_reduced_data_cpcs', target_id=target_id, stdout=cpcs_out, user_id=user_id)
         else:
             call_command('updatereduceddata_gaia', stdout=gaia_out)
-            # call_command('updatereduceddata_aavso', stdout=aavso_out, user_id=user_id)
+            call_command('updatereduceddata_aavso', stdout=aavso_out, user_id=user_id)
+            call_command('update_reduced_data_ztf', stdout=ztf_out, user_id=user_id)
+            call_command('update_reduced_data_cpcs', stdout=cpcs_out, user_id=user_id)
             
         def print_message(buffer: StringIO):
             status, message = decode_message(buffer.getvalue())
@@ -82,7 +89,9 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
                 messages.success(request, message)
 
         print_message(gaia_out)
-        # print_message(aavso_out)
+        print_message(aavso_out)
+        print_message(ztf_out)
+        print_message(cpcs_out)
 
         # add_hint(request, mark_safe(
         #                   'Did you know updating observation statuses can be automated? Learn how in '
