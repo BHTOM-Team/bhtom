@@ -39,7 +39,7 @@ base_url = 'http://gsaweb.ast.cam.ac.uk/alerts'
 logger = logging.getLogger(__name__)
 
 
-##queries alerts.csv and searches for the name
+# queries alerts.csv and searches for the name
 # then also loads the light curve
 def get(term):
     alertindex_url = f'{base_url}/alerts.csv'
@@ -57,8 +57,8 @@ def get(term):
     for alert in gaiadata:
         gaia_name = alert.split(',')[0]
 
-        if (term.lower() in gaia_name.lower()):  # case insensitive
-            ##alert found, now getting its params
+        if term.lower() in gaia_name.lower():  # case insensitive
+            # alert found, now getting its params
             ra = Decimal(alert.split(',')[2])
             dec = Decimal(alert.split(',')[3])
             disc = alert.split(',')[1]
@@ -69,7 +69,9 @@ def get(term):
             catalog_data["dec"] = dec
             catalog_data["disc"] = disc
             catalog_data["classif"] = classif
-            #            print("DEBUG: found: "+catalog_data["gaia_name"]+" "+catalog_data["disc"])
+
+            logger.debug(f'Found {gaia_name} in Gaia Alerts Catalog')
+
             break  # in case of multiple entries, it will return only the first one
 
     return catalog_data
@@ -96,8 +98,8 @@ class GaiaAlertsHarvester(AbstractHarvester):
             t0 = Target.objects.get(name=gaia_name)
             print("Target " + gaia_name + " already in the db.")
             return t0
-        except:
-            pass
+        except Exception as e:
+            logger.error(f'Error when searching for target with gaia name {gaia_name}')
 
         try:
             # creating a target object
