@@ -379,6 +379,15 @@ BROKER_CREDENTIALS = {
     }
 }
 
+ALERT_NAME_KEYS = {
+    'GAIA': 'gaia_alert_name',
+    'ZTF': 'ztf_alert_name',
+    'CPCS': 'calib_server_name',
+    'AAVSO': 'aavso_name',
+    'GAIA DR2': 'gaiadr2_id',
+    'TNS': 'TNS_ID'
+}
+
 # Define extra target fields here. Types can be any of "number", "string", "boolean" or "datetime"
 # See https://tomtoolkit.github.io/docs/target_fields for documentation on this feature
 # For example:
@@ -394,6 +403,7 @@ EXTRA_FIELDS = [
     {'name': 'ztf_alert_name', 'type': 'string'},
     {'name': 'aavso_name', 'type': 'string'},
     {'name': 'gaiadr2_id', 'type': 'string'},
+    {'name': 'TNS_ID', 'type': 'string'},
     {'name': 'classification', 'type': 'string'},
     {'name': 'tweet', 'type': 'boolean'},
     {'name': 'jdlastobs', 'type': 'number'},
@@ -414,9 +424,7 @@ AUTH_STRATEGY = 'READ_ONLY'
 OPEN_URLS = []
 
 HOOKS = {
-#    'target_post_save': 'tom_common.hooks.target_post_save',
     'target_pre_save': 'bhtom.hooks.target_pre_save',
-    'target_post_save': 'bhtom.hooks.target_post_save',
     'observation_change_state': 'tom_common.hooks.observation_change_state',
     'data_product_post_upload': 'bhtom.hooks.data_product_post_upload',
 }
@@ -458,5 +466,7 @@ except ImportError:
 TARGET_PERMISSIONS_ONLY = True
 
 AAVSO_DATA_FETCH_URL = "https://www.aavso.org/vsx/index.php"
+GAIA_ALERT_URL = "http://gsaweb.ast.cam.ac.uk/alerts/alert"
+TNS_OBJECT_URL = "https://www.wis-tns.org/object"
 
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
