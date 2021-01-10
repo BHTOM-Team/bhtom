@@ -1,21 +1,24 @@
 import os
 import requests
 import logging
-import uuid
+
+from django.conf import settings
+
 from .models import BHTomFits, Instrument, Observatory, BHTomData, BHTomUser
 from .utils.coordinate_utils import fill_galactic_coordinates
+from .utils.observation_data_extra_data_utils import ObservationDatapointExtraData, \
+    get_facility_and_obs_time_for_spectroscopy_file
 from tom_targets.models import Target
 from tom_dataproducts.models import DataProduct
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from django.contrib import messages
 from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 from django.utils import timezone
 import json
 
 from django.core.mail import send_mail
-from settings import settings
+from typing import Optional
 
 try:
     from settings import local_settings as secret
@@ -24,12 +27,12 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, dry_run, matchDist, comment, user):
 
+def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, dry_run, matchDist, comment, user):
     url = 'data/' + format(dp)
     logger.info('Running post upload hook for DataProduct: {}'.format(url))
 
-    if observatory != None:
+    if observatory is not None:
 
         observatory = Observatory.objects.get(id=observatory.id)
         instrument = Instrument.objects.get(observatory_id=observatory.id, user_id=user)
@@ -42,15 +45,18 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
     if dp.data_product_type == 'fits_file' and observatory != None:
 
         with open(url, 'rb') as file:
-            #fits_id = uuid.uuid4().hex
+            # fits_id = uuid.uuid4().hex
             try:
-                instance = BHTomFits.objects.create(instrument_id=instrument, dataproduct_id=dp, start_time=datetime.now(),
-                                                    filter=observation_filter, allow_upload=dry_run, matchDist=matching_radius,
+                instance = BHTomFits.objects.create(instrument_id=instrument, dataproduct_id=dp,
+                                                    start_time=datetime.now(),
+                                                    filter=observation_filter, allow_upload=dry_run,
+                                                    matchDist=matching_radius,
                                                     comment=comment, data_stored=True)
 
-                response = requests.post(secret.CCDPHOTD_URL,  {'job_id': instance.file_id, 'instrument': observatory.obsName,
-                                                                'webhook_id': secret.CCDPHOTD_WEBHOOK_ID,
-                                                                'instrument_prefix': observatory.prefix}, files={'fits_file': file})
+                response = requests.post(secret.CCDPHOTD_URL,
+                                         {'job_id': instance.file_id, 'instrument': observatory.obsName,
+                                          'webhook_id': secret.CCDPHOTD_WEBHOOK_ID,
+                                          'instrument_prefix': observatory.prefix}, files={'fits_file': file})
                 if response.status_code == 201:
                     instance.status = 'S'
                     instance.status_message = 'Sent to photometry'
@@ -71,10 +77,11 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
         target = Target.objects.get(id=dp.target_id)
         try:
             instance = BHTomFits.objects.create(status='S', instrument_id=instrument, dataproduct_id=dp,
-                                     status_message='Sent to Calibration', start_time=datetime.now(),
-                                     cpcs_time=datetime.now(), filter=observation_filter, photometry_file=url,
-                                     mjd=MJD, expTime=expTime, allow_upload=dry_run,
-                                     matchDist=matching_radius, data_stored=True)
+                                                status_message='Sent to Calibration', start_time=datetime.now(),
+                                                cpcs_time=datetime.now(), filter=observation_filter,
+                                                photometry_file=url,
+                                                mjd=MJD, expTime=expTime, allow_upload=dry_run,
+                                                matchDist=matching_radius, data_stored=True)
 
             send_to_cpcs(url, instance, target.extra_fields['calib_server_name'])
 
@@ -84,14 +91,23 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
             raise Exception(str(e))
     elif dp.data_product_type == 'spectroscopy' or dp.data_product_type == 'photometry':
         try:
+            if dp.data_product_type == 'spectroscopy':
+                # Check if spectroscopy ASCII file contains facility and observation date in the comments
+                extra_data: Optional[ObservationDatapointExtraData] = \
+                    get_facility_and_obs_time_for_spectroscopy_file(dp)
+                if extra_data:
+                    # If there are information in the comments, then update the DataProduct
+                    dp.extra_data = extra_data.to_json_str()
+                    dp.save(update_fields=["extra_data"])
+
             instance = BHTomData.objects.create(user_id=user, dataproduct_id=dp, comment=comment)
         except Exception as e:
             logger.error('data_product_post_upload error: ' + str(e))
             instance.delete()
             raise Exception(str(e))
 
-def send_to_cpcs(result, fits, eventID):
 
+def send_to_cpcs(result, fits, eventID):
     url_cpcs = secret.CPCS_URL + 'upload'
     logger.info('Send file to cpcs')
 
@@ -103,11 +119,11 @@ def send_to_cpcs(result, fits, eventID):
         else:
             with open(format(result), 'rb') as file:
 
-                response = requests.post(url_cpcs, {'MJD': fits.mjd, 'EventID': eventID, 'expTime':  fits.expTime,
-                                              'matchDist': fits.matchDist, 'dryRun': int(fits.allow_upload),
-                                              'forceFilter': fits.filter, 'hashtag': Instrument.objects.get(id=fits.instrument_id.id).hashtag,
-                                                'outputFormat': 'json'}, files={'sexCat': file})
-
+                response = requests.post(url_cpcs, {'MJD': fits.mjd, 'EventID': eventID, 'expTime': fits.expTime,
+                                                    'matchDist': fits.matchDist, 'dryRun': int(fits.allow_upload),
+                                                    'forceFilter': fits.filter,
+                                                    'hashtag': Instrument.objects.get(id=fits.instrument_id.id).hashtag,
+                                                    'outputFormat': 'json'}, files={'sexCat': file})
 
             if response.status_code == 201 or response.status_code == 200:
 
@@ -134,7 +150,7 @@ def send_to_cpcs(result, fits, eventID):
             else:
 
                 error_message = 'Cpcs error: %s' % response.content.decode()
-                fits.status='E'
+                fits.status = 'E'
                 fits.status_message = error_message
                 fits.save()
 
@@ -144,9 +160,9 @@ def send_to_cpcs(result, fits, eventID):
         fits.status_message = 'Error: %s' % str(e)
         fits.save()
 
+
 @receiver(pre_save, sender=Instrument)
 def create_cpcs_user_profile(sender, instance, **kwargs):
-
     url_cpcs = secret.CPCS_URL + 'newuser'
     observatory = Observatory.objects.get(id=instance.observatory_id.id)
 
@@ -154,14 +170,16 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
         try:
 
             response = requests.post(url_cpcs,
-                                       {'obsName': observatory.obsName, 'lon': observatory.lon, 'lat': observatory.lat,
-                                        'allow_upload': 1,
-                                        'prefix': 'dev_bhtom_'+observatory.prefix, 'hashtag': secret.CPCS_Admin_Hashtag})
+                                     {'obsName': observatory.obsName, 'lon': observatory.lon, 'lat': observatory.lat,
+                                      'allow_upload': 1,
+                                      'prefix': 'dev_bhtom_' + observatory.prefix,
+                                      'hashtag': secret.CPCS_Admin_Hashtag})
 
             if response.status_code == 200:
                 instance.hashtag = response.content.decode('utf-8').split(': ')[1]
                 logger.info('Create_cpcs_user')
-                send_mail('Wygenerowano hastag', secret.EMAILTEXT_CREATE_HASTAG + str(observatory.obsName), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+                send_mail('Wygenerowano hastag', secret.EMAILTEXT_CREATE_HASTAG + str(observatory.obsName),
+                          settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             else:
                 logger.error('Error from hastag')
                 send_mail('Error from hastag', secret.EMAILTEXT_ERROR_CREATE_HASTAG + str(observatory.obsName),
@@ -171,9 +189,9 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
                 raise Exception(response.content.decode('utf-8')) from None
 
         except Exception as e:
-             logger.error('create_cpcs_user_profile error: ' + str(e))
-             return None
-             #raise Exception(str(e)) from None
+            logger.error('create_cpcs_user_profile error: ' + str(e))
+            return None
+            # raise Exception(str(e)) from None
     else:
         logger.info('Hastag exist or cpcs Only')
 
@@ -183,11 +201,12 @@ def target_pre_save(sender, instance, **kwargs):
     fill_galactic_coordinates(instance)
     logger.info('Target pre save hook: %s', str(instance))
 
+
 def target_post_save(target, created):
     logger.info('Target post save hook: %s created: %s', target, created)
 
-def delete_point_cpcs(instance):
 
+def delete_point_cpcs(instance):
     logger.info('Delete in cpcs: %s', instance.data)
     url_cpcs = secret.CPCS_URL + 'delpoint'
     fit = BHTomFits.objects.get(dataproduct_id=instance)
@@ -205,9 +224,9 @@ def delete_point_cpcs(instance):
     except Exception as e:
         logger.error('delete_point_cpcs error: ' + str(e))
 
+
 @receiver(post_save, sender=BHTomFits)
 def BHTomFits_pre_save(sender, instance, **kwargs):
-
     time_threshold = timezone.now() - timedelta(minutes=secret.DAYS_DELETE_FILES)
     fits = BHTomFits.objects.filter(start_time__lte=time_threshold).exclude(data_stored=False)
 
@@ -219,23 +238,26 @@ def BHTomFits_pre_save(sender, instance, **kwargs):
         if data:
             url_result = os.path.join(url_base, str(data.data))
             if os.path.exists(url_result) and data.data is not None:
-
                 fit.data_stored = False
                 fit.save()
                 os.remove(url_result)
 
+
 @receiver(pre_save, sender=BHTomUser)
-def BHTomUser_post_save(sender, instance, **kwargs):
+def BHTomUser_pre_save(sender, instance, **kwargs):
+    try:
+        bHTomUser_old = BHTomUser.objects.get(id=instance.pk)
+    except BHTomUser.DoesNotExist:
+        bHTomUser_old = None
 
-    bHTomUser_old = BHTomUser.objects.get(id=instance.pk)
     user_email = None
+    if bHTomUser_old is not None:
+        if bHTomUser_old.is_activate == False and instance.is_activate == True:
+            try:
+                user_email = User.objects.get(id=instance.user.id)
+            except BHTomFits.DoesNotExist:
+                user_email = None
 
-    if bHTomUser_old.is_activate == False and instance.is_activate == True:
-        try:
-            user_email = User.objects.get(id=instance.user.id)
-        except BHTomFits.DoesNotExist:
-            user_email = None
-
-        if user_email is not None:
-            send_mail(secret.EMAILTET_ACTIVATEUSER_TITLE, secret.EMAILTET_ACTIVATEUSER_TITLE,
-                    settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)
+            if user_email is not None:
+                send_mail(secret.EMAILTET_ACTIVATEUSER_TITLE, secret.EMAILTET_ACTIVATEUSER_TITLE,
+                          settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)

@@ -15,7 +15,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options['target_id']:
             target_id = options['target_id']
-            print("updating single ",target_id)
             try:
                 target_object = Target.objects.get(pk=target_id)
                 gaia = target_object.targetextra_set.get(key='gaia_alert_name').value
@@ -41,7 +40,7 @@ class Command(BaseCommand):
                     gaia = t.targetextra_set.get(key='gaia_alert_name').value
                     print("UPDATING all: ",t, gaia)
                     gaia_alerts_harvester.update_gaia_lc(t, gaia) #this updates SUN separation and checks the flag updateme again
-                    dontupdateme = (target_object.targetextra_set.get(key='dont_update_me').value)
+                    dontupdateme = (t.targetextra_set.get(key='dont_update_me').value)
                     if (dontupdateme=="True"): 
                         print ('Update-many: Light curve of %s not updated because of dont_update_me flag')%(gaia)
                     else:

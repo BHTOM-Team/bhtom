@@ -18,27 +18,25 @@ from tom_common.hints import add_hint
 
 from tom_dataproducts.data_processor import run_data_processor
 from tom_dataproducts.exceptions import InvalidFileFormatException
-from tom_dataproducts.models import ReducedDatum, DataProduct, DataProductGroup
+from tom_dataproducts.models import ReducedDatum, DataProduct
 
 from rest_framework import viewsets, status
-from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
 from bhtom.models import BHTomFits, Observatory, Instrument, BHTomUser
-from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer, BHTomFitsStatusSerializer
+from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer
 from bhtom.hooks import send_to_cpcs, delete_point_cpcs
 from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
 from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
 
 from django.http import HttpResponseServerError, Http404
-from django.views.generic.edit import FormView, DeleteView
+from django.views.generic.edit import FormView
 from django.views.generic import View
 from django.conf import settings
 from django.contrib import messages
 from django.core.cache.utils import make_template_fragment_key
 from django.core.cache import cache
-from django.core.files.storage import FileSystemStorage
-from django.core.files.storage import default_storage
 
 from django.contrib.auth.models import User, Group
 from django.contrib.auth import update_session_auth_hash
@@ -52,11 +50,11 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django_filters.views import FilterView
-from django.core.files import File
 
 from django.http import HttpResponseRedirect
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
-from guardian.shortcuts import get_objects_for_user, get_groups_with_perms, assign_perm
+from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
+
 
 try:
     from settings import local_settings as secret
@@ -596,33 +594,50 @@ class fits_upload(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
 
         self.check_permissions(request)
+        observatory, MJD, ExpTime, dryRun, matchDist, comment = None, None, None, None, None, None
 
         try:
             observation_filter = request.data.get('filter')
-        except:
+        except Exception as e:
             observation_filter = None
         try:
-            target = request.data.get('target')
-            data_product_files = request.FILES.getlist("files")
             hashtag = request.data.get('hashtag')
-            dp_type = request.data.get('data_product_type')
-            MJD = request.data.get('MJD')
-            ExpTime = request.data.get('ExpTime')
-            dryRun = request.data.get('dryRun')
-            matchDist = request.data.get('matchDist')
-            comment = request.data.get('comment')
-            dryRun = request.data.get('dryRun')
-
             instrument = Instrument.objects.get(hashtag=hashtag)
-            observatory = Observatory.objects.get(id=instrument.observatory_id.id)
-            user = User.objects.get(id=instrument.user_id.id)
+        except Instrument.DoesNotExist:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        try:
+            target = request.data.get('target')
             target_id = Target.objects.get(name=target)
+        except Target.DoesNotExist:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        try:
+            dp_type = request.data.get('data_product_type')
+            if dp_type == 'photometry':
+                dp_type = 'photometry_cpcs'
+            user = User.objects.get(id=instrument.user_id.id)
+            data_product_files = request.FILES.getlist("files")
 
-            if instrument is None or target_id is None:
+            if data_product_files is None:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
 
+            if dp_type == 'fits_file' or dp_type == 'photometry_cpcs':
+                matchDist = request.data.get('matchDist')
+                comment = request.data.get('comment')
+                dryRun = request.data.get('dryRun')
+                observatory = Observatory.objects.get(id=instrument.observatory_id.id)
+
+                if matchDist is None:
+                    matchDist = 0
+                if dryRun is None:
+                    dryRun = 0
+            if dp_type == 'photometry_cpcs':
+                MJD = request.data.get('MJD')
+                ExpTime = request.data.get('ExpTime')
+                if MJD is None or ExpTime is None:
+                    return Response(status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
-            logger.error('fits_upload error: ' + str(e))
+            logger.error('data upload error: ' + str(e))
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         successful_uploads = []
@@ -637,7 +652,6 @@ class fits_upload(viewsets.ModelViewSet):
             dp.save()
 
             try:
-
                 run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun,
                          matchDist, comment, user)
 
@@ -879,6 +893,53 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
                               ' the docs.</a>'))
             return redirect(reverse('bhlist_detail', args=(target_id,)))
         return super().get(request, *args, **kwargs)
+
+
+class TargetDownloadPhotometryDataView(PermissionRequiredMixin, View):
+
+    permission_required = 'tom_dataproducts.add_dataproduct'
+
+    def get(self, request, *args, **kwargs):
+        import os
+        from django.http import FileResponse
+        from bhtom.utils.photometry_and_spectroscopy_data_utils import save_photometry_data_for_target_to_csv_file
+
+        target_id: int = kwargs.get('pk', None)
+        logger.info(f'Generating photometry CSV file for target with id={target_id}...')
+
+        try:
+            tmp, filename = save_photometry_data_for_target_to_csv_file(target_id)
+            return FileResponse(open(tmp.name, 'rb'),
+                                as_attachment=True,
+                                filename=filename)
+        except Exception as e:
+            logger.error(f'Error while generating photometry CSV file for target with id={target_id}: {e}')
+        finally:
+            os.remove(tmp.name)
+
+
+class TargetDownloadSpectroscopyDataView(PermissionRequiredMixin, View):
+
+    permission_required = 'tom_dataproducts.add_dataproduct'
+
+    def get(self, request, *args, **kwargs):
+        import os
+        from django.http import FileResponse
+        from bhtom.utils.photometry_and_spectroscopy_data_utils import save_spectroscopy_data_for_target_to_csv_file
+
+        target_id: int = kwargs.get('pk', None)
+        logger.info(f'Generating spectroscopy CSV file for target with id={target_id}...')
+
+        try:
+            tmp, filename = save_spectroscopy_data_for_target_to_csv_file(target_id)
+            return FileResponse(open(tmp.name, 'rb'),
+                                as_attachment=True,
+                                filename=filename)
+        except Exception as e:
+            logger.error(f'Error while generating spectroscopy CSV file for target with id={target_id}: {e}')
+        finally:
+            os.remove(tmp.name)
+
 
 class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
 

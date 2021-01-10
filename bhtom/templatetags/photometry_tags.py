@@ -7,6 +7,8 @@ from plotly import offline
 from tom_dataproducts.models import ReducedDatum
 import logging
 
+from bhtom.utils.aavso_data_fetch import fetch_aavso_photometry
+
 logger = logging.getLogger(__name__)
 register = template.Library()
 
@@ -19,6 +21,7 @@ def photometry_for_target(context, target):
     This templatetag requires all ``ReducedDatum`` objects with a data_type of ``photometry`` to be structured with the
     following keys in the JSON representation: magnitude, error, filter
     """
+
     photometry_data = {}
     if settings.TARGET_PERMISSIONS_ONLY:
         datums = ReducedDatum.objects.filter(target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
@@ -34,17 +37,17 @@ def photometry_for_target(context, target):
         photometry_data.setdefault(values['filter'], {})
         photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
         photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
-        photometry_data[values['filter']].setdefault('error', []).append(values.get('error'))
+        photometry_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
+
     plot_data = [
-        go.Scattergl(
+        go.Scatter(
             x=filter_values['time'],
-            y=filter_values['magnitude'], mode='markers',
+            y=filter_values['magnitude'],
+            mode='markers',
             name=filter_name,
-            error_y=dict(
-                type='data',
-                array=filter_values['error'],
-                visible=True
-            )
+            error_y=dict(type='data',
+                         array=filter_values['error'],
+                         visible=True)
         ) for filter_name, filter_values in photometry_data.items()]
     layout = go.Layout(
         yaxis=dict(autorange='reversed'),

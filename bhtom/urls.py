@@ -26,7 +26,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework import routers, permissions
 from bhtom import views
-from bhtom.views import DataProductUploadView, TargetDetailView, TargetInteractivePhotometryView, TargetFileDetailView
+from bhtom.views import DataProductUploadView, TargetDetailView, TargetInteractivePhotometryView,\
+    TargetDownloadPhotometryDataView, TargetDownloadSpectroscopyDataView, TargetFileDetailView
 from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView, TargetGroupingView
 from bhtom.views import DeleteObservatory, UpdateObservatory, ObservatoryList, CreateObservatory
 from bhtom.views import DeleteInstrument, UpdateInstrument, CreateInstrument, DataProductDeleteView
@@ -49,6 +50,8 @@ urlpatterns = [
     path('bhlist/<int:pk>/file/<int:pk_fit>', TargetFileDetailView.as_view(), name='bhlist_file_detail'),
     path('bhlist/<int:pk>/', TargetDetailView.as_view(), name='bhlist_detail'),
     path('bhlist/<int:pk>/iphotometry', TargetInteractivePhotometryView.as_view(), name='bhlist_i_photometry'),
+    path('bhlist/<int:pk>/download-photometry', TargetDownloadPhotometryDataView.as_view(), name='bhlist_download_photometry_data'),
+    path('bhlist/<int:pk>/download-spectroscopy', TargetDownloadSpectroscopyDataView.as_view(), name='bhlist_download_spectroscopy_data'),
     path('bhlist/grouping/', TargetGroupingView.as_view(), name='targetgrouping'),
     path('bhlist/<int:pk_target>/file/<int:pk>/delete/', DataProductDeleteView.as_view(), name='data_delete'),
 

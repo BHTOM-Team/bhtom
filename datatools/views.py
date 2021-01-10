@@ -24,6 +24,9 @@ from guardian.shortcuts import get_objects_for_user
 
 from tom_common.hints import add_hint
 
+from bhtom.models import BHTomUser
+
+
 class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
     """
     View that handles the updating of reduced data tied to a ``DataProduct`` that was automatically ingested from a
@@ -55,13 +58,32 @@ class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
         Method that handles the GET requests for this view. Calls the management command to update the reduced data and
         adds a hint using the messages framework about automation.
         """
+        from datatools.management.commands.utils.result_messages import MessageStatus, decode_message
+
         target_id = request.GET.get('target_id', None)
-        out = StringIO()
+        user_id = request.user.pk
+
+        gaia_out: StringIO = StringIO()
+        aavso_out: StringIO = StringIO()
         if target_id:
-            call_command('updatereduceddata_gaia', target_id=target_id, stdout=out)
+            call_command('updatereduceddata_gaia', target_id=target_id, stdout=gaia_out)
+            call_command('updatereduceddata_aavso', target_id=target_id, stdout=aavso_out, user_id=user_id)
         else:
-            call_command('updatereduceddata_gaia', stdout=out)
-        messages.info(request, out.getvalue())
+            call_command('updatereduceddata_gaia', stdout=gaia_out)
+            call_command('updatereduceddata_aavso', stdout=aavso_out, user_id=user_id)
+            
+        def print_message(buffer: StringIO):
+            status, message = decode_message(buffer.getvalue())
+            if status == MessageStatus.INFO:
+                messages.info(request, message)
+            elif status == MessageStatus.ERROR:
+                messages.error(request, message)
+            elif status == MessageStatus.SUCCESS:
+                messages.success(request, message)
+
+        print_message(gaia_out)
+        print_message(aavso_out)
+
         # add_hint(request, mark_safe(
         #                   'Did you know updating observation statuses can be automated? Learn how in '
         #                   '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
