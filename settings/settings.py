@@ -48,6 +48,7 @@ try:
     LT_PROPOSAL_PORT = secret.LT_PROPOSAL_PORT
     RECAPTCHA_PUBLIC_KEY = secret.RECAPTCHA_PUBLIC_KEY
     RECAPTCHA_PRIVATE_KEY = secret.RECAPTCHA_PRIVATE_KEY
+    TNS_API_KEY = secret.TNS_API_KEY
 
 except:
     LCO_APIKEY = os.environ['LCO_APIKEY']
@@ -60,6 +61,7 @@ except:
     TWITTER_ACCESSSECRET = os.environ['TWITTER_ACCESSSECRET']
     TOMEMAIL = os.environ['TOMEMAIL']
     TOMEMAILPASSWORD = os.environ['TOMEMAILPASSWORD']
+    TNS_API_KEY = os.environ['TNS_API_KEY']
 
     
     GEMINI_S_API_KEY = os.environ['GEMINI_S_API_KEY']
@@ -467,6 +469,6 @@ TARGET_PERMISSIONS_ONLY = True
 
 AAVSO_DATA_FETCH_URL = "https://www.aavso.org/vsx/index.php"
 GAIA_ALERT_URL = "http://gsaweb.ast.cam.ac.uk/alerts/alert"
-TNS_OBJECT_URL = "https://www.wis-tns.org/object"
+TNS_URL = "https://www.wis-tns.org/api/get"
 
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
