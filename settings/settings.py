@@ -63,7 +63,6 @@ except:
     TOMEMAILPASSWORD = os.environ['TOMEMAILPASSWORD']
     TNS_API_KEY = os.environ['TNS_API_KEY']
 
-    
     GEMINI_S_API_KEY = os.environ['GEMINI_S_API_KEY']
     
     GEMINI_N_API_KEY = os.environ['GEMINI_N_API_KEY']
