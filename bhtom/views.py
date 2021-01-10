@@ -318,8 +318,6 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
             form.add_error(None, names.errors)
             form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
-        logger.info('Target post save hook: %s created: %s', self.object, True)
-        run_hook('target_post_save', target=self.object, created=True)
 
         return redirect('bhlist_detail', pk=form.instance.id)
 

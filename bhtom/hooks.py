@@ -1,24 +1,23 @@
-import os
-import requests
+import json
 import logging
+import os
+from datetime import datetime, timedelta
+from typing import Optional
 
+import requests
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
+from django.utils import timezone
+from tom_dataproducts.models import DataProduct
+from tom_targets.models import Target, TargetExtra
 
 from .models import BHTomFits, Instrument, Observatory, BHTomData, BHTomUser
 from .utils.coordinate_utils import fill_galactic_coordinates
 from .utils.observation_data_extra_data_utils import ObservationDatapointExtraData, \
     get_facility_and_obs_time_for_spectroscopy_file
-from tom_targets.models import Target
-from tom_dataproducts.models import DataProduct
-from django.db.models.signals import post_save, pre_save
-from django.dispatch import receiver
-from django.contrib.auth.models import User
-from datetime import datetime, timedelta
-from django.utils import timezone
-import json
-
-from django.core.mail import send_mail
-from typing import Optional
 
 try:
     from settings import local_settings as secret
@@ -200,10 +199,6 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
 def target_pre_save(sender, instance, **kwargs):
     fill_galactic_coordinates(instance)
     logger.info('Target pre save hook: %s', str(instance))
-
-
-def target_post_save(target, created):
-    logger.info('Target post save hook: %s created: %s', target, created)
 
 
 def delete_point_cpcs(instance):
