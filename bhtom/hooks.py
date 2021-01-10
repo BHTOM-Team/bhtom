@@ -156,7 +156,7 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
             response = requests.post(url_cpcs,
                                        {'obsName': observatory.obsName, 'lon': observatory.lon, 'lat': observatory.lat,
                                         'allow_upload': 1,
-                                        'prefix': 'dev_bhtom_'+observatory.prefix, 'hashtag': secret.CPCS_Admin_Hashtag})
+                                        'prefix': 'bhtom_'+observatory.prefix, 'hashtag': secret.CPCS_Admin_Hashtag})
 
             if response.status_code == 200:
                 instance.hashtag = response.content.decode('utf-8').split(': ')[1]
