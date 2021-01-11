@@ -66,3 +66,7 @@ td.green {
 @media only screen and (min-width : 1200px) {
     .container { max-width: 1500px; }
 }
+
+.comments{
+    color:black!important;
+}
