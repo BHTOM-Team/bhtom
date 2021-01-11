@@ -12,7 +12,7 @@ from tom_targets.models import Target
 from bhtom.models import ReducedDatumExtraData
 from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointExtraData
 
-accepted_valid_flags: List[str] = ['V', 'Z']
+accepted_valid_flags: List[str] = ['V']
 filters: List[str] = ['V', 'I', 'R']
 source_name: str = 'AAVSO'
 

@@ -7,8 +7,6 @@ from plotly import offline
 from tom_dataproducts.models import ReducedDatum
 import logging
 
-from bhtom.utils.aavso_data_fetch import fetch_aavso_photometry
-
 logger = logging.getLogger(__name__)
 register = template.Library()
 
