@@ -1,5 +1,8 @@
+from collections import OrderedDict
 from logging import Logger, getLogger
-from typing import Dict, Optional
+from typing import Dict, List, Optional
+
+from tom_targets.models import Target
 
 from astroquery.simbad import Simbad
 
@@ -30,58 +33,91 @@ def get_tns_id_from_gaia_name(gaia_name: str) -> Optional[str]:
         return None
 
 
-def get_gaia_ztf_names_for_tns_id(tns_id: str) -> Dict[str, str]:
+def get_tns_id(target: Target) -> Optional[str]:
     """
     Queries the TNS server and returns a dictionary with
     ztf_alert_name and gaia_alert_name, if found
     """
+    import json
+
     try:
-        target_url: str = f'{settings.TNS_OBJECT_URL}/{tns_id_to_url_slug(tns_id)}'
+        target_url: str = f'{settings.TNS_URL}/search'
+        api_key: str = settings.TNS_API_KEY
 
-        logger.info(f'Requesting data from the TNS server for object with TNS_ID {tns_id} at the address {target_url}...')
+        search_json = {
+            "ra": str(target.ra),
+            "dec": str(target.dec),
+            "objname": "",
+            "objname_exact_match": 0,
+            "internal_name": str(target.name),
+            "internal_name_exact_match ": 0,
+        }
+        search_data = [('api_key', (None, api_key)),
+                       ('data', (None, json.dumps(OrderedDict(search_json))))]
+        # search obj using request module
+        response = requests.post(target_url, files=search_data)
 
-        result = requests.get(target_url)
-        status_code: Optional[int] = getattr(result, 'status_code', None)
+        response_data: Dict[str, str] = json.loads(response.content.decode("utf-8"))['data']['reply'][0]
+        return f'{response_data["prefix"]}{response_data["objname"]}'
+    except Exception as e:
+        logger.error(f'Error while querying TNS server: {e}')
+        return None
 
-        logger.debug(f'Request at {target_url} returned status code {status_code}')
 
+def get_tns_internal(tns_id: str) -> Dict[str, str]:
+    """
+    Queries the TNS server and returns a dictionary with
+    ztf_alert_name and gaia_alert_name, if found
+    """
+    import json
+
+    try:
+        target_url: str = f'{settings.TNS_URL}/object'
+        api_key: str = settings.TNS_API_KEY
+
+        search_json = {
+            "objname": tns_id_to_url_slug(tns_id),
+            "objname_exact_match": 1,
+            "photometry": "0",
+            "spectra": "0"
+        }
+
+        search_data = [('api_key', (None, api_key)),
+                       ('data', (None, json.dumps(OrderedDict(search_json))))]
+        # search obj using request module
+        response = requests.post(target_url, files=search_data)
+
+        internal_names: List[str] = [n.strip() for n in
+                                     json.loads(response.content.decode("utf-8"))['data']['reply'][
+                                         'internal_names'].split(',')]
         result_dict: Dict[str, str] = {}
 
-        if status_code == 200:
+        for internal_name in internal_names:
+            matched_group: List[str] = assign_group_to_internal_name(internal_name)
+            if len(matched_group) > 0:
+                try:
+                    result_dict[matched_group[0][0]] = internal_name
+                except:
+                    continue
 
-            tree = html.fromstring(result.content)
-
-            ztf_names = tree.xpath(tns_internal_name_xpath("ZTF"))
-            if ztf_names and len(ztf_names) > 0:
-                result_dict['ztf_alert_name'] = ztf_names[0]
-
-            gaia_names = tree.xpath(tns_internal_name_xpath("GaiaAlerts"))
-            if gaia_names and len(gaia_names) > 0:
-                result_dict['gaia_alert_name'] = gaia_names[0]
-
-            return result_dict
-        else:
-            logger.error(f'Error when requesting the URL on TNS server. Returned status code: {status_code}')
-            return {}
-
+        return result_dict
     except Exception as e:
-        logger.error(f'Error while looking up alert internal names on the TNS server: {e}')
+        logger.error(f'Error while querying TNS server: {e}')
         return {}
 
 
-def query_simbad_for_names(identifier: str) -> Dict[str, str]:
+def query_simbad_for_names(target: Target) -> Dict[str, str]:
     from astropy.table import Table
     import re
 
     try:
-        logger.info(f'Querying Simbad for target {identifier}...')
+        logger.info(f'Querying Simbad for target {target.name}...')
 
-        result_table: Optional[Table] = Simbad.query_objectids(object_name=identifier)
+        result_table: Optional[Table] = Simbad.query_objectids(object_name=target.name)
         result_dict: Dict[str] = {}
 
         if result_table:
             for row in result_table['ID']:
-                print(row)
                 if 'AAVSO' in row:
                     result_dict[alert_name_keys['AAVSO']] = re.sub(r'^AAVSO( )*', '', row)
                 elif 'Gaia DR2' in row:
@@ -89,7 +125,7 @@ def query_simbad_for_names(identifier: str) -> Dict[str, str]:
 
         return result_dict
     except Exception as e:
-        logger.error(f'Error while querying Simbad for target {identifier}: {e}')
+        logger.error(f'Error while querying Simbad for target {target.name}: {e}')
         return {}
 
 
@@ -99,7 +135,12 @@ def tns_id_to_url_slug(tns_id: str) -> str:
     return re.sub(r'^([A-Z])+( )*', '', tns_id)
 
 
+def assign_group_to_internal_name(name: str) -> List[str]:
+    import re
+
+    name_regex = re.compile('(^([A-Z]|[a-z])+)')
+    return name_regex.findall(name)
+
+
 def tns_internal_name_xpath(group_name: str) -> str:
     return f'//tr[td[@class="cell-groups" and text()="{group_name}"]]/td[@class="cell-internal_name"]/text()'
-
-

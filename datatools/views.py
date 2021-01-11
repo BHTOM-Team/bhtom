@@ -110,17 +110,7 @@ class FetchTargetNames(LoginRequiredMixin, RedirectView):
             return None
 
     def get(self, request, *args, **kwargs):
-        from .utils.catalog_name_lookup import get_tns_id_from_gaia_name, get_gaia_ztf_names_for_tns_id, query_simbad_for_names
-
-        def update_extra_data(target: Target,
-                              result_dict: Dict[str, str],
-                              extra_data: Dict[str, str],
-                              alert_name_keys: List[str]) -> Dict[str, str]:
-            for alert_key in alert_name_keys:
-                if result_dict and result_dict.get(alert_key) and not target.extra_fields.get(alert_key):
-                    extra_data[alert_key] = result_dict[alert_key]
-            return extra_data
-
+        from .utils.catalog_name_lookup import get_tns_id, get_tns_internal, query_simbad_for_names
 
         target_id = request.GET.get('target_id', None)
         try:
@@ -129,33 +119,36 @@ class FetchTargetNames(LoginRequiredMixin, RedirectView):
             tns_id: Optional[str] = target.extra_fields.get('TNS_ID')
             gaia_alert_name: Optional[str] = target.extra_fields.get('gaia_alert_name')
             ztf_alert_name: Optional[str] = target.extra_fields.get('ztf_alert_name')
+            aavso_name: Optional[str] = target.extra_fields.get(alert_name_keys['AAVSO'])
+            gaia_dr_2_id: Optional[str] = target.extra_fields.get(alert_name_keys['GAIA DR2'])
 
             extras_to_update: Dict[str, str] = {}
 
-            # If there is a Gaia Alerts name, TNS ID can be fetched from Gaia Alerts website
-            if gaia_alert_name and not tns_id:
-                tns_id: Optional[str] = get_tns_id_from_gaia_name(target.extra_fields.get('gaia_alert_name'))
+            # If there is no TNS ID, it can be fetched from Gaia Alerts website
+            # based on the internal name
+            if not tns_id:
+                tns_id: Optional[str] = get_tns_id(target)
                 if tns_id:
                     extras_to_update['TNS_ID'] = tns_id
 
-            # If there is a TNS ID, but no Gaia Alerts name or ZTF Alerts name, both
-            # can be fetched from the TNS server:
+            # If there is either no Gaia Alerts or ZTF name, these can be fetched from the TNS server
             if tns_id and not (gaia_alert_name and ztf_alert_name):
+                tns_response: Dict[str, str] = get_tns_internal(tns_id)
 
-                tns_result: Dict[str, str] = get_gaia_ztf_names_for_tns_id(tns_id)
-                extras_to_update = update_extra_data(target=target,
-                                                     result_dict=tns_result,
-                                                     extra_data=extras_to_update,
-                                                     alert_name_keys=[alert_name_keys['GAIA'],
-                                                                      alert_name_keys['ZTF']])
+                if not gaia_alert_name and tns_response.get('Gaia'):
+                    extras_to_update['gaia_alert_name'] = tns_response['Gaia']
+                if not ztf_alert_name and tns_response.get('ZTF'):
+                    extras_to_update['ztf_alert_name'] = tns_response['ZTF']
 
-            # Query Simbad for AAVSO and GAIA DR2 ID if not yet present:
-            if not (target.extra_fields.get(alert_name_keys['AAVSO']) and target.extra_fields.get(alert_name_keys['GAIA DR2'])):
-                extras_to_update = update_extra_data(target=target,
-                                                     result_dict=query_simbad_for_names(target.name),
-                                                     extra_data=extras_to_update,
-                                                     alert_name_keys=[alert_name_keys['AAVSO'],
-                                                                      alert_name_keys['GAIA DR2']])
+            # If there is no AAVSO or Gaia DR2, query Simbad
+            if not (aavso_name and gaia_dr_2_id):
+                simbad_response: Dict[str, str] = query_simbad_for_names(target)
+
+                if not aavso_name and simbad_response.get(alert_name_keys['AAVSO']):
+                    extras_to_update[alert_name_keys['AAVSO']] = simbad_response[alert_name_keys['AAVSO']]
+                if not gaia_dr_2_id and simbad_response.get(alert_name_keys['GAIA DR2']):
+                    extras_to_update[alert_name_keys['GAIA DR2']] = simbad_response[alert_name_keys['GAIA DR2']]
+
 
             target.save(extras=extras_to_update)
 
