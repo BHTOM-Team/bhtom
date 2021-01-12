@@ -89,7 +89,7 @@ def update_ztf_lc(target, requesting_user_id):
                 rd, created = ReducedDatum.objects.get_or_create(
                     timestamp=jd.to_datetime(timezone=TimezoneInfo()),
                     value=json.dumps(value),
-                    source_name=target.name,
+                    source_name='ZTF',
                     source_location=alert['lco_id'],
                     data_type='photometry',
                     target=target)
@@ -97,7 +97,7 @@ def update_ztf_lc(target, requesting_user_id):
                 rd_extra_data, _ = ReducedDatumExtraData.objects.update_or_create(
                     reduced_datum=rd,
                     defaults={'extra_data': ObservationDatapointExtraData(facility_name=ZTF_OBSERVATORY_NAME,
-                                                                          owner_id=requesting_user_id).to_json_str()
+                                                                          owner='ZTF').to_json_str()
                              }
                 )
 

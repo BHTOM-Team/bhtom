@@ -190,7 +190,7 @@ def update_gaia_lc(target, requesting_user_id):
                 rd, created = ReducedDatum.objects.get_or_create(
                     timestamp=datum_jd.to_datetime(timezone=TimezoneInfo()),
                     value=json.dumps(value),
-                    source_name=target.name,
+                    source_name='GaiaAlerts',
                     source_location=lightcurve_url,
                     data_type='photometry',
                     target=target)
@@ -198,7 +198,7 @@ def update_gaia_lc(target, requesting_user_id):
                 rd_extra_data, _ = ReducedDatumExtraData.objects.update_or_create(
                     reduced_datum=rd,
                     defaults={'extra_data': ObservationDatapointExtraData(facility_name="Gaia",
-                                                                          owner_id=requesting_user_id).to_json_str()
+                                                                          owner="Gaia").to_json_str()
                              }
                 )
             except Exception as e:

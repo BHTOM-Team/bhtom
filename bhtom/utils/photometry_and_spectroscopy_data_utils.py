@@ -69,7 +69,7 @@ def get_observation_facility(datum: ReducedDatum) -> Optional[str]:
         return None
 
 
-def get_username(datum: ReducedDatum) -> Optional[str]:
+def get_observer_name(datum: ReducedDatum) -> Optional[str]:
     try:
         # First, check in reduced datum extra data
         # Some sources might save additional data, such as
@@ -77,25 +77,14 @@ def get_username(datum: ReducedDatum) -> Optional[str]:
         # There should be just one extra data object, as
         # the reduced datum extra data has reduced datum as the primary key.
         extra_data: Optional[ObservationDatapointExtraData] = get_reduced_datum_extra_data(datum)
-        if getattr(extra_data, 'owner_id', None):
-            user: Optional[User] = User.objects.get(pk=int(extra_data.owner_id))
-
-            # Check if the user with given pk exists
-            if user:
-                return user.username
+        if getattr(extra_data, 'owner', None):
+            return extra_data.owner
 
         # If there is no extra data for the reduced datum,
         # check if it belongs to a data product (e.g. is from a photometry CSV file)
         data_product: DataProduct = getattr(datum, 'data_product', None)
         if data_product is None:
             return None
-
-        # If the datum is from observation or a file,
-        # then an user is assigned to it and
-        # there exists a BHTomData object
-        bhtom_data: Optional[BHTomData] = BHTomData.objects.get(dataproduct_id=data_product.pk)
-        user_id: Optional[User] = getattr(bhtom_data, 'user_id', None)
-        return getattr(user_id, 'username', None)
     except:
         return None
 
@@ -176,7 +165,7 @@ def save_photometry_data_for_target_to_csv_file(target_id: int) -> Tuple[NamedTe
                      values.get('error'),
                      get_observation_facility(datum),
                      values.get('filter'),
-                     get_username(datum)])
+                     get_observer_name(datum)])
 
     filename: str = "target_%s_photometry.csv" % target.name
 
@@ -206,7 +195,7 @@ def save_spectroscopy_data_for_target_to_csv_file(target_id: int) -> Tuple[Named
         flux_units: str = values.get('photon_flux_units')
         wavelength_units: str = values.get('wavelength_units')
         observation_facility: str = get_observation_facility(datum)
-        username: str = get_username(datum)
+        observer_name: str = get_observer_name(datum)
 
         data.append([jd,
                      deserialized.flux.value,
@@ -214,7 +203,7 @@ def save_spectroscopy_data_for_target_to_csv_file(target_id: int) -> Tuple[Named
                      flux_units,
                      wavelength_units,
                      observation_facility,
-                     username])
+                     observer_name])
 
     filename: str = "target_%s_spectroscopy.csv" % target.name
 
