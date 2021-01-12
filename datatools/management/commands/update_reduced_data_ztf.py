@@ -14,7 +14,7 @@ class Command(UpdateReducedDataCommand):
         ztf_name: str = target.extra_fields.get('ztf_alert_name')
 
         if dont_update_me:
-            return encode_message(MessageStatus.INFO,
+            return encode_message(MessageStatus.NONE,
                                   "Didn't update ZTF data of %s because dont_update_me is set to True" % target.name)
 
         if ztf_name:
@@ -22,5 +22,5 @@ class Command(UpdateReducedDataCommand):
             return encode_message(MessageStatus.SUCCESS,
                                   f'Updated ZTF data for {ztf_name}')
         else:
-            return encode_message(MessageStatus.INFO,
+            return encode_message(MessageStatus.NONE,
                                   "No ZTF name provided for %s" % target.name)

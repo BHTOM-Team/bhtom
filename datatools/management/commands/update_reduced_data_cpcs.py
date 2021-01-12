@@ -14,7 +14,7 @@ class Command(UpdateReducedDataCommand):
         cpcs_name: str = target.extra_fields.get('calib_server_name')
 
         if dont_update_me:
-            return encode_message(MessageStatus.INFO,
+            return encode_message(MessageStatus.NONE,
                                   "Didn't update CPCS data of %s because dont_update_me is set to True" % target.name)
 
         if cpcs_name:
@@ -22,5 +22,5 @@ class Command(UpdateReducedDataCommand):
             return encode_message(MessageStatus.SUCCESS,
                                   f'Updated CPCS data for {cpcs_name}')
         else:
-            return encode_message(MessageStatus.INFO,
+            return encode_message(MessageStatus.NONE,
                                   "No Calib Server name provided for %s" % target.name)

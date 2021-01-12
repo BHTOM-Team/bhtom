@@ -13,7 +13,7 @@ class Command(UpdateReducedDataCommand):
         aavso_name: str = target.extra_fields.get('aavso_name')
 
         if dont_update_me:
-            return encode_message(MessageStatus.INFO,
+            return encode_message(MessageStatus.NONE,
                                   "Didn't update AAVSO data of %s because dont_update_me is set to True" % target.name)
 
         if aavso_name:
@@ -26,7 +26,7 @@ class Command(UpdateReducedDataCommand):
                 return encode_message(MessageStatus.ERROR,
                                       "Couldn't connect to the AAVSO database- returned status code: %d" % result_status_code)
         else:
-            return encode_message(MessageStatus.INFO,
+            return encode_message(MessageStatus.NONE,
                                   "No AAVSO name provided for %s" % target.name)
 
 

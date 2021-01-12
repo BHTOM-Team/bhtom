@@ -14,7 +14,7 @@ class Command(UpdateReducedDataCommand):
         gaia_name: str = target.extra_fields.get('gaia_alert_name')
 
         if dont_update_me:
-            return encode_message(MessageStatus.INFO,
+            return encode_message(MessageStatus.NONE,
                                   "Didn't update Gaia Alerts data of %s because dont_update_me is set to True" % target.name)
 
         if gaia_name:
@@ -22,5 +22,5 @@ class Command(UpdateReducedDataCommand):
             return encode_message(MessageStatus.SUCCESS,
                                   f'Updated Gaia Alerts data for {gaia_name}')
         else:
-            return encode_message(MessageStatus.INFO,
+            return encode_message(MessageStatus.NONE,
                                   "No Gaia Alerts name provided for %s" % target.name)
