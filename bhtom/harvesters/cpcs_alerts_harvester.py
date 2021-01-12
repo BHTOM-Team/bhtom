@@ -13,6 +13,9 @@ from .utils.last_jd import update_last_jd
 # from tom_targets.templatetags.targets_extras import target_extra_field
 
 ### how to pass those variables from settings?
+from ..models import ReducedDatumExtraData
+from ..utils.observation_data_extra_data_utils import ObservationDatapointExtraData
+
 try:
     from settings import local_settings as secret
 except ImportError:
@@ -94,6 +97,7 @@ def update_cpcs_lc(target):
                     sourcelink = (
                                              'http://gsaweb.ast.cam.ac.uk/followup/get_alert_lc_data?alert_name=ivo:%%2F%%2F%s' % nam) + "&" + str(
                         ids[i])
+                    observer = obs[i]
 
                     value = {
                         'magnitude': datum_mag,
@@ -103,11 +107,17 @@ def update_cpcs_lc(target):
                     rd, created = ReducedDatum.objects.get_or_create(
                         timestamp=datum_jd.to_datetime(timezone=TimezoneInfo()),
                         value=json.dumps(value),
-                        source_name=datum_source,
+                        source_name=datum_source, # Maybe CPCS?
                         source_location=sourcelink,
                         data_type='photometry',
                         target=target)
                     rd.save()
+                    rd_extra_data, _ = ReducedDatumExtraData.objects.update_or_create(
+                        reduced_datum=rd,
+                        defaults={'extra_data': ObservationDatapointExtraData(facility_name=observer,
+                                                                              owner=observer).to_json_str()
+                                  }
+                    )
                 except:
                     print("FAILED storing (CPCS)")
 
