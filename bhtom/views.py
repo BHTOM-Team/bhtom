@@ -625,7 +625,7 @@ class fits_upload(viewsets.ModelViewSet):
                 observatory = Observatory.objects.get(id=instrument.observatory_id.id)
 
                 if matchDist is None:
-                    matchDist = 0
+                    matchDist = '0'
                 if dryRun is None:
                     dryRun = 0
             if dp_type == 'photometry_cpcs':

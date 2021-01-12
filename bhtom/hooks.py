@@ -222,7 +222,7 @@ def delete_point_cpcs(instance):
 
 @receiver(post_save, sender=BHTomFits)
 def BHTomFits_pre_save(sender, instance, **kwargs):
-    time_threshold = timezone.now() - timedelta(minutes=secret.DAYS_DELETE_FILES)
+    time_threshold = timezone.now() - timedelta(days=secret.DAYS_DELETE_FILES)
     fits = BHTomFits.objects.filter(start_time__lte=time_threshold).exclude(data_stored=False)
 
     BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
