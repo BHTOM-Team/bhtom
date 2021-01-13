@@ -7,17 +7,17 @@ import json
 
 FACILITY_NAME_KEY: str = "facility"
 OBSERVATION_TIME_KEY: str = "observation_time"
-OWNER_ID_KEY: str = "owner_id"
+OWNER_KEY: str = "owner"
 
 
 class ObservationDatapointExtraData:
     def __init__(self,
                  facility_name: Optional[str] = None,
                  observation_time: Optional[str] = None,
-                 owner_id: Optional[int] = None):
+                 owner: Optional[str] = None):
         self.__facility_name: Optional[str] = facility_name
         self.__observation_time: Optional[str] = observation_time
-        self.__owner_id = owner_id
+        self.__owner = owner
 
     @property
     def facility_name(self) -> Optional[str]:
@@ -28,8 +28,8 @@ class ObservationDatapointExtraData:
         return self.__observation_time
 
     @property
-    def owner_id(self) -> Optional[int]:
-        return self.__owner_id
+    def owner(self) -> Optional[str]:
+        return self.__owner
 
     def to_json_str(self) -> str:
         data: Dict[str, str] = {}
@@ -40,8 +40,8 @@ class ObservationDatapointExtraData:
         if self.__observation_time:
             data[OBSERVATION_TIME_KEY] = self.__observation_time
 
-        if self.__owner_id:
-            data[OWNER_ID_KEY] = str(self.__owner_id)
+        if self.__owner:
+            data[OWNER_KEY] = str(self.__owner)
 
         return json.dumps(data)
 
@@ -49,7 +49,7 @@ class ObservationDatapointExtraData:
 def decode_datapoint_extra_data(data: Dict[str, Any]) -> ObservationDatapointExtraData:
     return ObservationDatapointExtraData(facility_name=data.get(FACILITY_NAME_KEY, None),
                                          observation_time=data.get(OBSERVATION_TIME_KEY, None),
-                                         owner_id=data.get(OWNER_ID_KEY, None))
+                                         owner=data.get(OWNER_KEY, None))
 
 
 def get_facility_and_obs_time_for_spectroscopy_file(data_product: DataProduct) -> Optional[ObservationDatapointExtraData]:

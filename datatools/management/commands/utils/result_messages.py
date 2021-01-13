@@ -6,6 +6,7 @@ class MessageStatus(Enum):
     SUCCESS = auto()
     INFO = auto()
     ERROR = auto()
+    NONE = auto()
 
 
 def encode_message(status: MessageStatus, message: str) -> str:
