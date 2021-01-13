@@ -12,7 +12,7 @@ from tom_targets.models import Target
 from bhtom.models import ReducedDatumExtraData
 from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointExtraData
 
-accepted_valid_flags: List[str] = ['V']
+accepted_valid_flags: List[str] = ['V', 'Z']
 filters: List[str] = ['V', 'I', 'R']
 source_name: str = 'AAVSO'
 
@@ -72,12 +72,13 @@ def save_row_to_db(target_id: int,
     )
 
     obs_affil: str = row["obsAffil"]
+    obs_name: str = row["obsName"]
 
-    if obs_affil or requesting_user_id:
+    if obs_affil or obs_name:
         rd_extra_data, _ = ReducedDatumExtraData.objects.update_or_create(
             reduced_datum=rd,
             defaults={'extra_data': ObservationDatapointExtraData(facility_name=obs_affil,
-                                                                  owner_id=requesting_user_id).to_json_str()}
+                                                                  owner=obs_name).to_json_str()}
         )
     return rd
 
@@ -86,6 +87,6 @@ def to_json_value(row: pd.Series):
     import json
     return json.dumps({
         "magnitude": row["mag"],
-        "filter": "AAVSO/%s" % row["band"],
+        "filter": "%s/AAVSO" % row["band"],
         "error": row["uncert"]
     })
