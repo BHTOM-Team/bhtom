@@ -5,6 +5,9 @@
 {% if perms.tom_targets.delete_target %}
 <a href="{% url 'bhlist_delete' pk=target.id %}" title="Delete target" class="btn  btn-warning">Delete</a>
 {% endif %}
+{% if perms.tom_targets.add_target and perms.tom_targets.change_target %}
+<a href="{% url 'datatools:fetch-target-names' %}?target_id={{ target.id }}" title="Look up other names this target is identified by in catalogs" class="btn  btn-primary">Fetch target names</a>
+{% endif %}
 <dl class="row">
   {% for target_name in target.names %}
     {% if forloop.first %}

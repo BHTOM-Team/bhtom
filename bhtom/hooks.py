@@ -1,5 +1,11 @@
+import json
+import logging
 import os
+from datetime import datetime, timedelta
+from typing import Optional
+
 import requests
+<<<<<<< HEAD
 import logging
 
 from django.conf import settings
@@ -14,11 +20,26 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from datetime import datetime, timedelta
+=======
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
+>>>>>>> dev-bhtom-akond
 from django.utils import timezone
-import json
+from tom_dataproducts.models import DataProduct
+from tom_targets.models import Target, TargetExtra
 
+<<<<<<< HEAD
 from django.core.mail import send_mail
 from typing import Optional
+=======
+from .models import BHTomFits, Instrument, Observatory, BHTomData, BHTomUser
+from .utils.coordinate_utils import fill_galactic_coordinates
+from .utils.observation_data_extra_data_utils import ObservationDatapointExtraData, \
+    get_facility_and_obs_time_for_spectroscopy_file
+>>>>>>> dev-bhtom-akond
 
 try:
     from settings import local_settings as secret
@@ -201,11 +222,15 @@ def target_pre_save(sender, instance, **kwargs):
     fill_galactic_coordinates(instance)
     logger.info('Target pre save hook: %s', str(instance))
 
+<<<<<<< HEAD
 
 def target_post_save(target, created):
     logger.info('Target post save hook: %s created: %s', target, created)
 
 
+=======
+
+>>>>>>> dev-bhtom-akond
 def delete_point_cpcs(instance):
     logger.info('Delete in cpcs: %s', instance.data)
     url_cpcs = secret.CPCS_URL + 'delpoint'
@@ -227,7 +252,11 @@ def delete_point_cpcs(instance):
 
 @receiver(post_save, sender=BHTomFits)
 def BHTomFits_pre_save(sender, instance, **kwargs):
+<<<<<<< HEAD
     time_threshold = timezone.now() - timedelta(minutes=secret.DAYS_DELETE_FILES)
+=======
+    time_threshold = timezone.now() - timedelta(days=secret.DAYS_DELETE_FILES)
+>>>>>>> dev-bhtom-akond
     fits = BHTomFits.objects.filter(start_time__lte=time_threshold).exclude(data_stored=False)
 
     BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

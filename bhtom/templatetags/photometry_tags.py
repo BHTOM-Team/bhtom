@@ -7,8 +7,6 @@ from plotly import offline
 from tom_dataproducts.models import ReducedDatum
 import logging
 
-from bhtom.utils.aavso_data_fetch import fetch_aavso_photometry
-
 logger = logging.getLogger(__name__)
 register = template.Library()
 
@@ -47,7 +45,8 @@ def photometry_for_target(context, target):
             name=filter_name,
             error_y=dict(type='data',
                          array=filter_values['error'],
-                         visible=True)
+                         visible=True),
+            hover_data=['']
         ) for filter_name, filter_values in photometry_data.items()]
     layout = go.Layout(
         yaxis=dict(autorange='reversed'),
