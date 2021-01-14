@@ -9,7 +9,7 @@ from django.core.cache import cache
 from tom_dataproducts.models import ReducedDatum
 from tom_targets.models import Target
 
-from bhtom.models import ReducedDatumExtraData
+from bhtom.models import ReducedDatumExtraData, refresh_reduced_data_view
 from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointExtraData
 
 accepted_valid_flags: List[str] = ['V', 'Z']
@@ -46,6 +46,7 @@ def fetch_aavso_photometry(target: Target,
             save_row_to_db(target_id, row, settings.AAVSO_DATA_FETCH_URL, requesting_user_id)
 
         cache.set(f'{target_id}_aavso', result_df.JD.max())
+        refresh_reduced_data_view()
 
         return result_df, result.status_code
     else:
@@ -60,8 +61,7 @@ def filter_data(df: pd.DataFrame) -> pd.DataFrame:
 
 def save_row_to_db(target_id: int,
                    row: pd.Series,
-                   url: str,
-                   requesting_user_id: Optional[int] = None):
+                   url: str):
     rd, _ = ReducedDatum.objects.get_or_create(
         data_type="photometry",
         source_name=source_name,
