@@ -20,8 +20,7 @@ source_name: str = 'AAVSO'
 def fetch_aavso_photometry(target: Target,
                            from_time: Optional[Time] = None,
                            to_time: Time = Time.now(),
-                           delimiter: str = "~",
-                           requesting_user_id: Optional[int] = None) -> Tuple[Optional[pd.DataFrame], Optional[int]]:
+                           delimiter: str = "~") -> Tuple[Optional[pd.DataFrame], Optional[int]]:
     target_name: str = target.name
     target_id: int = target.pk
 
@@ -43,7 +42,7 @@ def fetch_aavso_photometry(target: Target,
                                                           error_bad_lines=False))
 
         for i, row in result_df.iterrows():
-            save_row_to_db(target_id, row, settings.AAVSO_DATA_FETCH_URL, requesting_user_id)
+            save_row_to_db(target_id, row, settings.AAVSO_DATA_FETCH_URL)
 
         cache.set(f'{target_id}_aavso', result_df.JD.max())
         refresh_reduced_data_view()

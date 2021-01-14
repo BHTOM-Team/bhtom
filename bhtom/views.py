@@ -24,7 +24,7 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from bhtom.models import BHTomFits, Observatory, Instrument, BHTomUser
+from bhtom.models import BHTomFits, Observatory, Instrument, BHTomUser, refresh_reduced_data_view
 from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer
 from bhtom.hooks import send_to_cpcs, delete_point_cpcs
 from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
@@ -811,6 +811,7 @@ class DataProductUploadView(FormView):
                 run_data_processor(dp)
 
                 successful_uploads.append(str(dp).split('/')[-1])
+                refresh_reduced_data_view()
             except InvalidFileFormatException as iffe:
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
