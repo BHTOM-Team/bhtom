@@ -190,7 +190,7 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
             response = requests.post(url_cpcs,
                                      {'obsName': observatory.obsName, 'lon': observatory.lon, 'lat': observatory.lat,
                                       'allow_upload': 1,
-                                      'prefix': secret.CPCS_PREFIX_HASTAG + observatory.prefix,
+                                      'prefix': secret.CPCS_PREFIX_HASTAG + observatory.prefix + '_' + str(instance.user_id) + '_',
                                       'hashtag': secret.CPCS_Admin_Hashtag})
 
             if response.status_code == 200:
