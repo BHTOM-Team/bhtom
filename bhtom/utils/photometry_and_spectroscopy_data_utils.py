@@ -1,12 +1,13 @@
 import json
+from tempfile import NamedTemporaryFile
+from typing import Any, List, Optional, Tuple
+
+import pandas as pd
 from django.conf import settings
-from django.contrib.auth.models import User
-from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_targets.models import Target
 
-from bhtom.models import BHTomData, BHTomFits, Instrument, Observatory, ReducedDatumExtraData
-from .data_product_types import DataProductType
+from bhtom.models import ViewReducedDatum
 from .observation_data_extra_data_utils import decode_datapoint_extra_data, ObservationDatapointExtraData
 
 SPECTROSCOPY: str = "spectroscopy"
@@ -107,7 +108,7 @@ def save_photometry_data_for_target_to_csv_file(target_id: int) -> Tuple[NamedTe
 
     target: Target = Target.objects.get(pk=target_id)
     datums: ViewReducedDatum = ViewReducedDatum.objects.filter(target=target,
-                                                       data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
+                                                               data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
 
     columns: List[str] = ['JD', 'Magnitude', 'Error', 'Facility', 'Filter', 'Owner']
     data: List[List[Any]] = []

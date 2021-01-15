@@ -17,7 +17,7 @@ class Command(UpdateReducedDataCommand):
                                   "Didn't update AAVSO data of %s because dont_update_me is set to True" % target.name)
 
         if aavso_name:
-            result_df, result_status_code = fetch_aavso_photometry(target, requesting_user_id=user_id)
+            result_df, result_status_code = fetch_aavso_photometry(target)
             if result_status_code == 200:
                 return encode_message(MessageStatus.SUCCESS,
                                       "Updated AAVSO data for %s. Received %d datapoints" % (
