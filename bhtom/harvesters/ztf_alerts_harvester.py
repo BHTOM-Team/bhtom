@@ -1,18 +1,18 @@
 import json
 import logging
 import os
+from typing import Dict, List, Optional
 
 import numpy as np
 import requests
 from astropy.time import Time, TimezoneInfo
 from tom_dataproducts.models import ReducedDatum
-from typing import Dict, List, Optional
-
-# from tom_targets.templatetags.targets_extras import target_extra_field
 
 ### how to pass those variables from settings?
-from bhtom.models import ReducedDatumExtraData
+from bhtom.models import ReducedDatumExtraData, refresh_reduced_data_view
 from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointExtraData
+
+# from tom_targets.templatetags.targets_extras import target_extra_field
 
 try:
     from settings import local_settings as secret
@@ -101,8 +101,7 @@ def update_ztf_lc(target, requesting_user_id):
                              }
                 )
 
-
-
+        refresh_reduced_data_view()
         jdlast = np.array(jdarr).max()
 
         # modifying jd of last obs

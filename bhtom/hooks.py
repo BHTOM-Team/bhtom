@@ -14,10 +14,21 @@ from django.utils import timezone
 from tom_dataproducts.models import DataProduct
 from tom_targets.models import Target, TargetExtra
 
-from .models import BHTomFits, Instrument, Observatory, BHTomData, BHTomUser
+from .models import BHTomFits, Instrument, Observatory, BHTomData, BHTomUser, ViewReducedDatum
 from .utils.coordinate_utils import fill_galactic_coordinates
 from .utils.observation_data_extra_data_utils import ObservationDatapointExtraData, \
-    get_facility_and_obs_time_for_spectroscopy_file
+    get_comments_extra_info_for_spectroscopy_file, get_comments_extra_info_for_photometry_file
+from tom_targets.models import Target
+from tom_dataproducts.models import DataProduct, ReducedDatum
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+from datetime import datetime, timedelta
+from django.utils import timezone
+import json
+
+from django.core.mail import send_mail
+from typing import Optional
 
 try:
     from settings import local_settings as secret
@@ -93,7 +104,15 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
             if dp.data_product_type == 'spectroscopy':
                 # Check if spectroscopy ASCII file contains facility and observation date in the comments
                 extra_data: Optional[ObservationDatapointExtraData] = \
-                    get_facility_and_obs_time_for_spectroscopy_file(dp)
+                    get_comments_extra_info_for_spectroscopy_file(dp)
+                if extra_data:
+                    # If there are information in the comments, then update the DataProduct
+                    dp.extra_data = extra_data.to_json_str()
+                    dp.save(update_fields=["extra_data"])
+            elif dp.data_product_type == 'photometry':
+                # Check if spectroscopy ASCII file contains facility and observation date in the comments
+                extra_data: Optional[ObservationDatapointExtraData] = \
+                    get_comments_extra_info_for_photometry_file(dp)
                 if extra_data:
                     # If there are information in the comments, then update the DataProduct
                     dp.extra_data = extra_data.to_json_str()

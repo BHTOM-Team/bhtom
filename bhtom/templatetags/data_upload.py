@@ -1,21 +1,13 @@
-import urllib
-from datetime import datetime
-
-import matplotlib.pyplot as plt
-import plotly.graph_objs as go
-from django import template
-from django.conf import settings
-
-from guardian.shortcuts import get_objects_for_user
-from plotly import offline
-from tom_dataproducts.models import DataProduct, ReducedDatum
-from tom_dataproducts.processors.data_serializers import SpectrumSerializer
-from bhtom.models import BHTomFits, Observatory, Instrument, BHTomUser, BHTomData
-
 import logging
+
+from django import template
+from tom_dataproducts.models import DataProduct
+
+from bhtom.models import BHTomFits, Observatory, Instrument, BHTomData
 
 register = template.Library()
 logger = logging.getLogger(__name__)
+
 
 @register.inclusion_tag('tom_dataproducts/partials/dataproduct_upload_list.html', takes_context=True)
 def dataproduct_list(context, target):
