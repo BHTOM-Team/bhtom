@@ -130,9 +130,9 @@ class ReducedDatumExtraData(models.Model):
 
 
 class ViewReducedDatum(pg.MaterializedView):
-    concurrent_index = 'target_id, data_product_id, data_type, source_name, timestamp, value'
+    concurrent_index = 'id'
     sql = """
-        SELECT row_number() OVER (PARTITION BY true) AS id,
+        SELECT rd.id AS id,
         rd.target_id, rd.data_product_id, rd.data_type, rd.source_name, rd.timestamp, rd.value,
         rdd.extra_data AS rd_extra_data,
         dpobr.extra_data AS dp_extra_data,
