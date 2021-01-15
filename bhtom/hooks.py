@@ -19,7 +19,7 @@ from .utils.coordinate_utils import fill_galactic_coordinates
 from .utils.observation_data_extra_data_utils import ObservationDatapointExtraData, \
     get_comments_extra_info_for_spectroscopy_file, get_comments_extra_info_for_photometry_file
 from tom_targets.models import Target
-from tom_dataproducts.models import DataProduct
+from tom_dataproducts.models import DataProduct, ReducedDatum
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
