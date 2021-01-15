@@ -508,6 +508,9 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
         elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
             messages.error(self.request, secret.NOT_PERMISSION)
             return False
+        elif self.request.user != BHTomFits.objects.get(file_id=self.kwargs['pk_fit']).instrument_id.user_id:
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
         return True
 
     def get_context_data(self, *args, **kwargs):
@@ -538,7 +541,11 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
                 response = requests.get(url_cpcs, {'hashtag': instrument.hashtag})
                 if response.status_code == 200:
                     BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                    url_base = BASE + '/data/png/'+format(fits.followupId)+'.png'
+                    url_base = BASE + '/data/png/'
+                    if not os.path.exists(url_base):
+                        os.makedirs(url_base)
+                    url_base = url_base + format(fits.followupId)+'.png'
+
                     with open(url_base, 'wb') as f:
                         f.write(response.content)
                     context['cpcs_plot'] = '/data/png/'+format(fits.followupId)+'.png'
@@ -1452,10 +1459,10 @@ class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
         return reverse_lazy('bhlist_detail', kwargs={'pk': self.kwargs['pk_target']})
 
     def delete(self, request, *args, **kwargs):
-
-
+        logger.info('Dete File, type: ' + self.get_object().data_product_type)
         if self.get_object().data_product_type == 'photometry_cpcs' or self.get_object().data_product_type == 'fits_file':
             fit = BHTomFits.objects.get(dataproduct_id=self.get_object())
+            logger.info('status: ' + fit.status)
             if fit.status == 'F':
                 delete_point_cpcs(self.get_object())
         ReducedDatum.objects.filter(data_product=self.get_object()).delete()
