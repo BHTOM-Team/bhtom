@@ -1,20 +1,19 @@
 import json
 import logging
 import os
+from typing import Optional
 
 import mechanize
 import numpy as np
 from astropy.time import Time, TimezoneInfo
 from tom_dataproducts.models import ReducedDatum
 
-from typing import Optional
 from .utils.last_jd import update_last_jd
+### how to pass those variables from settings?
+from ..models import ReducedDatumExtraData, refresh_reduced_data_view
+from ..utils.observation_data_extra_data_utils import ObservationDatapointExtraData
 
 # from tom_targets.templatetags.targets_extras import target_extra_field
-
-### how to pass those variables from settings?
-from ..models import ReducedDatumExtraData
-from ..utils.observation_data_extra_data_utils import ObservationDatapointExtraData
 
 try:
     from settings import local_settings as secret
@@ -107,7 +106,7 @@ def update_cpcs_lc(target):
                     rd, created = ReducedDatum.objects.get_or_create(
                         timestamp=datum_jd.to_datetime(timezone=TimezoneInfo()),
                         value=json.dumps(value),
-                        source_name=datum_source, # Maybe CPCS?
+                        source_name="CPCS",
                         source_location=sourcelink,
                         data_type='photometry',
                         target=target)
@@ -120,6 +119,8 @@ def update_cpcs_lc(target):
                     )
                 except:
                     print("FAILED storing (CPCS)")
+
+            refresh_reduced_data_view()
 
             # Updating the last observation JD
             jdlast = np.max(np.array(jd).astype(np.float))

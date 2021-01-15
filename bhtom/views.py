@@ -24,7 +24,7 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from bhtom.models import BHTomFits, Observatory, Instrument, BHTomUser
+from bhtom.models import BHTomFits, Observatory, Instrument, BHTomUser, refresh_reduced_data_view
 from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer
 from bhtom.hooks import send_to_cpcs, delete_point_cpcs
 from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
@@ -508,6 +508,9 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
         elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
             messages.error(self.request, secret.NOT_PERMISSION)
             return False
+        elif self.request.user != BHTomFits.objects.get(file_id=self.kwargs['pk_fit']).instrument_id.user_id:
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
         return True
 
     def get_context_data(self, *args, **kwargs):
@@ -538,7 +541,11 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
                 response = requests.get(url_cpcs, {'hashtag': instrument.hashtag})
                 if response.status_code == 200:
                     BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                    url_base = BASE + '/data/png/'+format(fits.followupId)+'.png'
+                    url_base = BASE + '/data/png/'
+                    if not os.path.exists(url_base):
+                        os.makedirs(url_base)
+                    url_base = url_base + format(fits.followupId)+'.png'
+
                     with open(url_base, 'wb') as f:
                         f.write(response.content)
                     context['cpcs_plot'] = '/data/png/'+format(fits.followupId)+'.png'
@@ -811,6 +818,7 @@ class DataProductUploadView(FormView):
                 run_data_processor(dp)
 
                 successful_uploads.append(str(dp).split('/')[-1])
+                refresh_reduced_data_view()
             except InvalidFileFormatException as iffe:
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
@@ -1010,32 +1018,11 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
                     comment=comment
                 )
             #instrument.save()
-            observatory = Observatory.objects.get(id=observatoryID.id)
 
-            if (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits == None or observatory.fits == ''): #tylko obsInfo wysylamy maila
-                logger.info('Send mail, ' + observatoryID.obsName)
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(user), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
-            elif (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits != None or observatory.fits != '') : #procesujemy fitsa
+            logger.info('Send mail, %s, %s' % (observatoryID.obsName, str(user)))
+            send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(user) + ', ' + observatoryID.obsName,
+                      settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
 
-                '''dp = DataProduct(
-                    target=target,
-                    data=observatory.fits,
-                    product_id=None,
-                    data_product_type='fits_file'
-                )
-                dp.save()
-                run_hook('data_product_post_upload', dp, instrument, 'No', None, None, 1, 2)'''
-                logger.info('Send mail')
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(observatoryID.obsName), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
-            elif (observatory.obsInfo == None or observatory.obsInfo == '') and (observatory.fits != None or observatory.fits != ''):
-                logger.info('Send mai, ' + observatoryID.obsName)
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(observatoryID.obsName), settings.EMAIL_HOST_USER,
-                          secret.RECIPIENTEMAIL, fail_silently=False)
-            elif (observatory.obsInfo == None or observatory.obsInfo == '') and (
-                    observatory.fits == None or observatory.fits == ''):
-                logger.info('Send mail, ' + observatoryID.obsName)
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(observatoryID.obsName), settings.EMAIL_HOST_USER,
-                          secret.RECIPIENTEMAIL, fail_silently=False)
         except Exception as e:
             logger.error('CreateInstrument error: ' + str(e))
             messages.error(self.request, 'Error with creating the instrument')
@@ -1452,10 +1439,10 @@ class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
         return reverse_lazy('bhlist_detail', kwargs={'pk': self.kwargs['pk_target']})
 
     def delete(self, request, *args, **kwargs):
-
-
+        logger.info('Dete File, type: ' + self.get_object().data_product_type)
         if self.get_object().data_product_type == 'photometry_cpcs' or self.get_object().data_product_type == 'fits_file':
             fit = BHTomFits.objects.get(dataproduct_id=self.get_object())
+            logger.info('status: ' + fit.status)
             if fit.status == 'F':
                 delete_point_cpcs(self.get_object())
         ReducedDatum.objects.filter(data_product=self.get_object()).delete()

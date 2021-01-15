@@ -1,125 +1,81 @@
 import json
-from django.conf import settings
-from django.contrib.auth.models import User
-from tom_dataproducts.models import DataProduct, ReducedDatum
-from tom_dataproducts.processors.data_serializers import SpectrumSerializer
-from tom_observations.models import ObservationRecord
-from tom_targets.models import Target
 from tempfile import NamedTemporaryFile
-
-from bhtom.models import BHTomData, BHTomFits, Instrument, Observatory, ReducedDatumExtraData
-from .data_product_types import DataProductType
-from .observation_data_extra_data_utils import decode_datapoint_extra_data, ObservationDatapointExtraData
-import pandas as pd
-import json
-
 from typing import Any, List, Optional, Tuple
+
+import pandas as pd
+from django.conf import settings
+from tom_dataproducts.processors.data_serializers import SpectrumSerializer
+from tom_targets.models import Target
+
+from bhtom.models import ViewReducedDatum
+from .observation_data_extra_data_utils import decode_datapoint_extra_data, ObservationDatapointExtraData
 
 SPECTROSCOPY: str = "spectroscopy"
 
 
-def get_observation_facility(datum: ReducedDatum) -> Optional[str]:
+def get_observation_facility(datum: ViewReducedDatum) -> Optional[str]:
+    try:
+        # If the reduced datum is from an observation, then
+        # the data product object is linked to an observation record
+        # which contains information about the facility
+        if datum.observation_record_facility:
+            return datum.observation_record_facility
+
+        # Then, check in reduced datum extra data
+        # Some sources might save additional data, such as
+        # the facility name, in the reduced datum extra data
+        # There should be just one extra data object, as
+        # the reduced datum extra data has reduced datum as the primary key.
+        if datum.rd_extra_data:
+            facility: Optional[str] = decode_facility_name(datum.rd_extra_data)
+            if facility:
+                return facility
+
+        if datum.dp_extra_data:
+            facility: Optional[str] = decode_facility_name(datum.dp_extra_data)
+            if facility:
+                return facility
+    except:
+        return None
+
+
+def decode_facility_name(extra_data_json_str: str) -> Optional[str]:
+    extra_data: Optional[ObservationDatapointExtraData] = decode_datapoint_extra_data(json.loads(extra_data_json_str))
+    return getattr(extra_data, 'facility_name', None)
+
+
+def get_observer_name(datum: ViewReducedDatum) -> Optional[str]:
     try:
         # First, check in reduced datum extra data
         # Some sources might save additional data, such as
         # the facility name, in the reduced datum extra data
         # There should be just one extra data object, as
         # the reduced datum extra data has reduced datum as the primary key.
-        extra_data: Optional[ObservationDatapointExtraData] = get_reduced_datum_extra_data(datum)
-        facility_name: Optional[str] = getattr(extra_data, 'facility_name', None)
-        if facility_name:
-            return facility_name
+        if datum.rd_extra_data:
+            facility: Optional[str] = decode_owner(datum.rd_extra_data)
+            if facility:
+                return facility
 
-        data_product: DataProduct = getattr(datum, 'data_product', None)
-
-        if data_product is None:
-            # If there is no data product associated with the datum,
-            # then it's from an alert broker
-            return None
-
-        # If the reduced datum is from an observation, then
-        # the data product object is linked to an observation record
-        # which contains information about the facility
-        observation_record: Optional[ObservationRecord] = getattr(data_product,
-                                                                  'observation_record',
-                                                                  None)
-        if observation_record:
-            return observation_record.facility
-        else:
-            # If there is no observation record, then the reduced datum
-            # is from a file uploaded by the user.
-
-            if data_product.data_product_type == DataProductType.SPECTROSCOPY:
-                # Spectroscopy data product uploaded from the user can contain facility information in extra data
-                extra_data: Optional[ObservationDatapointExtraData] = get_spectroscopy_extra_data(data_product)
-                if extra_data:
-                    return extra_data.facility_name
-            else:
-                # If the data is not spectroscopic, a bhtom_fits object can exist
-                bhtom_fits: Optional[BHTomFits] = BHTomFits.objects.filter(dataproduct_id=data_product.pk)
-                instrument: Optional[Instrument] = getattr(bhtom_fits,
-                                                           'instrument_id',
-                                                           None)
-                observatory: Optional[Observatory] = getattr(instrument,
-                                                             'observatory_id',
-                                                             None)
-                return observatory.obsName
-
+        if datum.dp_extra_data:
+            facility: Optional[str] = decode_owner(datum.dp_extra_data)
+            if facility:
+                return facility
     except:
         return None
 
 
-def get_observer_name(datum: ReducedDatum) -> Optional[str]:
-    try:
-        # First, check in reduced datum extra data
-        # Some sources might save additional data, such as
-        # owner user, in the reduced datum extra data
-        # There should be just one extra data object, as
-        # the reduced datum extra data has reduced datum as the primary key.
-        extra_data: Optional[ObservationDatapointExtraData] = get_reduced_datum_extra_data(datum)
-        if getattr(extra_data, 'owner', None):
-            return extra_data.owner
+def decode_owner(extra_data_json_str: str) -> Optional[str]:
+    extra_data: Optional[ObservationDatapointExtraData] = decode_datapoint_extra_data(json.loads(extra_data_json_str))
+    return getattr(extra_data, 'owner', None)
 
-        # If there is no extra data for the reduced datum,
-        # check if it belongs to a data product (e.g. is from a photometry CSV file)
-        data_product: DataProduct = getattr(datum, 'data_product', None)
-        if data_product is None:
-            return None
-    except:
-        return None
-
-
-def get_spectroscopy_extra_data(data_product: DataProduct) -> Optional[ObservationDatapointExtraData]:
-    if data_product.data_product_type != DataProductType.SPECTROSCOPY:
-        return None
-    else:
-        extra_data = getattr(data_product, 'extra_data', None)
-        if extra_data:
-            extra_data_json = json.loads(extra_data)
-            return decode_datapoint_extra_data(extra_data_json)
-        else:
-            return None
-
-
-def get_reduced_datum_extra_data(reduced_datum: ReducedDatum) -> Optional[ObservationDatapointExtraData]:
-    extra_data_str: Optional[str] = getattr(ReducedDatumExtraData.objects.filter(reduced_datum=reduced_datum).first(),
-                                            'extra_data',
-                                            None)
-    if extra_data_str:
-        return decode_datapoint_extra_data(json.loads(extra_data_str))
-    else:
-        return None
-
-
-def get_spectroscopy_observation_time_jd(reduced_datum: ReducedDatum) -> Optional[float]:
+def get_spectroscopy_observation_time_jd(reduced_datum: ViewReducedDatum) -> Optional[float]:
     from dateutil import parser
     from datetime import datetime
     from astropy.time import Time
     # Observation time might be included in the file, if spectrum is from an ASCII file.
 
-    data_product: DataProduct = reduced_datum.data_product
-    if data_product:
-        extra_data: Optional[ObservationDatapointExtraData] = get_spectroscopy_extra_data(data_product)
+    if reduced_datum.dp_extra_data:
+        extra_data: Optional[ObservationDatapointExtraData] = decode_datapoint_extra_data(json.loads(reduced_datum.dp_extra_data))
         if getattr(extra_data, 'observation_time', None):
             try:
                 observation_time: datetime = parser.parse(extra_data.observation_time)
@@ -151,8 +107,8 @@ def save_photometry_data_for_target_to_csv_file(target_id: int) -> Tuple[NamedTe
     from astropy.time import Time
 
     target: Target = Target.objects.get(pk=target_id)
-    datums: ReducedDatum = ReducedDatum.objects.filter(target=target,
-                                                       data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
+    datums: ViewReducedDatum = ViewReducedDatum.objects.filter(target=target,
+                                                               data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
 
     columns: List[str] = ['JD', 'Magnitude', 'Error', 'Facility', 'Filter', 'Owner']
     data: List[List[Any]] = []
@@ -176,8 +132,8 @@ def save_spectroscopy_data_for_target_to_csv_file(target_id: int) -> Tuple[Named
     from astropy.time import Time
 
     target: Target = Target.objects.get(pk=target_id)
-    datums: ReducedDatum = ReducedDatum.objects.filter(target=target,
-                                                       data_type=settings.DATA_PRODUCT_TYPES['spectroscopy'][0])
+    datums: ViewReducedDatum = ViewReducedDatum.objects.filter(target=target,
+                                                               data_type=settings.DATA_PRODUCT_TYPES['spectroscopy'][0])
 
     columns: List[str] = ['JD', 'Flux', 'Wavelength', 'Flux Units', 'Wavelength Units', 'Facility', 'Owner']
     data: List[List[Any]] = []
