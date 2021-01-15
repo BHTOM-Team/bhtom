@@ -19,6 +19,7 @@ import logging
 register = template.Library()
 logger = logging.getLogger(__name__)
 
+
 @register.inclusion_tag('tom_dataproducts/partials/detail_fits_upload.html')
 def detail_fits_upload(target, user):
     """
@@ -27,7 +28,7 @@ def detail_fits_upload(target, user):
     user = Instrument.objects.filter(user_id=user).values_list('id')
     data_product = DataProduct.objects.filter(target_id=target.id).values_list('id')
     fits = BHTomFits.objects.filter(user_id__in=user, dataproduct_id__in=data_product)
-    tabFits=[]
+    tabFits = []
 
     for fit in fits:
         try:
@@ -41,7 +42,6 @@ def detail_fits_upload(target, user):
         'target': target
 
     }
-
 
 
 @register.inclusion_tag('tom_dataproducts/partials/spectroscopy_for_target.html', takes_context=True)
@@ -67,12 +67,13 @@ def spectroscopy_for_target(context, target, dataproduct=None):
         plot_data.append(go.Scattergl(
             x=deserialized.wavelength.value,
             y=deserialized.flux.value,
-            name=datetime.strftime(datum.timestamp, '%Y%m%d-%H:%M:%s')
+            name=datetime.strftime(datum.timestamp, '%Y-%m-%d %H:%M:%s')
         ))
 
     layout = go.Layout(
         height=600,
-        width=700,
+        width=900,
+        margin=dict(l=90, r=180, t=60, b=60),
         xaxis=dict(
             tickformat="d"
         ),
@@ -84,6 +85,7 @@ def spectroscopy_for_target(context, target, dataproduct=None):
         'target': target,
         'plot': offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
     }
+
 
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target_static.html', takes_context=True)
 def photometry_for_target_static(context, target, include_aavso):
@@ -109,7 +111,6 @@ def photometry_for_target_static(context, target, include_aavso):
         photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
         photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
         photometry_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
-
 
     figure: plt.Figure = plt.figure(figsize=(9, 6))
     ax = figure.add_axes((0.1, 0.1, 0.7, 0.8))

@@ -1,17 +1,14 @@
-from django.conf import settings
-from tom_dataproducts.models import DataProduct, ReducedDatum
-from tom_dataproducts.processors.data_serializers import SpectrumSerializer
-from tom_observations.models import ObservationRecord
-from tom_targets.models import Target
-from tempfile import NamedTemporaryFile
-
-from bhtom.models import BHTomFits, Instrument, Observatory, ViewReducedDatum
-from .data_product_types import DataProductType
-from .observation_data_extra_data_utils import decode_datapoint_extra_data, ObservationDatapointExtraData
-import pandas as pd
 import json
-
+from tempfile import NamedTemporaryFile
 from typing import Any, List, Optional, Tuple
+
+import pandas as pd
+from django.conf import settings
+from tom_dataproducts.processors.data_serializers import SpectrumSerializer
+from tom_targets.models import Target
+
+from bhtom.models import ViewReducedDatum
+from .observation_data_extra_data_utils import decode_datapoint_extra_data, ObservationDatapointExtraData
 
 SPECTROSCOPY: str = "spectroscopy"
 
