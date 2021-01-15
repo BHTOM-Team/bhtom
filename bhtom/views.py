@@ -1018,32 +1018,11 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
                     comment=comment
                 )
             #instrument.save()
-            observatory = Observatory.objects.get(id=observatoryID.id)
 
-            if (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits == None or observatory.fits == ''): #tylko obsInfo wysylamy maila
-                logger.info('Send mail, ' + observatoryID.obsName)
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(user), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
-            elif (observatory.obsInfo != None or observatory.obsInfo != '') and (observatory.fits != None or observatory.fits != '') : #procesujemy fitsa
+            logger.info('Send mail, %s, %s' % (observatoryID.obsName, str(user)))
+            send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(user) + ', ' + observatoryID.obsName,
+                      settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
 
-                '''dp = DataProduct(
-                    target=target,
-                    data=observatory.fits,
-                    product_id=None,
-                    data_product_type='fits_file'
-                )
-                dp.save()
-                run_hook('data_product_post_upload', dp, instrument, 'No', None, None, 1, 2)'''
-                logger.info('Send mail')
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(observatoryID.obsName), settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
-            elif (observatory.obsInfo == None or observatory.obsInfo == '') and (observatory.fits != None or observatory.fits != ''):
-                logger.info('Send mai, ' + observatoryID.obsName)
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(observatoryID.obsName), settings.EMAIL_HOST_USER,
-                          secret.RECIPIENTEMAIL, fail_silently=False)
-            elif (observatory.obsInfo == None or observatory.obsInfo == '') and (
-                    observatory.fits == None or observatory.fits == ''):
-                logger.info('Send mail, ' + observatoryID.obsName)
-                send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(observatoryID.obsName), settings.EMAIL_HOST_USER,
-                          secret.RECIPIENTEMAIL, fail_silently=False)
         except Exception as e:
             logger.error('CreateInstrument error: ' + str(e))
             messages.error(self.request, 'Error with creating the instrument')

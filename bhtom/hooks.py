@@ -196,11 +196,11 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
             if response.status_code == 200:
                 instance.hashtag = response.content.decode('utf-8').split(': ')[1]
                 logger.info('Create_cpcs_user')
-                send_mail('Wygenerowano hastag', secret.EMAILTEXT_CREATE_HASTAG + str(observatory.obsName),
+                send_mail('Wygenerowano hastag', secret.EMAILTEXT_CREATE_HASTAG + str(observatory.obsName) + ', ' + str(instance.user_id),
                           settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
             else:
                 logger.error('Error from hastag')
-                send_mail('Error from hastag', secret.EMAILTEXT_ERROR_CREATE_HASTAG + str(observatory.obsName),
+                send_mail('Blad przy generowaniu hastagu', secret.EMAILTEXT_ERROR_CREATE_HASTAG + str(observatory.obsName)+ ', ' + str(instance.user_id),
                           settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
 
                 instance.isActive = False
