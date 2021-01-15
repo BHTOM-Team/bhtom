@@ -45,8 +45,7 @@ def photometry_for_target(context, target):
             name=filter_name,
             error_y=dict(type='data',
                          array=filter_values['error'],
-                         visible=True),
-            hover_data=['']
+                         visible=True)
         ) for filter_name, filter_values in photometry_data.items()]
     layout = go.Layout(
         yaxis=dict(autorange='reversed'),

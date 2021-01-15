@@ -14,7 +14,7 @@ from tom_targets.models import Target
 from typing import Optional
 
 ### how to pass those variables from settings?
-from bhtom.models import ReducedDatumExtraData
+from bhtom.models import ReducedDatumExtraData, refresh_reduced_data_view
 from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointExtraData
 
 try:
@@ -203,6 +203,8 @@ def update_gaia_lc(target, requesting_user_id):
                 )
             except Exception as e:
                 logger.error(f'Error while updating LC for target {target}: {e}')
+
+        refresh_reduced_data_view()
         logger.info("Finished updating Gaia LC for " + gaia_name_name)
 
         # Updating/storing the last JD
