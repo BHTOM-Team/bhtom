@@ -12,7 +12,6 @@ from tom_targets.views import TargetCreateView
 from tom_targets.templatetags.targets_extras import target_extra_field
 from tom_targets.models import Target, TargetList
 from tom_targets.forms import (SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset)
-from tom_targets.filters import TargetFilter
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
 
@@ -24,6 +23,7 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
+from bhtom.filters import TargetFilter
 from bhtom.models import BHTomFits, Observatory, Instrument, BHTomUser, refresh_reduced_data_view
 from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer
 from bhtom.hooks import send_to_cpcs, delete_point_cpcs
