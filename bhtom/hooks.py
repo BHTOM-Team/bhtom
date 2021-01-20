@@ -118,7 +118,7 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
                     dp.extra_data = extra_data.to_json_str()
                     dp.save(update_fields=["extra_data"])
 
-            instance = BHTomData.objects.create(user_id=user, dataproduct_id=dp, comment=comment)
+            instance = BHTomData.objects.create(user_id=user, dataproduct_id=dp, comment=comment, data_stored=True)
         except Exception as e:
             logger.error('data_product_post_upload error: ' + str(e))
             instance.delete()
@@ -273,5 +273,5 @@ def BHTomUser_pre_save(sender, instance, **kwargs):
                 user_email = None
 
             if user_email is not None:
-                send_mail(secret.EMAILTET_ACTIVATEUSER_TITLE, secret.EMAILTET_ACTIVATEUSER_TITLE,
+                send_mail(secret.EMAILTET_ACTIVATEUSER_TITLE, secret.EMAILTET_ACTIVATEUSER,
                           settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)

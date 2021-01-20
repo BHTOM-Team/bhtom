@@ -24,13 +24,13 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from bhtom.models import BHTomFits, Observatory, Instrument, BHTomUser, refresh_reduced_data_view
+from bhtom.models import BHTomFits, Observatory, Instrument, BHTomUser, refresh_reduced_data_view, BHTomData
 from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer
 from bhtom.hooks import send_to_cpcs, delete_point_cpcs
 from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
 from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
 
-from django.http import HttpResponseServerError, Http404
+from django.http import HttpResponseServerError, Http404, FileResponse
 from django.views.generic.edit import FormView
 from django.views.generic import View
 from django.conf import settings
@@ -530,7 +530,7 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
 
         observatory = Observatory.objects.get(id=instrument.observatory_id.id)
         data_product = DataProduct.objects.get(id=fits.dataproduct_id.id)
-        tabFits = {}
+        tabData = {}
         filter = ''
 
         if fits.cpcs_plot is not None and fits.cpcs_plot != '':
@@ -555,17 +555,16 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
                 context['cpcs_plot'] = fits.cpcs_plot
         try:
             if data_product.data_product_type == 'photometry_cpcs':
-
-                tabFits['ccdphot_url'] = format(data_product.data)
-                tabFits['ccdphot'] = format(data_product.data).split('/')[-1]
+                tabData['photometry'] = format(data_product.data).split('/')[-1]
+                tabData['photometry_id'] = format(fits.file_id)
             else:
-
-                tabFits['fits_url'] = format("/".join(["/data", str(data_product.data)]))
-                tabFits['fits'] = format(data_product.data).split('/')[-1]
+                tabData['fits'] = format(data_product.data).split('/')[-1]
+                tabData['fits_id'] = format(data_product.id)
+                tabData['fits_url'] = format("/".join(["/data", str(data_product.data)]))
 
                 if fits.photometry_file != '':
-                    tabFits['ccdphot_url'] = format("/".join(["/data", str(fits.photometry_file)]))
-                    tabFits['ccdphot'] = format(str(fits.photometry_file).split('/')[-1])
+                    tabData['photometry'] = format(str(fits.photometry_file).split('/')[-1])
+                    tabData['photometry_id'] = format(fits.file_id)
 
             if fits.filter == 'no':
                 filter = 'Auto'
@@ -579,7 +578,7 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
         context['filter'] = filter
         context['Observatory'] = observatory
         context['data_product'] = data_product
-        context['tabFits'] = tabFits
+        context['tabData'] = tabData
 
         return context
 
@@ -1439,7 +1438,7 @@ class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
         return reverse_lazy('bhlist_detail', kwargs={'pk': self.kwargs['pk_target']})
 
     def delete(self, request, *args, **kwargs):
-        logger.info('Dete File, type: ' + self.get_object().data_product_type)
+        logger.info('Delete File, type: ' + self.get_object().data_product_type)
         if self.get_object().data_product_type == 'photometry_cpcs' or self.get_object().data_product_type == 'fits_file':
             fit = BHTomFits.objects.get(dataproduct_id=self.get_object())
             logger.info('status: ' + fit.status)
@@ -1449,3 +1448,135 @@ class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
         self.get_object().data.delete()
 
         return super().delete(request, *args, **kwargs)
+
+class fits_download(PermissionRequiredMixin, View):
+
+    permission_required = 'tom_dataproducts.view_dataproduct'
+
+    def handle_no_permission(self):
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def has_permission(self):
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
+            messages.error(self.request, secret.NOT_ACTIVATE)
+            return False
+        elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        elif self.request.user != BHTomFits.objects.get(dataproduct_id=self.kwargs['file_id']).instrument_id.user_id:
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
+
+    def get(self, request, *args, **kwargs):
+        try:
+            file = DataProduct.objects.get(pk=self.kwargs['file_id'])
+        except DataProduct.DoesNotExist:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+        if file.data:
+            address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/data/' + format(file.data)
+            return FileResponse(open(address, 'rb'), as_attachment=True)
+        else:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+class photometry_download(PermissionRequiredMixin, View):
+
+    permission_required = 'tom_dataproducts.view_dataproduct'
+
+    def handle_no_permission(self):
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def has_permission(self):
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
+            messages.error(self.request, secret.NOT_ACTIVATE)
+            return False
+        elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        elif self.request.user != BHTomFits.objects.get(file_id=self.kwargs['file_id']).instrument_id.user_id:
+            logger.info(self.request.user)
+            logger.info(BHTomFits.objects.get(file_id=self.kwargs['file_id']).instrument_id.user_id)
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
+
+    def get(self, request, *args, **kwargs):
+        try:
+            file = BHTomFits.objects.get(file_id=self.kwargs['file_id'])
+        except DataProduct.DoesNotExist:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+        if file.photometry_file:
+            address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/' + format(file.photometry_file)
+            return FileResponse(open(address, 'rb'), as_attachment=True)
+        else:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+
+class data_download(PermissionRequiredMixin, View):
+
+    permission_required = 'tom_dataproducts.view_dataproduct'
+
+    def handle_no_permission(self):
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def has_permission(self):
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
+            messages.error(self.request, secret.NOT_ACTIVATE)
+            return False
+        elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        elif self.request.user != BHTomData.objects.get(dataproduct_id=self.kwargs['file_id']).user_id:
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
+
+    def get(self, request, *args, **kwargs):
+        try:
+            file = DataProduct.objects.get(pk=self.kwargs['file_id'])
+        except DataProduct.DoesNotExist:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+        if file.data:
+            address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/data/' + format(file.data)
+            return FileResponse(open(address, 'rb'), as_attachment=True)
+        else:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))

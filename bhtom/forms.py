@@ -34,13 +34,13 @@ class FilterChoiceField(forms.ModelChoiceField):
 
 class DataProductUploadForm(forms.Form):
 
-    MATCHING_RADIUS = {
+    MATCHING_RADIUS = [
         ('0', 'Default for the Observatory'),
         ('1', '1 arcsec'),
         ('2', '2 arcsec'),
         ('4', '4 arcsec'),
         ('6', '6 arcsec')
-    }
+    ]
 
     observation_record = forms.ModelChoiceField(
         ObservationRecord.objects.all(),

@@ -31,7 +31,6 @@ def dataproduct_list(context, target):
                 bhtomData = None
 
         try:
-
             if fit is not None:
 
                 instrument = Instrument.objects.get(id=fit.instrument_id.id)
@@ -51,6 +50,7 @@ def dataproduct_list(context, target):
             else:
                 if bhtomData is not None:
                     data_user = bhtomData.user_id.id
+                    data_stored = bhtomData.data_stored
                 else:
                     data_user = -1
 
@@ -62,7 +62,7 @@ def dataproduct_list(context, target):
                 ccdphot_name = format(ccdphot_url).split('/')[-1]
 
 
-            tabData.append([fit_id, data.id, format(data.data), format(data.data).split('/')[-1],
+            tabData.append([fit_id, data.id, format(data.data).split('/')[-1],
                             ccdphot_url, ccdphot_name, filter,
                             observatory, status_message, mjd, expTime,
                             data.data_product_type, data.featured, data_user, data_stored])
