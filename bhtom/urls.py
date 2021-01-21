@@ -18,6 +18,7 @@ from django.urls import path, include
 from .views import BlackHoleListView
 
 from django.contrib import admin
+
 from django.urls import path
 from django.urls import include
 from django.views.generic import TemplateView

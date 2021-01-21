@@ -25,10 +25,14 @@
           <tbody>
           <tr>
             <td>Fits</td>
-              {% if tabData.fits_id is not None %}
-                <td><a href="{% url 'fits_download' file_id=tabData.fits_id %} ">{{ tabData.fits }}</a></td>
+              {% if data_stored == True %}
+                  {% if tabData.fits_id is not None %}
+                    <td><a href="{% url 'fits_download' file_id=tabData.fits_id %} ">{{ tabData.fits }}</a></td>
+                  {% else %}
+                    <td></td>
+                  {% endif %}
               {% else %}
-                <td></td>
+                 <td><div title="{{tabData.fits}}">{{ tabData.fits }}</div></td>
               {% endif %}
           </tr>
           <tr>
@@ -164,13 +168,10 @@
           </tbody>
      </table>
   </div>
+
 {% if fits.cpcs_plot != None %}
      <div class="col-md-2">
-        {% if fits.allow_upload == True %}
-            <img src="data:image/png;base64,{{ fits.cpcs_plot }}"/>
-         {% else %}
-            <img src="{{ cpcs_plot }}"/>
-        {% endif %}
+         <img src="data:image/png;base64,{{ cpcs_plot }}"/>
      </div>
 {% endif %}
 </div>

@@ -7,6 +7,7 @@ import os.path
 import numpy as np
 import logging
 import requests
+import base64
 
 from tom_targets.views import TargetCreateView
 from tom_targets.templatetags.targets_extras import target_extra_field
@@ -514,24 +515,30 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
         tabData = {}
         filter = ''
 
-        if fits.cpcs_plot is not None and fits.cpcs_plot != '':
+        if fits.cpcs_plot is None or fits.cpcs_plot == '':
             if fits.allow_upload == False:
+                BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                url_base = BASE + '/data/png/'
+                if not os.path.exists(url_base):
+                    os.makedirs(url_base)
+                url_base = url_base + fits.followupId + '.png'
 
-                logger.info('Get plot from cpcs')
-                url_cpcs = fits.cpcs_plot
-                response = requests.get(url_cpcs, {'hashtag': instrument.hashtag})
-                if response.status_code == 200:
-                    BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                    url_base = BASE + '/data/png/'
-                    if not os.path.exists(url_base):
-                        os.makedirs(url_base)
-                    url_base = url_base + format(fits.followupId)+'.png'
+                try:
+                    with open(url_base, "rb") as image_file:
+                        encoded_string = base64.b64encode(image_file.read())
+                        context['cpcs_plot'] = str(encoded_string, "utf-8")
+                except IOError:
+                    logger.info('Get plot from cpcs')
+                    url_cpcs = fits.cpcs_plot
+                    response = requests.get(url_cpcs, {'hashtag': instrument.hashtag})
+                    if response.status_code == 200:
+                        with open(url_base, 'wb') as f:
+                            f.write(response.content)
+                            encoded_string = base64.b64encode(f.read())
+                        context['cpcs_plot'] = str(encoded_string, "utf-8")
+                    else:
+                        context['cpcs_plot'] = None
 
-                    with open(url_base, 'wb') as f:
-                        f.write(response.content)
-                    context['cpcs_plot'] = '/data/png/'+format(fits.followupId)+'.png'
-                else:
-                    context['cpcs_plot'] = None
             else:
                 context['cpcs_plot'] = fits.cpcs_plot
         try:
@@ -1489,8 +1496,6 @@ class photometry_download(PermissionRequiredMixin, View):
             messages.error(self.request, secret.NOT_PERMISSION)
             return False
         elif self.request.user != BHTomFits.objects.get(file_id=self.kwargs['file_id']).instrument_id.user_id:
-            logger.info(self.request.user)
-            logger.info(BHTomFits.objects.get(file_id=self.kwargs['file_id']).instrument_id.user_id)
             messages.error(self.request, secret.NOT_PERMISSION)
             return False
         return True
@@ -1505,14 +1510,18 @@ class photometry_download(PermissionRequiredMixin, View):
                 return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
         if file.photometry_file:
-            address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/' + format(file.photometry_file)
+            address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/data/' + format(file.photometry_file)
+            logger.info(address)
+            try:
+                open(address, 'r')
+            except IOError:
+                address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/' + format(file.photometry_file)
             return FileResponse(open(address, 'rb'), as_attachment=True)
         else:
             if self.request.META.get('HTTP_REFERER') is None:
                 return HttpResponseRedirect('/')
             else:
                 return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
-
 
 class data_download(PermissionRequiredMixin, View):
 
