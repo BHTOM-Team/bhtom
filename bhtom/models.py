@@ -9,21 +9,20 @@ from django_pgviews import view as pg
 
 
 class Observatory(models.Model):
-    MATCHING_RADIUS = {
-
+    MATCHING_RADIUS = [
         ('1', '1 arcsec'),
         ('2', '2 arcsec'),
         ('4', '4 arcsec'),
         ('6', '6 arcsec')
-    }
+    ]
 
     obsName = models.CharField(max_length=255, verbose_name='Observatory name', unique=True)
     lon = models.FloatField(null=False, blank=False, verbose_name='Longitude')
     lat = models.FloatField(null=False, blank=False, verbose_name='Latitude')
     prefix = models.CharField(max_length=255, null=True, blank=True)
     cpcsOnly = models.BooleanField(default='False', verbose_name='Only instrumental photometry file')
-    obsInfo = models.FileField(upload_to='ObsInfo', null=True, blank=True, verbose_name='Obs Info')
-    fits = models.FileField(upload_to='user_fits', null=True, blank=True, verbose_name='Sample fits')
+    obsInfo = models.FileField(upload_to='ObsInfo', null=False, blank=False, verbose_name='Obs Info')
+    fits = models.FileField(upload_to='user_fits', null=False, blank=False, verbose_name='Sample fits')
     matchDist = models.CharField(max_length=10, choices=MATCHING_RADIUS, default='1',
                                  verbose_name='Matching radius')
     comment = models.TextField(null=True, blank=True)
@@ -61,12 +60,12 @@ class BHTomFits(models.Model):
         ('E', 'Error'),
         ('U', 'User not active'),
     ]
-    MATCHING_RADIUS = {
+    MATCHING_RADIUS = [
         ('1', '1 arcsec'),
         ('2', '2 arcsec'),
         ('4', '4 arcsec'),
         ('6', '6 arcsec')
-    }
+    ]
 
     file_id = models.AutoField(db_index=True, primary_key=True)
     instrument_id = models.ForeignKey(Instrument, on_delete=models.CASCADE)
@@ -121,6 +120,7 @@ class BHTomUser(models.Model):
 class BHTomData(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     dataproduct_id = models.ForeignKey(DataProduct, on_delete=models.CASCADE)
+    data_stored = models.BooleanField(default='False')
     comment = models.TextField(null=True, blank=True)
 
 

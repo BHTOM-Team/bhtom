@@ -1,13 +1,53 @@
-body {
-  padding-top: 5rem;
+@import url('https://fonts.googleapis.com/css?family=Montserrat');
+@import url('https://fonts.googleapis.com/css?family=Open+Sans');
+
+h5 {
+  font-family: 'Montserrat', sans-serif;
 }
+
+h4 {
+  font-family: 'Montserrat', sans-serif;
+}
+
+h3 {
+  font-family: 'Montserrat', sans-serif;
+}
+
+h2 {
+  font-family: 'Montserrat', sans-serif;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  padding-top: 5rem;
+  background-Color: black;
+  color: white;
+}
+
+.table {
+  color:  white;
+}
+
 .content {
   padding: 3rem 1.5rem;
+  background-Color: black;
+  color: whitesmoke;
 }
+
 .navbar-brand > img {
-    max-height: 25px;
+   max-height: 25px;
 }
 
 .input-group-text {
     font-family: monospace;
+}
+
+td.red {
+  background-Color: red;
+}
+td.orange {
+  background-Color: orange;
+}
+td.green {
+  background-Color: green;
 }

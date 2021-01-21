@@ -158,7 +158,6 @@ class FetchTargetNames(LoginRequiredMixin, RedirectView):
                 if not gaia_dr_2_id and simbad_response.get(alert_name_keys['GAIA DR2']):
                     extras_to_update[alert_name_keys['GAIA DR2']] = simbad_response[alert_name_keys['GAIA DR2']]
 
-
             target.save(extras=extras_to_update)
 
             messages.success(self.request, f'Updated target names')
