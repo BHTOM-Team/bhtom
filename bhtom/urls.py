@@ -18,6 +18,7 @@ from django.urls import path, include
 from .views import BlackHoleListView
 
 from django.contrib import admin
+
 from django.urls import path
 from django.urls import include
 from django.views.generic import TemplateView
@@ -31,7 +32,9 @@ from bhtom.views import DataProductUploadView, TargetDetailView, TargetInteracti
 from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView, TargetGroupingView
 from bhtom.views import DeleteObservatory, UpdateObservatory, ObservatoryList, CreateObservatory
 from bhtom.views import DeleteInstrument, UpdateInstrument, CreateInstrument, DataProductDeleteView
-from bhtom.views import RegisterUser, DataProductFeatureView, UserUpdateView
+from bhtom.views import RegisterUser, DataProductFeatureView, UserUpdateView, photometry_download, fits_download
+from bhtom.views import data_download
+
 router = routers.DefaultRouter()
 router.register('upload', views.fits_upload)
 router.register('result', views.result_fits)
@@ -68,6 +71,12 @@ urlpatterns = [
     path('user/create/', RegisterUser.as_view(), name='register_user'),
     path('user/<int:pk>/update/', UserUpdateView.as_view(), name='user-update'),
     path('tom_dataproducts/data/<int:pk>/feature/', DataProductFeatureView.as_view(), name='bhtom_feature'),
+
+    path('download/fits/<int:file_id>/', fits_download.as_view(), name='fits_download'),
+    path('download/photometry/<int:file_id>/', photometry_download.as_view(), name='photometry_download'),
+    path('download/data/<int:file_id>/', data_download.as_view(), name='data_download')
     # The static helper below only works in development see
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
- ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+ ]
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

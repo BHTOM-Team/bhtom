@@ -1,6 +1,10 @@
 @import url('https://fonts.googleapis.com/css?family=Montserrat');
 @import url('https://fonts.googleapis.com/css?family=Open+Sans');
 
+@media (min-width: 1200px){
+  .container {max-width: 1500px;}
+}
+
 h5 {
   font-family: 'Montserrat', sans-serif;
 }
@@ -23,10 +27,17 @@ body {
   background-Color: black;
   color: white;
 }
+
+.table {
+  color:  white;
+}
+
 .content {
   padding: 3rem 1.5rem;
   background-Color: black;
+  color: whitesmoke;
 }
+
 .navbar-brand > img {
    max-height: 25px;
 }
@@ -47,12 +58,12 @@ td.green {
 .table-hover tbody tr:hover {
     color: white!important;
 }
-
-@media (min-width: 1200px)!import
-.container {
-    max-width: 1500px;
-}
-
 .comments{
     color:black!important;
+}
+.internal-tabs {
+    margin-left: 0;
+}
+.internal-tab-content {
+    padding: 0;
 }

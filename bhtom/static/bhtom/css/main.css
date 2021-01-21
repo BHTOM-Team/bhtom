@@ -1,6 +1,10 @@
 @import url('https://fonts.googleapis.com/css?family=Montserrat');
 @import url('https://fonts.googleapis.com/css?family=Open+Sans');
 
+@media (min-width: 1200px){
+  .container {max-width: 1500px;}
+}
+
 h5 {
   font-family: 'Montserrat', sans-serif;
 }
@@ -54,19 +58,12 @@ td.green {
 .table-hover tbody tr:hover {
     color: white!important;
 }
-
+.comments{
+    color:black!important;
+}
 .internal-tabs {
     margin-left: 0;
 }
-
 .internal-tab-content {
     padding: 0;
-}
-
-@media only screen and (min-width : 1200px) {
-    .container { max-width: 1500px; }
-}
-
-.comments{
-    color:black!important;
 }

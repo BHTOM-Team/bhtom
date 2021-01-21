@@ -7,6 +7,7 @@ import os.path
 import numpy as np
 import logging
 import requests
+import base64
 
 from tom_targets.views import TargetCreateView
 from tom_targets.templatetags.targets_extras import target_extra_field
@@ -24,13 +25,14 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from bhtom.models import BHTomFits, Observatory, Instrument, BHTomUser, refresh_reduced_data_view
+from bhtom.filters import TargetFilter
+from bhtom.models import BHTomFits, Observatory, Instrument, BHTomUser, refresh_reduced_data_view, BHTomData
 from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer
 from bhtom.hooks import send_to_cpcs, delete_point_cpcs
 from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
 from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
 
-from django.http import HttpResponseServerError, Http404
+from django.http import HttpResponseServerError, Http404, FileResponse
 from django.views.generic.edit import FormView
 from django.views.generic import View
 from django.conf import settings
@@ -54,7 +56,6 @@ from django_filters.views import FilterView
 from django.http import HttpResponseRedirect
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
-
 
 try:
     from settings import local_settings as secret
@@ -221,7 +222,6 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
     def get_default_target_type(self):
         """
         Returns the user-configured target type specified in ``settings.py``, if it exists, otherwise returns sidereal
-
         :returns: User-configured target type or global default
         :rtype: str
         """
@@ -234,7 +234,6 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
         """
         Gets the type of the target to be created from the query parameters. If none exists, use the default target
         type specified in ``settings.py``.
-
         :returns: target type
         :rtype: str
         """
@@ -248,13 +247,9 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
     def get_initial(self):
         """
         Returns the initial data to use for forms on this view.
-
         :returns: Dictionary with the following keys:
-
                   `type`: ``str``: Type of the target to be created
-
                   `groups`: ``QuerySet<Group>`` Groups available to the current user
-
         :rtype: dict
         """
         return {
@@ -266,11 +261,8 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         """
         Inserts certain form data into the context dict.
-
         :returns: Dictionary with the following keys:
-
                   `type_choices`: ``tuple``: Tuple of 2-tuples of strings containing available target types in the TOM
-
                   `extra_form`: ``FormSet``: Django formset with fields for arbitrary key/value pairs
         :rtype: dict
         """
@@ -285,7 +277,6 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
     def get_form_class(self):
         """
         Return the form class to use in this view.
-
         :returns: form class for target creation
         :rtype: subclass of TargetCreateForm
         """
@@ -300,7 +291,6 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
         """
         Runs after form validation. Creates the ``Target``, and creates any ``TargetName`` or ``TargetExtra`` objects,
         then runs the ``target_post_save`` hook and redirects to the success URL.
-
         :param form: Form data for target creation
         :type form: subclass of TargetCreateForm
         """
@@ -324,7 +314,6 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
     def get_form(self, *args, **kwargs):
         """
         Gets an instance of the ``TargetCreateForm`` and populates it with the groups available to the current user.
-
         :returns: instance of creation form
         :rtype: subclass of TargetCreateForm
         """
@@ -365,7 +354,6 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         """
         Adds formset for ``TargetName`` and ``TargetExtra`` to the context.
-
         :returns: context object
         :rtype: dict
         """
@@ -385,9 +373,7 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
         Runs after form validation. Validates and saves the ``TargetExtra`` and ``TargetName`` formsets, then calls the
         superclass implementation of ``form_valid``, which saves the ``Target``. If any forms are invalid, rolls back
         the changes.
-
         Saving is done in this order to ensure that new names/extras are available in the ``target_post_save`` hook.
-
         :param form: Form data for target update
         :type form: subclass of TargetCreateForm
         """
@@ -409,7 +395,6 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
         """
         Returns the queryset that will be used to look up the Target by limiting the result to targets that the user is
         authorized to modify.
-
         :returns: Set of targets
         :rtype: QuerySet
         """
@@ -418,7 +403,6 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
     def get_form_class(self):
         """
         Return the form class to use in this view.
-
         :returns: form class for target update
         :rtype: subclass of TargetCreateForm
         """
@@ -431,7 +415,6 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
         """
         Returns the initial data to use for forms on this view. For the ``TargetUpdateView``, adds the groups that the
         target is a member of.
-
         :returns:
         :rtype: dict
         """
@@ -442,7 +425,6 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
     def get_form(self, *args, **kwargs):
         """
         Gets an instance of the ``TargetCreateForm`` and populates it with the groups available to the current user.
-
         :returns: instance of creation form
         :rtype: subclass of TargetCreateForm
         """
@@ -530,42 +512,49 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
 
         observatory = Observatory.objects.get(id=instrument.observatory_id.id)
         data_product = DataProduct.objects.get(id=fits.dataproduct_id.id)
-        tabFits = {}
+        tabData = {}
         filter = ''
-
+        logger.info(fits.cpcs_plot)
         if fits.cpcs_plot is not None and fits.cpcs_plot != '':
             if fits.allow_upload == False:
+                BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                url_base = BASE + '/data/png/'
 
-                logger.info('Get plot from cpcs')
-                url_cpcs = fits.cpcs_plot
-                response = requests.get(url_cpcs, {'hashtag': instrument.hashtag})
-                if response.status_code == 200:
-                    BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                    url_base = BASE + '/data/png/'
-                    if not os.path.exists(url_base):
-                        os.makedirs(url_base)
-                    url_base = url_base + format(fits.followupId)+'.png'
+                if not os.path.exists(url_base):
+                    os.makedirs(url_base)
+                url_base = url_base + str(fits.followupId) + '.png'
 
-                    with open(url_base, 'wb') as f:
-                        f.write(response.content)
-                    context['cpcs_plot'] = '/data/png/'+format(fits.followupId)+'.png'
-                else:
-                    context['cpcs_plot'] = None
+                try:
+                    with open(url_base, "rb") as image_file:
+                        encoded_string = base64.b64encode(image_file.read())
+                        context['cpcs_plot'] = str(encoded_string, "utf-8")
+                except IOError:
+                    logger.info('Get plot from cpcs')
+                    url_cpcs = fits.cpcs_plot
+                    response = requests.get(url_cpcs, {'hashtag': instrument.hashtag})
+                    if response.status_code == 200:
+                        with open(url_base, 'wb') as f:
+                            f.write(response.content)
+                        with open(url_base, "rb") as f:
+                            encoded_string = base64.b64encode(f.read())
+                        context['cpcs_plot'] = str(encoded_string, "utf-8")
+                    else:
+                        context['cpcs_plot'] = None
+
             else:
                 context['cpcs_plot'] = fits.cpcs_plot
         try:
             if data_product.data_product_type == 'photometry_cpcs':
-
-                tabFits['ccdphot_url'] = format(data_product.data)
-                tabFits['ccdphot'] = format(data_product.data).split('/')[-1]
+                tabData['photometry'] = format(data_product.data).split('/')[-1]
+                tabData['photometry_id'] = format(fits.file_id)
             else:
-
-                tabFits['fits_url'] = format("/".join(["/data", str(data_product.data)]))
-                tabFits['fits'] = format(data_product.data).split('/')[-1]
+                tabData['fits'] = format(data_product.data).split('/')[-1]
+                tabData['fits_id'] = format(data_product.id)
+                tabData['fits_url'] = format("/".join(["/data", str(data_product.data)]))
 
                 if fits.photometry_file != '':
-                    tabFits['ccdphot_url'] = format("/".join(["/data", str(fits.photometry_file)]))
-                    tabFits['ccdphot'] = format(str(fits.photometry_file).split('/')[-1])
+                    tabData['photometry'] = format(str(fits.photometry_file).split('/')[-1])
+                    tabData['photometry_id'] = format(fits.file_id)
 
             if fits.filter == 'no':
                 filter = 'Auto'
@@ -579,7 +568,8 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
         context['filter'] = filter
         context['Observatory'] = observatory
         context['data_product'] = data_product
-        context['tabFits'] = tabFits
+        context['tabData'] = tabData
+        context['data_stored'] = fits.data_stored
 
         return context
 
@@ -734,13 +724,10 @@ class result_fits(viewsets.ModelViewSet):
 
 
 '''class status_fits(viewsets.ModelViewSet):
-
     queryset = BHTomFits.objects.all()
     serializer_class = BHTomFitsStatusSerializer
     permission_classes = [IsAuthenticatedOrReadOnlyOrCreation]
-
     def update(self, request, *args, **kwargs):
-
         try:
             instance = self.get_object()
             instance.status = request.TargetFileViewdata.get("status")
@@ -748,10 +735,8 @@ class result_fits(viewsets.ModelViewSet):
         except Exception as e:
             logger.error('error: ' + str(e))
             return HttpResponseServerError(e)
-
         ret = super().update(request, *args, **kwargs)
         return ret
-
     def list(self, request, *args, **kwargs):
         ret = super().list(request, *args, **kwargs)
         return ret
@@ -1439,7 +1424,7 @@ class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
         return reverse_lazy('bhlist_detail', kwargs={'pk': self.kwargs['pk_target']})
 
     def delete(self, request, *args, **kwargs):
-        logger.info('Dete File, type: ' + self.get_object().data_product_type)
+        logger.info('Delete File, type: ' + self.get_object().data_product_type)
         if self.get_object().data_product_type == 'photometry_cpcs' or self.get_object().data_product_type == 'fits_file':
             fit = BHTomFits.objects.get(dataproduct_id=self.get_object())
             logger.info('status: ' + fit.status)
@@ -1449,3 +1434,137 @@ class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
         self.get_object().data.delete()
 
         return super().delete(request, *args, **kwargs)
+
+class fits_download(PermissionRequiredMixin, View):
+
+    permission_required = 'tom_dataproducts.view_dataproduct'
+
+    def handle_no_permission(self):
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def has_permission(self):
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
+            messages.error(self.request, secret.NOT_ACTIVATE)
+            return False
+        elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        elif self.request.user != BHTomFits.objects.get(dataproduct_id=self.kwargs['file_id']).instrument_id.user_id:
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
+
+    def get(self, request, *args, **kwargs):
+        try:
+            file = DataProduct.objects.get(pk=self.kwargs['file_id'])
+        except DataProduct.DoesNotExist:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+        if file.data:
+            address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/data/' + format(file.data)
+            return FileResponse(open(address, 'rb'), as_attachment=True)
+        else:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+class photometry_download(PermissionRequiredMixin, View):
+
+    permission_required = 'tom_dataproducts.view_dataproduct'
+
+    def handle_no_permission(self):
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def has_permission(self):
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
+            messages.error(self.request, secret.NOT_ACTIVATE)
+            return False
+        elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        elif self.request.user != BHTomFits.objects.get(file_id=self.kwargs['file_id']).instrument_id.user_id:
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
+
+    def get(self, request, *args, **kwargs):
+        try:
+            file = BHTomFits.objects.get(file_id=self.kwargs['file_id'])
+        except DataProduct.DoesNotExist:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+        if file.photometry_file:
+            address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/data/' + format(file.photometry_file)
+            logger.info(address)
+            try:
+                open(address, 'r')
+            except IOError:
+                address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/' + format(file.photometry_file)
+            return FileResponse(open(address, 'rb'), as_attachment=True)
+        else:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+class data_download(PermissionRequiredMixin, View):
+
+    permission_required = 'tom_dataproducts.view_dataproduct'
+
+    def handle_no_permission(self):
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def has_permission(self):
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
+            messages.error(self.request, secret.NOT_ACTIVATE)
+            return False
+        elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        elif self.request.user != BHTomData.objects.get(dataproduct_id=self.kwargs['file_id']).user_id:
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
+
+    def get(self, request, *args, **kwargs):
+        try:
+            file = DataProduct.objects.get(pk=self.kwargs['file_id'])
+        except DataProduct.DoesNotExist:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+        if file.data:
+            address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/data/' + format(file.data)
+            return FileResponse(open(address, 'rb'), as_attachment=True)
+        else:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))

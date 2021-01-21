@@ -25,11 +25,23 @@
           <tbody>
           <tr>
             <td>Fits</td>
-            <td><a href="{{ tabFits.fits_url }}">{{ tabFits.fits }}</a></td>
+              {% if data_stored == True %}
+                  {% if tabData.fits_id is not None %}
+                    <td><a href="{% url 'fits_download' file_id=tabData.fits_id %} ">{{ tabData.fits }}</a></td>
+                  {% else %}
+                    <td></td>
+                  {% endif %}
+              {% else %}
+                 <td><div title="{{tabData.fits}}">{{ tabData.fits }}</div></td>
+              {% endif %}
           </tr>
           <tr>
             <td>Photometry</a></td>
-            <td><a href="{{ tabFits.ccdphot_url }}"> {{ tabFits.ccdphot }}</a></td>
+              {% if tabData.photometry_id is not None %}
+                <td><a href="{% url 'photometry_download' file_id=tabData.photometry_id %}"> {{ tabData.photometry }}</a></td>
+              {% else %}
+                <td></td>
+              {% endif %}
           </tr>
            <tr>
             <td>Observatory</a></td>
@@ -141,25 +153,29 @@
           </tr>
            <tr>
             <td>Comment</a></td>
-              <td>{{ fits.comment }}</td>
+               {% if fits.comment != None %}
+                    <td>{{ fits.comment }}</td>
+               {% else %}
+                    <td></td>
+               {% endif %}
           </tr>
-
+<!--
+          {% if tabData.fits_url is not None %}
            <tr>
             <td>Thumbnail</a></td>
-         <td>
-            {% include 'tom_dataproducts/partials/js9_button.html' with url=tabFits.fits_url  only %}
-          </td>
-          </tr>
+             <td>
+                {% include 'tom_dataproducts/partials/js9_button.html' with url=tabData.fits_url only %}
+              </td>
+            </tr>
+            {% endif%}
+-->
           </tbody>
      </table>
   </div>
+
 {% if fits.cpcs_plot != None %}
      <div class="col-md-2">
-        {% if fits.allow_upload == True %}
-            <img src="data:image/png;base64,{{ fits.cpcs_plot }}"/>
-         {% else %}
-            <img src="{{ cpcs_plot }}"/>
-        {% endif %}
+         <img src="data:image/png;base64,{{ cpcs_plot }}"/>
      </div>
 {% endif %}
 </div>

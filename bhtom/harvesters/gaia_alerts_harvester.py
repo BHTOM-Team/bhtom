@@ -205,9 +205,10 @@ def update_gaia_lc(target, requesting_user_id):
                 logger.error(f'Error while updating LC for target {target}: {e}')
 
         refresh_reduced_data_view()
-        logger.info("Finished updating Gaia LC for " + gaia_name_name)
 
         # Updating/storing the last JD
         update_last_jd(target=target,
                        maglast=maglast,
                        jdmax=jdmax)
+
+        logger.info("Finished updating Gaia LC for " + gaia_name_name)

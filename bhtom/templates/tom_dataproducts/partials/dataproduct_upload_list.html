@@ -27,7 +27,7 @@
             </thead>
             <tbody>
 
-                {% for Fit_id, Data_id, FileUrl, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type, feature, Fits_owner, data_stored in tabData %}
+                {% for Fit_id, Data_id, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type, feature, Fits_owner, data_stored in tabData %}
 
                 <tr>
                     {% if not feature %}
@@ -84,7 +84,7 @@
                   </thead>
                   <tbody>
 
-                  {% for Fit_id, Data_id, FileUrl, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type, feature, Fits_owner, data_stored in tabData %}
+                  {% for Fit_id, Data_id, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type, feature, Fits_owner, data_stored in tabData %}
 
                     {% if user.id == Fits_owner %}
                       <tr>
@@ -96,16 +96,23 @@
 
                             {% if type != 'photometry_cpcs' %}
                                 {% if data_stored == True %}
-                                    <td><div title="{{File}}"><a href="/data/{{ FileUrl }}">{{ File|truncatechars:15 }}</a></div></td>
-                                  {% else %}
-                                    <td><div title="{{File}}">{{ File|truncatechars:15 }}</div></td>
+                                    {% if type != 'photometry_cpcs' %}
+                                        {% if type == 'fits_file' %}
+                                            <td><div title="{{File}}"><a href="{% url 'fits_download' file_id=Data_id %} ">{{ File|truncatechars:15 }}</a></div></td>
+                                        {% else %}
+                                            <td><div title="{{File}}"><a href="{% url 'data_download' file_id=Data_id %} ">{{ File|truncatechars:15 }}</a></div></td>
+                                        {% endif %}
+                                    {% endif %}
+                                {% else %}
+                                     <td><div title="{{File}}">{{ File|truncatechars:15 }}</div></td>
                                 {% endif %}
+
                           {% else %}
                               <td></td>
-                            {% endif %}
+                          {% endif %}
 
                             {% if Photometry != None %}
-                                <td><div title="{{Photometry}}"><a href="/data/{{ PhotometryUrl }}">{{ Photometry|truncatechars:10 }}</a></div></td>
+                                <td><div title="{{Photometry}}"><a href="{% url 'photometry_download' file_id=Fit_id %}">{{ Photometry|truncatechars:10 }}</a></div></td>
                             {% else %}
                                 <td></td>
                             {% endif %}

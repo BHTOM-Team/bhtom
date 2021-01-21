@@ -89,12 +89,8 @@ except:
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'u&amp;!)0%2f^l3n#g+#7ldg7xf)&amp;#eg79n+0gf0c@_v&amp;8wc9vp-3f'
 
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -103,7 +99,7 @@ EMAIL_HOST_USER = TOMEMAIL
 EMAIL_HOST_PASSWORD = TOMEMAILPASSWORD
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 #SESSION_COOKIE_SECURE = True
 #SECURE_SSL_REDIRECT = True
 #X_FRAME_OPTIONS = 'DENY'
@@ -113,7 +109,7 @@ DEBUG = True
 #SECURE_HSTS_PRELOAD  = True
 #SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 #SECURE_HSTS_SECONDS = 3600
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['dev.bh-tom.astrolabs.pl',]
 #ALLOWED_HOSTS = ['bh-tom.astrolabs.pl']
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 
@@ -261,15 +257,10 @@ DATE_FORMAT = 'Y-m-d'
 STATIC_URL = '/bhtom/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, '_static/')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-#STATICFILES_DIRS  = ['/Users/wyrzykow/settings/bhtom/static/']
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'bhtom/static')]
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'data/')
 MEDIA_URL = '/data/'
-
-# STATIC_URL = '/static/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
-# MEDIA_URL = '/data/'
 
 LOGGING = {
     'version': 1,
@@ -458,11 +449,6 @@ THUMBNAIL_DEFAULT_SIZE = (200, 200)
 
 HINTS_ENABLED = True
 HINT_LEVEL = 20
-
-try:
-    from local_settings import * # noqa
-except ImportError:
-    pass
 
 #TOM Toolkit 1.4 requires
 TARGET_PERMISSIONS_ONLY = True
