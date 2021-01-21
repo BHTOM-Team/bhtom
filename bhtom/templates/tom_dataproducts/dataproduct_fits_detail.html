@@ -153,7 +153,11 @@
           </tr>
            <tr>
             <td>Comment</a></td>
-              <td>{{ fits.comment }}</td>
+               {% if fits.comment != None %}
+                    <td>{{ fits.comment }}</td>
+               {% else %}
+                    <td></td>
+               {% endif %}
           </tr>
 <!--
           {% if tabData.fits_url is not None %}
