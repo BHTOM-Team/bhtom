@@ -535,6 +535,7 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
                     if response.status_code == 200:
                         with open(url_base, 'wb') as f:
                             f.write(response.content)
+                        with open(url_base, "rb") as f:
                             encoded_string = base64.b64encode(f.read())
                         context['cpcs_plot'] = str(encoded_string, "utf-8")
                     else:
