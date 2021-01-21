@@ -514,14 +514,15 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
         data_product = DataProduct.objects.get(id=fits.dataproduct_id.id)
         tabData = {}
         filter = ''
-
-        if fits.cpcs_plot is None or fits.cpcs_plot == '':
+        logger.info(fits.cpcs_plot)
+        if fits.cpcs_plot is not None and fits.cpcs_plot != '':
             if fits.allow_upload == False:
                 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
                 url_base = BASE + '/data/png/'
+
                 if not os.path.exists(url_base):
                     os.makedirs(url_base)
-                url_base = url_base + fits.followupId + '.png'
+                url_base = url_base + str(fits.followupId) + '.png'
 
                 try:
                     with open(url_base, "rb") as image_file:
@@ -567,6 +568,7 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
         context['Observatory'] = observatory
         context['data_product'] = data_product
         context['tabData'] = tabData
+        context['data_stored'] = fits.data_stored
 
         return context
 
