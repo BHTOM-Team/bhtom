@@ -99,7 +99,7 @@ EMAIL_HOST_USER = TOMEMAIL
 EMAIL_HOST_PASSWORD = TOMEMAILPASSWORD
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 #SESSION_COOKIE_SECURE = True
 #SECURE_SSL_REDIRECT = True
 #X_FRAME_OPTIONS = 'DENY'
@@ -259,7 +259,7 @@ STATIC_URL = '/bhtom/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, '_static/')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'bhtom/static')]
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'data/')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'data')
 MEDIA_URL = '/data/'
 
 LOGGING = {

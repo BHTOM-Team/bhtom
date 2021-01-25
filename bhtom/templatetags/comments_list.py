@@ -130,19 +130,15 @@ class RenderCommentListNode(CommentListNode):
     def handle_token(cls, parser, token):
         """Class method to parse render_comment_list and return a Node."""
         tokens = token.split_contents()
-        logger.info(tokens)
         if tokens[1] != 'for':
-            logger.info("a")
             raise template.TemplateSyntaxError("Second argument in %r tag must be 'for'" % tokens[0])
 
         # {% render_comment_list for obj %}
         if len(tokens) == 3:
-            logger.info("b")
             return cls(object_expr=parser.compile_filter(tokens[2]))
 
         # {% render_comment_list for app.models pk %}
         elif len(tokens) == 4:
-            logger.info("c")
             return cls(
                 ctype=BaseCommentNode.lookup_content_type(tokens[2], tokens[0]),
                 object_pk_expr=parser.compile_filter(tokens[3])
@@ -150,10 +146,7 @@ class RenderCommentListNode(CommentListNode):
 
     def render(self, context):
         ctype, object_pk = self.get_target_ctype_pk(context)
-        logger.info("d")
-        logger.info(object_pk)
         if object_pk:
-            logger.info("r")
             template_search_list = [
                 "tom_common/partials/%s/%s/list.html" % (ctype.app_label, ctype.model),
                 "tom_common/partials/%s/list.html" % ctype.app_label,
