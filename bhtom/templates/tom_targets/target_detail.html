@@ -1,6 +1,6 @@
 {% extends 'tom_common/base.html' %}
 {% load dataproduct_extras %}
-{% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras target_data_with_permissions data_upload publication_extras static cache %}
+{% load comments bootstrap4 tom_common_extras comments_list targets_extras observation_extras dataproduct_extras target_data_with_permissions data_upload publication_extras static cache %}
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">

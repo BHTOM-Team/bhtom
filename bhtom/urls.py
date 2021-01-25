@@ -33,7 +33,7 @@ from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView, Ta
 from bhtom.views import DeleteObservatory, UpdateObservatory, ObservatoryList, CreateObservatory
 from bhtom.views import DeleteInstrument, UpdateInstrument, CreateInstrument, DataProductDeleteView
 from bhtom.views import RegisterUser, DataProductFeatureView, UserUpdateView, photometry_download, fits_download
-from bhtom.views import data_download
+from bhtom.views import data_download, CommentDeleteView
 
 router = routers.DefaultRouter()
 router.register('upload', views.fits_upload)
@@ -57,7 +57,7 @@ urlpatterns = [
     path('bhlist/<int:pk>/download-spectroscopy', TargetDownloadSpectroscopyDataView.as_view(), name='bhlist_download_spectroscopy_data'),
     path('bhlist/grouping/', TargetGroupingView.as_view(), name='targetgrouping'),
     path('bhlist/<int:pk_target>/file/<int:pk>/delete/', DataProductDeleteView.as_view(), name='data_delete'),
-
+    path('bhlist/<int:pk_target>/comment/<int:pk>/delete', CommentDeleteView.as_view(), name='comment_delete'),
     path('', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('dataUpload/', DataProductUploadView.as_view(), name='data_upload'),
@@ -74,7 +74,8 @@ urlpatterns = [
 
     path('download/fits/<int:file_id>/', fits_download.as_view(), name='fits_download'),
     path('download/photometry/<int:file_id>/', photometry_download.as_view(), name='photometry_download'),
-    path('download/data/<int:file_id>/', data_download.as_view(), name='data_download')
+    path('download/data/<int:file_id>/', data_download.as_view(), name='data_download'),
+
     # The static helper below only works in development see
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
  ]
