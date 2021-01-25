@@ -41,6 +41,7 @@ def get_tns_id(target: Target) -> Optional[str]:
     import json
 
     try:
+
         target_url: str = f'{settings.TNS_URL}/search'
         api_key: str = settings.TNS_API_KEY
 
@@ -56,7 +57,7 @@ def get_tns_id(target: Target) -> Optional[str]:
                        ('data', (None, json.dumps(OrderedDict(search_json))))]
         # search obj using request module
         response = requests.post(target_url, files=search_data)
-
+        logger.info('TNS respnse: ' + response.content)
         response_data: Dict[str, str] = json.loads(response.content.decode("utf-8"))['data']['reply'][0]
         return f'{response_data["prefix"]}{response_data["objname"]}'
     except Exception as e:

@@ -99,7 +99,7 @@ EMAIL_HOST_USER = TOMEMAIL
 EMAIL_HOST_PASSWORD = TOMEMAILPASSWORD
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 #SESSION_COOKIE_SECURE = True
 #SECURE_SSL_REDIRECT = True
 #X_FRAME_OPTIONS = 'DENY'
@@ -109,7 +109,7 @@ DEBUG = False
 #SECURE_HSTS_PRELOAD  = True
 #SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 #SECURE_HSTS_SECONDS = 3600
-ALLOWED_HOSTS = ['dev.bh-tom.astrolabs.pl',]
+ALLOWED_HOSTS = ['dev.bh-tom.astrolabs.pl', '164.132.150.21']
 #ALLOWED_HOSTS = ['bh-tom.astrolabs.pl']
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 
@@ -144,7 +144,7 @@ INSTALLED_APPS = [
     'captcha',
 ]
 
-SITE_ID = 2
+SITE_ID = 3
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -265,17 +265,33 @@ MEDIA_URL = '/data/'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'console': {
+            'format': '%(name)-12s %(levelname)-8s %(message)s'
+        },
+        'file': {
+            'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+        }
+    },
     'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'log/debug.log',
+            'formatter': 'file'
+        },
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'console'
         }
     },
     'loggers': {
         '': {
-            'handlers': ['console'],
-            'level': 'INFO'
-        }
-    }
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
 }
 
 # Caching
