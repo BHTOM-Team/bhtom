@@ -39,6 +39,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.cache.utils import make_template_fragment_key
 from django.core.cache import cache
+from django_comments.models import Comment
 
 from django.contrib.auth.models import User, Group
 from django.contrib.auth import update_session_auth_hash
@@ -514,7 +515,7 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
         data_product = DataProduct.objects.get(id=fits.dataproduct_id.id)
         tabData = {}
         filter = ''
-        logger.info(fits.cpcs_plot)
+
         if fits.cpcs_plot is not None and fits.cpcs_plot != '':
             if fits.allow_upload == False:
                 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -529,7 +530,7 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
                         encoded_string = base64.b64encode(image_file.read())
                         context['cpcs_plot'] = str(encoded_string, "utf-8")
                 except IOError:
-                    logger.info('Get plot from cpcs')
+                    logger.info('Get plot from cpcs %s' %url_base)
                     url_cpcs = fits.cpcs_plot
                     response = requests.get(url_cpcs, {'hashtag': instrument.hashtag})
                     if response.status_code == 200:
@@ -1141,7 +1142,7 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
             )
 
             observatory.save()
-            logger.info('Send mail')
+            logger.info('Send mail, create new obserwatory:  %s' % str(obsName))
             send_mail('Stworzono nowe obserwatorium', secret.EMAILTEXT_CREATE_OBSERVATORY + str(obsName), settings.EMAIL_HOST_USER,
                       secret.RECIPIENTEMAIL, fail_silently=False)
         except Exception as e:
@@ -1514,7 +1515,7 @@ class photometry_download(PermissionRequiredMixin, View):
 
         if file.photometry_file:
             address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/data/' + format(file.photometry_file)
-            logger.info(address)
+            logger.info('Photometry download address: ' + address)
             try:
                 open(address, 'r')
             except IOError:
@@ -1568,3 +1569,22 @@ class data_download(PermissionRequiredMixin, View):
                 return HttpResponseRedirect('/')
             else:
                 return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+
+class CommentDeleteView(LoginRequiredMixin, DeleteView):
+    """
+    View that handles deletion of a ``Comment``. Requires authentication to call, and authorization to delete.
+    """
+    model = Comment
+    template_name = 'tom_common/partials/comment_confirm_delete.html'
+
+    def get_success_url(self):
+        messages.success(self.request, 'Successfully delete')
+        return reverse_lazy('bhlist_detail', kwargs={'pk': self.kwargs['pk_target']})
+
+    def delete(self, request, *args, **kwargs):
+
+        if request.user == self.get_object().user or request.user.is_superuser:
+            return super().delete(request, *args, **kwargs)
+        else:
+            return HttpResponseForbidden('Not authorized')
