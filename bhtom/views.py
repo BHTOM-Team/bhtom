@@ -701,10 +701,10 @@ class result_fits(viewsets.ModelViewSet):
                 instance.status = 'E'
                 instance.cpcs_time = datetime.now()
                 instance.photometry_file = ccdphot_result
-                if request.query_params.get('status_message'):
-                    instance.status_message = request.query_params.get('status_message')
-                else:
-                    instance.status_message = 'Photometry error'
+               # if request.query_params.get('status_message'):
+                 #   instance.status_message = request.query_params.get('status_message')
+                #else:
+                instance.status_message = 'Photometry error'
                 instance.save()
         except Exception as e:
             logger.error('result_fits error: ' + str(e))
