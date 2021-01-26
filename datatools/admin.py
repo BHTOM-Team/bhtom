@@ -1,6 +1,7 @@
 from django.contrib import admin
 from bhtom.models import BHTomFits, Instrument, Observatory, BHTomUser
 from django.http import FileResponse
+from django.utils.html import format_html
 import os
 
 class BHTomFits_displayField(admin.ModelAdmin):
@@ -31,7 +32,20 @@ class Instrument_displayField(admin.ModelAdmin):
     get_obsName.short_description = 'observatory name'
 
 class Observatory_displayField(admin.ModelAdmin):
-    list_display = ('obsName','prefix', 'cpcsOnly', 'obsInfo', 'isVerified', 'comment')
+    list_display = ('obsName','prefix', 'cpcsOnly', 'get_obsInfo', 'get_fits', 'isVerified', 'comment')
+
+    def get_obsInfo(self, obj):
+        if obj.obsInfo:
+            return format_html("<a href='/datatools/download/obsInfo/%s'>" %obj.obsName + str(obj.obsName) + "</a>")
+    get_obsInfo.short_description = 'ObsInfo'
+    get_obsInfo.allow_tags = True
+
+    def get_fits(self, obj):
+        if obj.fits:
+            return format_html("<a href='/datatools/download/obsFits/%s'>" %obj.obsName + str(obj.fits).split('/')[-1] + "</a>")
+    get_fits.short_description = 'Sample fits'
+    get_fits.allow_tags = True
+
 
 class BHTomUser_displayField(admin.ModelAdmin):
     list_display = ('get_user', 'get_firstName', 'get_lastName', 'get_email', 'latex_name','latex_affiliation',

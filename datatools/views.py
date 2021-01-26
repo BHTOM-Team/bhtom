@@ -1,15 +1,16 @@
 #based on https://github.com/TOMToolkit/tom_base/blob/master/tom_dataproducts/views.py
 from io import StringIO
+import os
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.management import call_command
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, FileResponse
 from django.views.generic.base import RedirectView
 from tom_targets.models import Target
 
-from bhtom.models import BHTomUser
+from bhtom.models import BHTomUser, Observatory
 from typing import List, Dict, Optional
 
 
@@ -175,3 +176,67 @@ class FetchTargetNames(LoginRequiredMixin, RedirectView):
         """
         referer = self.request.META.get('HTTP_REFERER', '/')
         return referer
+
+class obsInfo_download(RedirectView):
+
+    def handle_no_permission(self):
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def has_permission(self):
+        if not self.request.user.is_authenticated or not request.user.is_staff:
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
+
+    def get(self, request, *args, **kwargs):
+        try:
+            obs = Observatory.objects.get(obsName=self.kwargs['id'])
+        except Observatory.DoesNotExist:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+        if obs.obsInfo:
+            address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/data/' + format(obs.obsInfo)
+            return FileResponse(open(address, 'rb'), as_attachment=True)
+        else:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+class observatory_fits_download(RedirectView):
+
+    def handle_no_permission(self):
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def has_permission(self):
+        if not self.request.user.is_authenticated or not request.user.is_staff:
+            messages.error(self.request, secret.NOT_PERMISSION)
+            return False
+        return True
+
+    def get(self, request, *args, **kwargs):
+        try:
+            obs = Observatory.objects.get(obsName=self.kwargs['id'])
+        except Observatory.DoesNotExist:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+        if obs.obsInfo:
+            address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/data/' + format(obs.fits)
+            return FileResponse(open(address, 'rb'), as_attachment=True)
+        else:
+            if self.request.META.get('HTTP_REFERER') is None:
+                return HttpResponseRedirect('/')
+            else:
+                return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
