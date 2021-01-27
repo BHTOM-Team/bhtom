@@ -186,9 +186,10 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
 
     if instance.hashtag == None or instance.hashtag == '' and observatory.cpcsOnly == False:
         try:
+            obsName = observatory.obsName + ', ' + instance.user_id.first_name + ' ' + instance.user_id.last_name
 
             response = requests.post(url_cpcs,
-                                     {'obsName': observatory.obsName, 'lon': observatory.lon, 'lat': observatory.lat,
+                                     {'obsName': obsName, 'lon': observatory.lon, 'lat': observatory.lat,
                                       'allow_upload': 1,
                                       'prefix': secret.CPCS_PREFIX_HASTAG + observatory.prefix + '_' + str(instance.user_id) + '_',
                                       'hashtag': secret.CPCS_Admin_Hashtag})
