@@ -63,21 +63,20 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
                                                     matchDist=matching_radius, priority=priority,
                                                     comment=comment, data_stored=True)
 
-                logger.info("priorytet: " + str(priority))
-                #response = requests.post(secret.CCDPHOTD_URL,
-              #                           {'job_id': instance.file_id, 'instrument': observatory.obsName,
-               #                           'webhook_id': secret.CCDPHOTD_WEBHOOK_ID, 'priority': priority,
-               #                           'instrument_prefix': observatory.prefix}, files={'fits_file': file})
-              #  if response.status_code == 201:
-              #      instance.status = 'S'
-              #      instance.status_message = 'Sent to photometry'
-               #     instance.save()
-               # else:
-                #    error_message = 'CCDPHOTD error: %s' % response.status_code
-                  #  logger.info(error_message)
-                 #   instance.status = 'E'
-                  #  instance.status_message = error_message
-                  #  instance.save()
+                response = requests.post(secret.CCDPHOTD_URL,
+                                         {'job_id': instance.file_id, 'instrument': observatory.obsName,
+                                          'webhook_id': secret.CCDPHOTD_WEBHOOK_ID, 'priority': priority,
+                                          'instrument_prefix': observatory.prefix}, files={'fits_file': file})
+                if response.status_code == 201:
+                    instance.status = 'S'
+                    instance.status_message = 'Sent to photometry'
+                    instance.save()
+                else:
+                    error_message = 'CCDPHOTD error: %s' % response.status_code
+                    logger.info(error_message)
+                    instance.status = 'E'
+                    instance.status_message = error_message
+                    instance.save()
 
             except Exception as e:
                 logger.error('data_product_post_upload_fits_file error: ' + str(e))
