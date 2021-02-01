@@ -636,7 +636,6 @@ class fits_upload(viewsets.ModelViewSet):
             if dp_type == 'fits_file':
                 time_threshold = timezone.now() - timedelta(days=1)
                 fits_quantity = BHTomFits.objects.filter(start_time__gte=time_threshold).count()
-                logger.info(str(fits_quantity))
                 fits_quantity = fits_quantity*10
         except Exception as e:
             logger.error('data upload error: ' + str(e))
