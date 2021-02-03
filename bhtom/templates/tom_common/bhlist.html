@@ -34,7 +34,7 @@
 <!-- display events-->
     <label id="displaySelected"></label>
     <button id="optionSelectAll" type="button" class="btn btn-link" onClick="select_all({{ target_count }})"></button>
-    <form >
+    <form id="grouping-form" action="{% url 'targets:add-remove-grouping' %}" method="POST">
         {% csrf_token %}
 
   <div class="form-group d-flex justify-content-end align-items-baseline">
