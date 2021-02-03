@@ -95,6 +95,7 @@ class BHTomFits(models.Model):
     data_stored = models.BooleanField(default='False')
     survey = models.CharField(max_length=255, null=True, blank=True)
     cpsc_filter = models.CharField(max_length=10, null=True, blank=True)
+    priority = models.IntegerField(max_length=4, null=True, blank=True, editable=False)
 
     comment = models.TextField(null=True, blank=True)
 

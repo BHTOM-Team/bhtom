@@ -1,5 +1,5 @@
 from astropy.time import Time
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import StringIO
 import json
 import os
@@ -49,6 +49,7 @@ from django.db import transaction
 from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
 from django.utils.safestring import mark_safe
+from django.utils import timezone
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
@@ -591,6 +592,7 @@ class fits_upload(viewsets.ModelViewSet):
 
         self.check_permissions(request)
         observatory, MJD, ExpTime, dryRun, matchDist, comment = None, None, None, None, None, None
+        fits_quantity = None
 
         try:
             observation_filter = request.data.get('filter')
@@ -631,7 +633,10 @@ class fits_upload(viewsets.ModelViewSet):
                 ExpTime = request.data.get('ExpTime')
                 if MJD is None or ExpTime is None:
                     return Response(status=status.HTTP_400_BAD_REQUEST)
-
+            if dp_type == 'fits_file':
+                time_threshold = timezone.now() - timedelta(days=1)
+                fits_quantity = BHTomFits.objects.filter(start_time__gte=time_threshold).count()
+                fits_quantity = fits_quantity*10
         except Exception as e:
             logger.error('data upload error: ' + str(e))
             return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -649,7 +654,7 @@ class fits_upload(viewsets.ModelViewSet):
 
             try:
                 run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun,
-                         matchDist, comment, user)
+                         matchDist, comment, user, fits_quantity)
 
                 run_data_processor(dp)
                 successful_uploads.append(str(dp))
@@ -798,7 +803,7 @@ class DataProductUploadView(FormView):
             dp.save()
 
             try:
-                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun, matchDist, comment, user)
+                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun, matchDist, comment, user, -100)
 
                 #if dp.data_product_type == 'photometry':
                 run_data_processor(dp)
