@@ -276,3 +276,22 @@ def BHTomUser_pre_save(sender, instance, **kwargs):
             if user_email is not None:
                 send_mail(secret.EMAILTET_ACTIVATEUSER_TITLE, secret.EMAILTET_ACTIVATEUSER,
                           settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)
+
+@receiver(pre_save, sender=Observatory)
+def Observatory_pre_save(sender, instance, **kwargs):
+    try:
+        observatory_old = Observatory.objects.get(id=instance.pk)
+    except Observatory.DoesNotExist:
+        observatory_old = None
+
+    user_email = None
+    if observatory_old is not None:
+        if observatory_old.isVerified == False and instance.isVerified == True and instance.user is not None:
+            try:
+                user_email = User.objects.get(id=instance.user.id)
+            except BHTomFits.DoesNotExist:
+                user_email = None
+            logger.info(user_email.email)
+            if user_email is not None:
+                send_mail(secret.EMAILTEXT_ACTIVATEOBSERVATORY_TITLE, secret.EMAILTEXT_ACTIVATEOBSERVATORY,
+                          settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)

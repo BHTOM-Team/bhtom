@@ -1143,7 +1143,8 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
                     prefix=prefix,
                     cpcsOnly=cpcsOnly,
                     fits=fits,
-                    obsInfo=obsInfo
+                    obsInfo=obsInfo,
+                    user=user
             )
 
             observatory.save()
