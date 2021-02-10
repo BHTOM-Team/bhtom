@@ -428,11 +428,6 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
         :rtype: subclass of TargetCreateForm
         """
         form = super().get_form(*args, **kwargs)
-        if self.request.user.is_superuser:
-            form.fields['groups'].queryset = Group.objects.all()
-        else:
-            form.fields['groups'].queryset = self.request.user.groups.all()
-        return form
 
 class TargetDeleteView(PermissionRequiredMixin, DeleteView):
     """
