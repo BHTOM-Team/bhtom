@@ -295,3 +295,27 @@ def Observatory_pre_save(sender, instance, **kwargs):
             if user_email is not None:
                 send_mail(secret.EMAILTEXT_ACTIVATEOBSERVATORY_TITLE, secret.EMAILTEXT_ACTIVATEOBSERVATORY,
                           settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)
+
+def create_target_in_cpcs(user, instance):
+    logger.info('Create target in cpcs: %s', instance.name)
+    url_cpcs = secret.CPCS_URL + 'newevent'
+    hastag = None
+
+    try:
+        hastag = Instrument.objects.filter(user_id=user.id).exclude(hashtag__isnull=True).first().hashtag
+
+        if hastag is not None and hastag != '' and instance.extra_fields['calib_server_name'] != '':
+
+           response = requests.post(url_cpcs, {'id': instance.extra_fields['calib_server_name'],
+                                                'ra': instance.ra, 'dec': instance.ra,
+                                                'hashtag': hastag,
+                                                'outputFormat': 'json'})
+
+           if response.status_code == 201 or response.status_code == 200:
+               logger.info('Successfully created target')
+           else:
+               error_message = 'Cpcs error: %s' % response.content.decode()
+               logger.info(error_message)
+
+    except Exception as e:
+        logger.error('Create_target_in_cpcs error: ' + str(e))
