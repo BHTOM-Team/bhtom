@@ -306,7 +306,7 @@ def create_target_in_cpcs(user, instance):
 
         if hastag is not None and hastag != '' and instance.extra_fields['calib_server_name'] != '':
 
-           response = requests.post(url_cpcs, {'id': instance.extra_fields['calib_server_name'],
+           response = requests.post(url_cpcs, {'EventID': instance.extra_fields['calib_server_name'],
                                                 'ra': instance.ra, 'dec': instance.ra,
                                                 'hashtag': hastag,
                                                 'outputFormat': 'json'})
