@@ -297,7 +297,7 @@ def Observatory_pre_save(sender, instance, **kwargs):
                           settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)
 
 def create_target_in_cpcs(user, instance):
-    logger.info('Create target in cpcs: %s', instance.name)
+    logger.info('Create target in cpcs: %s', instance.extra_fields['calib_server_name'])
     url_cpcs = secret.CPCS_URL + 'newevent'
     hastag = None
 
@@ -312,7 +312,7 @@ def create_target_in_cpcs(user, instance):
                                                 'outputFormat': 'json'})
 
            if response.status_code == 201 or response.status_code == 200:
-               logger.info('Successfully created target')
+               logger.info('Successfully created target, user: %s' %user)
            else:
                error_message = 'Cpcs error: %s' % response.content.decode()
                logger.info(error_message)

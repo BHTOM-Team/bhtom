@@ -313,16 +313,6 @@ class TargetForm(forms.ModelForm):
                             key=field['name'],
                             defaults={'value': self.cleaned_data[field['name']]}
                     )
-            # Save groups for this target
-            for group in self.cleaned_data['groups']:
-                assign_perm('tom_targets.view_target', group, instance)
-                assign_perm('tom_targets.change_target', group, instance)
-                assign_perm('tom_targets.delete_target', group, instance)
-            for group in get_groups_with_perms(instance):
-                if group not in self.cleaned_data['groups']:
-                    remove_perm('tom_targets.view_target', group, instance)
-                    remove_perm('tom_targets.change_target', group, instance)
-                    remove_perm('tom_targets.delete_target', group, instance)
 
         return instance
 
