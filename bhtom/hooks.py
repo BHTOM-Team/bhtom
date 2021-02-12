@@ -303,12 +303,13 @@ def create_target_in_cpcs(user, instance):
 
     try:
         hastag = Instrument.objects.filter(user_id=user.id).exclude(hashtag__isnull=True).first().hashtag
-
+        url = secret.url + 'bhlist/' + str(instance.id) + '/'
+        logger.info(url)
         if hastag is not None and hastag != '' and instance.extra_fields['calib_server_name'] != '':
 
            response = requests.post(url_cpcs, {'EventID': instance.extra_fields['calib_server_name'],
                                                 'ra': instance.ra, 'dec': instance.ra,
-                                                'hashtag': hastag,
+                                                'hashtag': hastag, 'url': url,
                                                 'outputFormat': 'json'})
 
            if response.status_code == 201 or response.status_code == 200:
