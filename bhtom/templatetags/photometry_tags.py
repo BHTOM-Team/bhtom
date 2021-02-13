@@ -49,6 +49,7 @@ def photometry_for_target(context, target):
         ) for filter_name, filter_values in photometry_data.items()]
     layout = go.Layout(
         yaxis=dict(autorange='reversed'),
+        xaxis=dict(title='UTC time'),
         height=600,
         width=700
     )
