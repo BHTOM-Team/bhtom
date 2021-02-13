@@ -99,7 +99,9 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
             logger.error('data_product_post_upload-photometry_cpcs error: ' + str(e))
             instance.delete()
             raise Exception(str(e))
-    elif dp.data_product_type == 'spectroscopy' or dp.data_product_type == 'photometry':
+    elif dp.data_product_type == 'spectroscopy' \
+            or dp.data_product_type == 'photometry' \
+            or dp.data_product_type == 'photometry_asassn':
         try:
             if dp.data_product_type == 'spectroscopy':
                 # Check if spectroscopy ASCII file contains facility and observation date in the comments

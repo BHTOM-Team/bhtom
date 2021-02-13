@@ -97,13 +97,15 @@ def photometry_for_target_static(context, target, include_aavso):
     """
     photometry_data = {}
     if settings.TARGET_PERMISSIONS_ONLY:
-        datums = ReducedDatum.objects.filter(target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
+        datums = ReducedDatum.objects.filter(target=target, data_type__in=[settings.DATA_PRODUCT_TYPES['photometry'][0],
+                                                                       settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]])
     else:
         datums = get_objects_for_user(context['request'].user,
                                       'tom_dataproducts.view_reduceddatum',
                                       klass=ReducedDatum.objects.filter(
                                           target=target,
-                                          data_type=settings.DATA_PRODUCT_TYPES['photometry'][0]))
+                                          data_type__in=[settings.DATA_PRODUCT_TYPES['photometry'][0],
+                                                     settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]]))
 
     for datum in datums:
         values = json.loads(datum.value)
