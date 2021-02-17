@@ -12,7 +12,7 @@ import base64
 from tom_targets.views import TargetCreateView
 from tom_targets.templatetags.targets_extras import target_extra_field
 from tom_targets.models import Target, TargetList
-from tom_targets.forms import (SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset)
+from bhtom.forms import (SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset)
 from tom_targets.filters import TargetFilter
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
@@ -28,7 +28,7 @@ from rest_framework.response import Response
 from bhtom.filters import TargetFilter
 from bhtom.models import BHTomFits, Observatory, Instrument, BHTomUser, refresh_reduced_data_view, BHTomData
 from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer
-from bhtom.hooks import send_to_cpcs, delete_point_cpcs
+from bhtom.hooks import send_to_cpcs, delete_point_cpcs, create_target_in_cpcs
 from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
 from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
 
@@ -311,6 +311,7 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
             form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
 
+        create_target_in_cpcs(self.request.user, names.instance)
         return redirect('bhlist_detail', pk=form.instance.id)
 
     def get_form(self, *args, **kwargs):
@@ -320,10 +321,6 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
         :rtype: subclass of TargetCreateForm
         """
         form = super().get_form(*args, **kwargs)
-        if self.request.user.is_superuser:
-            form.fields['groups'].queryset = Group.objects.all()
-        else:
-            form.fields['groups'].queryset = self.request.user.groups.all()
         return form
 
 class TargetUpdateView(PermissionRequiredMixin, UpdateView):
@@ -431,11 +428,6 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
         :rtype: subclass of TargetCreateForm
         """
         form = super().get_form(*args, **kwargs)
-        if self.request.user.is_superuser:
-            form.fields['groups'].queryset = Group.objects.all()
-        else:
-            form.fields['groups'].queryset = self.request.user.groups.all()
-        return form
 
 class TargetDeleteView(PermissionRequiredMixin, DeleteView):
     """
@@ -1143,7 +1135,8 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
                     prefix=prefix,
                     cpcsOnly=cpcsOnly,
                     fits=fits,
-                    obsInfo=obsInfo
+                    obsInfo=obsInfo,
+                    user=user
             )
 
             observatory.save()
