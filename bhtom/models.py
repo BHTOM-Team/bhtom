@@ -27,6 +27,7 @@ class Observatory(models.Model):
                                  verbose_name='Matching radius')
     comment = models.TextField(null=True, blank=True)
     isVerified = models.BooleanField(default='False')
+    user = models.ForeignKey(User, models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
         return self.obsName
@@ -95,7 +96,7 @@ class BHTomFits(models.Model):
     data_stored = models.BooleanField(default='False')
     survey = models.CharField(max_length=255, null=True, blank=True)
     cpsc_filter = models.CharField(max_length=10, null=True, blank=True)
-    priority = models.IntegerField(max_length=4, null=True, blank=True, editable=False)
+    priority = models.IntegerField(null=True, blank=True, editable=False)
 
     comment = models.TextField(null=True, blank=True)
 
