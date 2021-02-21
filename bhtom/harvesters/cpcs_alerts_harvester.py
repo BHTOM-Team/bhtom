@@ -101,7 +101,8 @@ def update_cpcs_lc(target):
                     value = {
                         'magnitude': datum_mag,
                         'filter': datum_f,
-                        'error': datum_err
+                        'error': datum_err,
+                        'jd': datum_jd.jd
                     }
                     rd, created = ReducedDatum.objects.get_or_create(
                         timestamp=datum_jd.to_datetime(timezone=TimezoneInfo()),
