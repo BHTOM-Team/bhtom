@@ -1,12 +1,14 @@
-import mimetypes
 import json
+import mimetypes
 
 from astropy import units
 from astropy.io import ascii
 from astropy.time import Time, TimezoneInfo
-
 from tom_dataproducts.data_processor import DataProcessor
 from tom_dataproducts.exceptions import InvalidFileFormatException
+from tom_targets.models import Target
+
+from datatools.utils.hjd_to_jd import hjd_to_jd
 
 
 class ASASSNPhotometryProcessor(DataProcessor):
@@ -44,22 +46,32 @@ class ASASSNPhotometryProcessor(DataProcessor):
         """
 
         photometry = []
+        target: Target = data_product.target
+        ra: float = target.ra
+        dec: float = target.dec
 
         data = ascii.read(data_product.data.path)
         if len(data) < 1:
             raise InvalidFileFormatException('Empty table or invalid file type')
 
         for datum in data:
-            time = Time(float(datum['hjd']), format='jd')
-            utc = TimezoneInfo(utc_offset=0*units.hour)
-            time.format = 'datetime'
-            value = {
-                'timestamp': time.to_datetime(timezone=utc),
-                'magnitude': datum['mag'],
-                'camera': datum['camera'],
-                'filter': f'{datum["filter"]}/ASAS-SN',
-                'error': datum['mag err']
-            }
-            photometry.append(value)
+            try:
+                hjd: Time = datum['hjd']
+                jd: Time = Time(hjd_to_jd(hjd, ra, dec)[0], format='jd')
+
+                utc = TimezoneInfo(utc_offset=0 * units.hour)
+                jd.format = 'datetime'
+                value = {
+                    'timestamp': jd.to_datetime(timezone=utc),
+                    'magnitude': datum['mag'],
+                    'camera': datum['camera'],
+                    'filter': f'{datum["filter"]}/ASAS-SN',
+                    'error': datum['mag err'],
+                    'jd': jd.jd,
+                    'hjd': hjd
+                }
+                photometry.append(value)
+            except Exception as e:
+                print(e)
 
         return photometry

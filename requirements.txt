@@ -78,6 +78,8 @@ PyQt5==5.14.1
 PyQt5-sip==12.7.0
 pyqtgraph==0.10.0
 pyrsistent==0.15.5
+pytest==6.2.2
+pytest-django==4.1.0
 python-dateutil==2.8.1
 pytz==2019.3
 PyYAML==5.1.2
