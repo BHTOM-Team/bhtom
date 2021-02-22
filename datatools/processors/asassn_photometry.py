@@ -1,5 +1,7 @@
 import json
 import mimetypes
+import re
+from typing import Optional
 
 from astropy import units
 from astropy.io import ascii
@@ -54,24 +56,58 @@ class ASASSNPhotometryProcessor(DataProcessor):
         if len(data) < 1:
             raise InvalidFileFormatException('Empty table or invalid file type')
 
+        if 'hjd' in data.columns:
+            hjd_index: str = 'hjd'
+        elif 'HJD' in data.columns:
+            hjd_index: str = 'HJD'
+        else:
+            raise InvalidFileFormatException('No hjd or HJD in data columns')
+
+        if 'filter' in data.columns:
+            filter_index: str = 'filter'
+        elif 'Filter' in data.columns:
+            filter_index: str = 'Filter'
+        else:
+            raise InvalidFileFormatException('No filter or Filter in data columns')
+
+        if 'mag err' in data.columns:
+            mag_err_index: Optional[str] = 'mag err'
+        elif 'mag_err' in data.columns:
+            mag_err_index: Optional[str] = 'mag_err'
+        else:
+            mag_err_index: Optional[str] = None
+
+        if 'camera' in data.columns:
+            camera_index: Optional[str] = 'camera'
+        elif 'Camera' in data.columns:
+            camera_index: Optional[str] = 'Camera'
+        else:
+            camera_index: Optional[str] = None
+
         for datum in data:
             try:
-                hjd: Time = datum['hjd']
+                hjd: Time = datum[hjd_index]
                 jd: Time = Time(hjd_to_jd(hjd, ra, dec)[0], format='jd')
 
                 utc = TimezoneInfo(utc_offset=0 * units.hour)
                 jd.format = 'datetime'
                 value = {
                     'timestamp': jd.to_datetime(timezone=utc),
-                    'magnitude': datum['mag'],
-                    'camera': datum['camera'],
-                    'filter': f'{datum["filter"]}/ASAS-SN',
-                    'error': datum['mag err'],
+                    'magnitude': self._filter_non_numbers(str(datum['mag'])),
+                    'filter': f'{datum[filter_index]}/ASAS-SN',
                     'jd': jd.jd,
                     'hjd': hjd
                 }
+
+                if camera_index:
+                    value['camera'] = datum[camera_index]
+                if mag_err_index:
+                    value['error'] = self._filter_non_numbers(str(datum[mag_err_index]))
                 photometry.append(value)
             except Exception as e:
-                print(e)
+                raise InvalidFileFormatException(f'Error while processing data: {e}')
 
         return photometry
+
+    def _filter_non_numbers(self, number_str: str) -> float:
+        return float(re.sub('[^0-9\.]', '', number_str))
