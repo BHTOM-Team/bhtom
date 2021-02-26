@@ -97,13 +97,15 @@ def photometry_for_target_static(context, target, include_aavso):
     """
     photometry_data = {}
     if settings.TARGET_PERMISSIONS_ONLY:
-        datums = ReducedDatum.objects.filter(target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
+        datums = ReducedDatum.objects.filter(target=target, data_type__in=[settings.DATA_PRODUCT_TYPES['photometry'][0],
+                                                                       settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]])
     else:
         datums = get_objects_for_user(context['request'].user,
                                       'tom_dataproducts.view_reduceddatum',
                                       klass=ReducedDatum.objects.filter(
                                           target=target,
-                                          data_type=settings.DATA_PRODUCT_TYPES['photometry'][0]))
+                                          data_type__in=[settings.DATA_PRODUCT_TYPES['photometry'][0],
+                                                     settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]]))
 
     for datum in datums:
         values = json.loads(datum.value)
@@ -113,7 +115,7 @@ def photometry_for_target_static(context, target, include_aavso):
         photometry_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
 
     figure: plt.Figure = plt.figure(figsize=(9, 6))
-    ax = figure.add_axes((0.1, 0.1, 0.7, 0.8))
+    ax = figure.add_axes((0.1, 0.15, 0.7, 0.8))
 
     ax.xaxis_date()
     figure.autofmt_xdate()
@@ -142,6 +144,7 @@ def photometry_for_target_static(context, target, include_aavso):
                     label=filter_name)
 
     ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', frameon=True)
+    ax.set_xlabel('UTC time', labelpad=10)
 
     buf: io.BytesIO = io.BytesIO()
     figure.savefig(buf, format='png')

@@ -184,7 +184,8 @@ def update_gaia_lc(target, requesting_user_id):
                 value = {
                     'magnitude': datum_mag,
                     'filter': 'G_Gaia',
-                    'error': 0  # for now
+                    'error': 0,  # for now
+                    'jd': datum_jd.jd
                 }
 
                 rd, created = ReducedDatum.objects.get_or_create(

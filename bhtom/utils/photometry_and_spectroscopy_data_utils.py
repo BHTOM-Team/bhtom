@@ -108,7 +108,9 @@ def save_photometry_data_for_target_to_csv_file(target_id: int) -> Tuple[NamedTe
 
     target: Target = Target.objects.get(pk=target_id)
     datums: ViewReducedDatum = ViewReducedDatum.objects.filter(target=target,
-                                                               data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
+                                                               data_type__in=[
+                                                                   settings.DATA_PRODUCT_TYPES['photometry'][0],
+                                                                   settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]])
 
     columns: List[str] = ['JD', 'Magnitude', 'Error', 'Facility', 'Filter', 'Owner']
     data: List[List[Any]] = []
