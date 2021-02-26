@@ -304,7 +304,7 @@ def create_target_in_cpcs(user, instance):
     try:
         hastag = Instrument.objects.filter(user_id=user.id).exclude(hashtag__isnull=True).first().hashtag
         url = secret.url + 'bhlist/' + str(instance.id) + '/'
-        logger.info(url)
+
         if hastag is not None and hastag != '' and instance.extra_fields['calib_server_name'] != '':
 
            response = requests.post(url_cpcs, {'EventID': instance.extra_fields['calib_server_name'],
