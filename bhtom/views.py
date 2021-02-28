@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import os.path
+import time
 from datetime import datetime, timedelta
 from io import StringIO
 
@@ -37,6 +38,7 @@ from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from selenium import webdriver
+from selenium.common.exceptions import InvalidSessionIdException
 from tom_common.hints import add_hint
 from tom_common.hooks import run_hook
 from tom_dataproducts.data_processor import run_data_processor
@@ -931,24 +933,28 @@ class TargetDownloadSpectroscopyDataView(PermissionRequiredMixin, View):
 
 class TargetPrefilledAsassn(View):
 
-    def get(self, request, *args, **kwargs):
+    browser = None
 
+    def get(self, request, *args, **kwargs):
         target: Target = Target.objects.get(pk=kwargs.get("pk"))
-        browser_info: str = request.META['HTTP_USER_AGENT']
+        browser_info: str = request.META.get('HTTP_USER_AGENT')
 
         if 'Edge' in browser_info:
-            browser = webdriver.Edge()
+            logger.info("Fetching webdriver for Microsoft Edge...")
+            self.browser = webdriver.Edge()
         elif 'Chrome' in browser_info:
-           browser = webdriver.Chrome()
+            logger.info("Fetching webdriver for Google Chrome...")
+            self.browser = webdriver.Chrome()
         elif 'Mozilla' in browser_info:
-            browser = webdriver.Firefox()
+            logger.info("Fetching webdriver for Mozilla Firefox...")
+            self.browser = webdriver.Firefox()
         else:
             messages.error('Unsupported browser. Currently supported: Google Chrome, Microsoft Edge and Mozilla Firefox')
             logger.warning(f'Unsupported browser used for ASAS-SN prefilling: {browser_info}')
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
         try:
-            browser.get(settings.ASASSN_QUERY_URL)
+            self.browser.get(settings.ASASSN_QUERY_URL)
         except Exception as e:
             messages.error(f'Error while opening ASAS-SN form. Please try to query manually: {settings.ASASSN_QUERY_URL}')
             logger.warning(f'Error while opening ASAS-SN form: {e}')
@@ -956,7 +962,8 @@ class TargetPrefilledAsassn(View):
 
         def fill_field(field_name: str, fill_value: float):
             try:
-                elem = browser.find_element_by_id(field_name)
+                logger.info(f'Filling {field_name} field with value {fill_value}')
+                elem = self.browser.find_element_by_id(field_name)
                 elem.clear()
                 elem.send_keys(str(fill_value))
             except Exception as e:
@@ -965,15 +972,33 @@ class TargetPrefilledAsassn(View):
         fill_field('raInput', target.ra)
         fill_field('decInput', target.dec)
 
-        last_reduced_datum: Optional[ReducedDatum] = ReducedDatum.objects.filter(target=target, data_type__in=[
-            settings.DATA_PRODUCT_TYPES['photometry'][0],
-            settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]]).latest('timestamp')
+        try:
+            logger.info(f'Fetching last reduced datum...')
+            last_reduced_datum: Optional[ReducedDatum] = ReducedDatum.objects.filter(target=target, data_type__in=[
+                settings.DATA_PRODUCT_TYPES['photometry'][0],
+                settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]]).latest('timestamp')
 
-        if last_reduced_datum:
-            last_record_datetime: datetime = parser.parse(str(last_reduced_datum.timestamp))
-            days_to_query: int = (datetime.now(tz=timezone.utc) - last_record_datetime).days + 1
-            fill_field('query_duration', days_to_query)
+            if last_reduced_datum:
+                last_record_datetime: datetime = parser.parse(str(last_reduced_datum.timestamp))
+                days_to_query: int = (datetime.now(tz=timezone.utc) - last_record_datetime).days + 1
+                fill_field('query_duration', days_to_query)
+            else:
+                logger.info('No last reduced datum found.')
+        except Exception as e:
+            logger.error(f'Exception while retrieving last reduced datum: {e}')
 
+        start_time = datetime.now()
+        logger.info(f'Starting the timeout check count at {start_time}')
+        # Default timeout: 15 minutes
+        while (datetime.now()-start_time).seconds < 15*60:
+            try:
+                _ = self.browser.window_handles
+            except:
+                logger.info("ASAS-SN browser has been closed.")
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            time.sleep(1)
+
+        logger.info("Timeout encountered")
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
