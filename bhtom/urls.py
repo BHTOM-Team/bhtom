@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.urls import path, include
 
-from .views import BlackHoleListView
+from .views import BlackHoleListView, TargetPrefilledAsassn
 
 from django.contrib import admin
 
@@ -55,6 +55,7 @@ urlpatterns = [
     path('bhlist/<int:pk>/iphotometry', TargetInteractivePhotometryView.as_view(), name='bhlist_i_photometry'),
     path('bhlist/<int:pk>/download-photometry', TargetDownloadPhotometryDataView.as_view(), name='bhlist_download_photometry_data'),
     path('bhlist/<int:pk>/download-spectroscopy', TargetDownloadSpectroscopyDataView.as_view(), name='bhlist_download_spectroscopy_data'),
+    path('bhlist/<int:pk>/open_prefilled_asassn', TargetPrefilledAsassn.as_view(), name='bhlist_open_prefilled_asassn'),
     path('bhlist/grouping/', TargetGroupingView.as_view(), name='targetgrouping'),
     path('bhlist/<int:pk_target>/file/<int:pk>/delete/', DataProductDeleteView.as_view(), name='data_delete'),
     path('bhlist/<int:pk_target>/comment/<int:pk>/delete', CommentDeleteView.as_view(), name='comment_delete'),
