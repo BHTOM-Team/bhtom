@@ -1,61 +1,63 @@
-import base64
-import json
-import logging
-import os
-import os.path
+from astropy.time import Time
 from datetime import datetime, timedelta
 from io import StringIO
-
+import json
+import os
+import os.path
 import numpy as np
+import logging
 import requests
-from astropy.time import Time
-from django.conf import settings
-from django.contrib import messages
-from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
-from django.contrib.auth.models import User, Group
-from django.core.cache import cache
-from django.core.cache.utils import make_template_fragment_key
-from django.core.mail import send_mail
-from django.core.management import call_command
-from django.db import transaction
-from django.http import HttpResponseRedirect, HttpResponseForbidden
-from django.http import HttpResponseServerError, Http404, FileResponse
-from django.shortcuts import redirect
-from django.urls import reverse_lazy, reverse
-from django.utils import timezone
-from django.utils.safestring import mark_safe
-from django.views.generic import View
-from django.views.generic.detail import DetailView
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.views.generic.edit import FormView
-from django.views.generic.list import ListView
-from django_comments.models import Comment
-from django_filters.views import FilterView
-from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
-from rest_framework import viewsets, status
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.response import Response
-from selenium import webdriver
-from tom_common.hints import add_hint
+import base64
+
+from tom_targets.views import TargetCreateView
+from tom_targets.templatetags.targets_extras import target_extra_field
+from tom_targets.models import Target, TargetList
+from bhtom.forms import (SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset)
+from tom_targets.filters import TargetFilter
 from tom_common.hooks import run_hook
+from tom_common.hints import add_hint
+
 from tom_dataproducts.data_processor import run_data_processor
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.models import ReducedDatum, DataProduct
-from tom_targets.models import Target, TargetList
-from tom_targets.templatetags.targets_extras import target_extra_field
-from tom_targets.views import TargetCreateView
+
+from rest_framework import viewsets, status
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.response import Response
 
 from bhtom.filters import TargetFilter
-from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
-from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
-from bhtom.forms import (SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset)
-from bhtom.hooks import send_to_cpcs, delete_point_cpcs, create_target_in_cpcs
 from bhtom.models import BHTomFits, Observatory, Instrument, BHTomUser, refresh_reduced_data_view, BHTomData
 from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializer
+from bhtom.hooks import send_to_cpcs, delete_point_cpcs, create_target_in_cpcs
+from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
+from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
 
-from typing import Optional
-from dateutil import parser
+from django.http import HttpResponseServerError, Http404, FileResponse
+from django.views.generic.edit import FormView
+from django.views.generic import View
+from django.conf import settings
+from django.contrib import messages
+from django.core.cache.utils import make_template_fragment_key
+from django.core.cache import cache
+from django_comments.models import Comment
+
+from django.contrib.auth.models import User, Group
+from django.contrib.auth import update_session_auth_hash
+from django.core.management import call_command
+from django.core.mail import send_mail
+from django.db import transaction
+from django.shortcuts import redirect
+from django.urls import reverse_lazy, reverse
+from django.utils.safestring import mark_safe
+from django.utils import timezone
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views.generic.detail import DetailView
+from django.views.generic.list import ListView
+from django_filters.views import FilterView
+
+from django.http import HttpResponseRedirect
+from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
+from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
 
 try:
     from settings import local_settings as secret
@@ -63,7 +65,6 @@ except ImportError:
     pass
 
 logger = logging.getLogger(__name__)
-
 
 def make_magrecent(all_phot, jd_now):
     all_phot = json.loads(all_phot)
@@ -929,55 +930,8 @@ class TargetDownloadSpectroscopyDataView(PermissionRequiredMixin, View):
             os.remove(tmp.name)
 
 
-class TargetPrefilledAsassn(View):
-
-    def get(self, request, *args, **kwargs):
-
-        target: Target = Target.objects.get(pk=kwargs.get("pk"))
-        browser_info: str = request.META['HTTP_USER_AGENT']
-
-        if 'Edge' in browser_info:
-            browser = webdriver.Edge()
-        elif 'Chrome' in browser_info:
-           browser = webdriver.Chrome()
-        elif 'Mozilla' in browser_info:
-            browser = webdriver.Firefox()
-        else:
-            messages.error('Unsupported browser. Currently supported: Google Chrome, Microsoft Edge and Mozilla Firefox')
-            logger.warning(f'Unsupported browser used for ASAS-SN prefilling: {browser_info}')
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-        try:
-            browser.get(settings.ASASSN_QUERY_URL)
-        except Exception as e:
-            messages.error(f'Error while opening ASAS-SN form. Please try to query manually: {settings.ASASSN_QUERY_URL}')
-            logger.warning(f'Error while opening ASAS-SN form: {e}')
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-        def fill_field(field_name: str, fill_value: float):
-            try:
-                elem = browser.find_element_by_id(field_name)
-                elem.clear()
-                elem.send_keys(str(fill_value))
-            except Exception as e:
-                logger.error(f'Exception when prefillinf ASAS-SN: {e}')
-
-        fill_field('raInput', target.ra)
-        fill_field('decInput', target.dec)
-
-        last_reduced_datum: Optional[ReducedDatum] = ReducedDatum.objects.filter(target=target, data_type__in=[
-            settings.DATA_PRODUCT_TYPES['photometry'][0],
-            settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]]).latest('timestamp')
-
-        if last_reduced_datum:
-            last_record_datetime: datetime = parser.parse(str(last_reduced_datum.timestamp))
-            days_to_query: int = (datetime.now(tz=timezone.utc) - last_record_datetime).days + 1
-            fill_field('query_duration', days_to_query)
-
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-
 class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
+
     template_name = 'tom_targets/target_interactive_photometry.html'
     model = Target
 
