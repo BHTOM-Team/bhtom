@@ -1,5 +1,6 @@
 {% extends 'tom_common/base.html' %}
 {% load dataproduct_extras %}
+{% load dataproduct_extras %}
 {% load comments bootstrap4 tom_common_extras comments_list targets_extras observation_extras dataproduct_extras target_data_with_permissions data_upload publication_extras static cache %}
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
@@ -112,30 +113,38 @@
                title="Update Light Curve" style="float:right; margin-right:10px">Check for new data</a>
           </div>
         </div>
-        <div class="row">
-          <div class="col-md-12">
-            <div class="plot-container">
-              {% photometry_for_target_static target form.aavso_data.value %}
-            </div>
-          </div>
-        </div>
-
-        {% if perms.tom_dataproducts.add_dataproduct %}
           <div class="row">
-            <div class="col-md-12">
-              <button onclick="download_photometry()" class="btn btn-info" role="button">Download photometry data</button>
-            </div>
+              <div class="col-md-12">
+                  <div class="plot-container">
+                      {% photometry_for_target_static target form.aavso_data.value %}
+                  </div>
+              </div>
           </div>
-        {% endif %}
 
-        {% comments_enabled as comments_are_enabled %}
-        <hr/>
-        <h5>Comments</h5>
-        {% if comments_are_enabled %}
-          {% render_comment_list for object %}
-          {% url 'bhlist_detail' object.id as next %}
-          {% if user.is_authenticated %}
-           {% render_comment_form for object %}
+
+          <div class="row">
+              <div class="col-md-9">
+                  {% if perms.tom_dataproducts.add_dataproduct %}
+                      <button onclick="download_photometry()" class="btn btn-info" role="button">Download photometry
+                          data
+                      </button>
+                  {% endif %}
+              </div>
+              <div class="col-md-3">
+                  <a href="{% url 'bhlist_open_prefilled_asassn' target.id %}" class="btn btn-primary"
+                     id="asas-sn_link" style="float:right; margin-right:10px">ASAS-SN form</a>
+              </div>
+          </div>
+
+
+          {% comments_enabled as comments_are_enabled %}
+          <hr/>
+          <h5>Comments</h5>
+          {% if comments_are_enabled %}
+              {% render_comment_list for object %}
+              {% url 'bhlist_detail' object.id as next %}
+              {% if user.is_authenticated %}
+                  {% render_comment_form for object %}
           {% endif %}
         {% endif %}
 
@@ -190,5 +199,16 @@
   function download_spectroscopy() {
     window.open('{% url "bhlist_download_spectroscopy_data" target.id %}')
   }
+
+  window.onload = function() {
+      let user_agent = window.navigator.userAgent;
+      let asassn_link = document.getElementById("asas-sn_link");
+      if ((user_agent.indexOf("Firefox") > -1) || (user_agent.indexOf("Edge") > -1) || (user_agent.indexOf("Chrome") > -1)) {
+          asassn_link.classList.remove("disabled");
+      } else {
+          asassn_link.classList.add("disabled");
+      }
+  };
+
 </script>
 {% endblock %}
