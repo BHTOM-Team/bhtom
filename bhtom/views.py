@@ -256,7 +256,6 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
         """
         return {
             'type': self.get_target_type(),
-            'groups': self.request.user.groups.all(),
             **dict(self.request.GET.items())
         }
 
@@ -418,7 +417,6 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
         :rtype: dict
         """
         initial = super().get_initial()
-        initial['groups'] = get_groups_with_perms(self.get_object())
         return initial
 
     def get_form(self, *args, **kwargs):
@@ -428,7 +426,7 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
         :rtype: subclass of TargetCreateForm
         """
         form = super().get_form(*args, **kwargs)
-
+        return form
 class TargetDeleteView(PermissionRequiredMixin, DeleteView):
     """
     View for deleting a target. Requires authorization.
