@@ -359,12 +359,14 @@ DATA_PRODUCT_TYPES = {
     'fits_file': ('fits_file', 'Fits image for photometric processing'),
     'spectroscopy': ('spectroscopy', 'Spectrum as ASCII'),
     'photometry': ('photometry', 'Photometric time-series (CSV)'),
+    'photometry_asassn': ('photometry_asassn', 'Photometric time-series (ASAS-SN format)')
 
 }
 
 DATA_PROCESSORS = {
-    'photometry': 'tom_dataproducts.processors.photometry_processor.PhotometryProcessor',
+    'photometry': 'datatools.processors.photometry_processor.PhotometryProcessor',
     'spectroscopy': 'tom_dataproducts.processors.spectroscopy_processor.SpectroscopyProcessor',
+    'photometry_asassn': 'datatools.processors.asassn_photometry.ASASSNPhotometryProcessor'
 }
 
 TOM_FACILITY_CLASSES = [

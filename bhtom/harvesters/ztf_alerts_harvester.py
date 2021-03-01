@@ -84,7 +84,8 @@ def update_ztf_lc(target, requesting_user_id):
                 value = {
                     'magnitude': mag,
                     'filter': filters[alert['candidate']['fid']],
-                    'error': emag
+                    'error': emag,
+                    'jd': jd.jd
                 }
                 rd, created = ReducedDatum.objects.get_or_create(
                     timestamp=jd.to_datetime(timezone=TimezoneInfo()),

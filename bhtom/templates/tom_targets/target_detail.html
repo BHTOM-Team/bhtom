@@ -13,7 +13,7 @@
 <div class="row">
   <div class="col-md-4">
     <div id="target-info">
-      {% target_feature object %}
+    <h3>{{ target.name }}</h3>
       {% if object.future_observations %}
       <div class="alert alert-success">
         {{ object.future_observations|length }} upcoming observation{{ object.future_observations|pluralize }}
