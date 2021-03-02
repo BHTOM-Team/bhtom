@@ -73,7 +73,7 @@
         {% observingstrategy_run object %}
         <hr/>
         <h4>Plan</h4>
-        {% if object.type == 'SIDEREAL' %}
+        {% if object.type == 'SIDEREAL'%}
           {% target_plan %}
           {% moon_distance object %}
         {% elif target.type == 'NON_SIDEREAL' %}
