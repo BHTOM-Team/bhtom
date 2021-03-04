@@ -99,7 +99,9 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
             logger.error('data_product_post_upload-photometry_cpcs error: ' + str(e))
             instance.delete()
             raise Exception(str(e))
-    elif dp.data_product_type == 'spectroscopy' or dp.data_product_type == 'photometry':
+    elif dp.data_product_type == 'spectroscopy' \
+            or dp.data_product_type == 'photometry' \
+            or dp.data_product_type == 'photometry_asassn':
         try:
             if dp.data_product_type == 'spectroscopy':
                 # Check if spectroscopy ASCII file contains facility and observation date in the comments
@@ -304,7 +306,7 @@ def create_target_in_cpcs(user, instance):
     try:
         hastag = Instrument.objects.filter(user_id=user.id).exclude(hashtag__isnull=True).first().hashtag
         url = secret.url + 'bhlist/' + str(instance.id) + '/'
-        logger.info(url)
+
         if hastag is not None and hastag != '' and instance.extra_fields['calib_server_name'] != '':
 
            response = requests.post(url_cpcs, {'EventID': instance.extra_fields['calib_server_name'],

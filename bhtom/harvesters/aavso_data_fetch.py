@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 
 import pandas as pd
 import requests as req
-from astropy.time import Time
+from astropy.time import Time, TimezoneInfo
 from django.conf import settings
 from django.core.cache import cache
 from tom_dataproducts.models import ReducedDatum
@@ -15,6 +15,8 @@ from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointEx
 accepted_valid_flags: List[str] = ['V', 'Z']
 filters: List[str] = ['V', 'I', 'R']
 source_name: str = 'AAVSO'
+
+timezone_info: TimezoneInfo = TimezoneInfo()
 
 
 def fetch_aavso_photometry(target: Target,
@@ -65,7 +67,7 @@ def save_row_to_db(target_id: int,
         data_type="photometry",
         source_name=source_name,
         source_location=url,
-        timestamp=Time(row["JD"], format="jd").to_datetime(),
+        timestamp=Time(row["JD"], format="jd", scale="utc").to_datetime(timezone=timezone_info),
         value=to_json_value(row),
         target_id=target_id
     )
@@ -87,5 +89,6 @@ def to_json_value(row: pd.Series):
     return json.dumps({
         "magnitude": row["mag"],
         "filter": "%s/AAVSO" % row["band"],
-        "error": row["uncert"]
+        "error": row["uncert"],
+        "jd": row["JD"]
     })

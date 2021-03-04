@@ -4,6 +4,8 @@ function dataProductSelect() {
     var data_type_1 = document.getElementById("id_data_product_type_1").checked;
     var data_type_2 = document.getElementById("id_data_product_type_2").checked;
     var data_type_3 = document.getElementById("id_data_product_type_3").checked;
+    var data_type_4 = document.getElementById("id_data_product_type_4").checked;
+
     var mjd = document.getElementById("mjd");
     var ExpTime = document.getElementById("ExpTime");
     var matchDist = document.getElementById("id_matchDist");
@@ -45,7 +47,7 @@ function dataProductSelect() {
 
     }
 
-    if (data_type_2 == true || data_type_3 == true){
+    if (data_type_2 == true || data_type_3 == true || data_type_4 == true){
 
         mjd.removeAttribute("required");
         ExpTime.removeAttribute("required");

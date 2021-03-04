@@ -1,11 +1,12 @@
 import json
+import logging
+
 import plotly.graph_objs as go
 from django import template
 from django.conf import settings
 from guardian.shortcuts import get_objects_for_user
 from plotly import offline
 from tom_dataproducts.models import ReducedDatum
-import logging
 
 logger = logging.getLogger(__name__)
 register = template.Library()
@@ -22,13 +23,15 @@ def photometry_for_target(context, target):
 
     photometry_data = {}
     if settings.TARGET_PERMISSIONS_ONLY:
-        datums = ReducedDatum.objects.filter(target=target, data_type=settings.DATA_PRODUCT_TYPES['photometry'][0])
+        datums = ReducedDatum.objects.filter(target=target, data_type__in=[settings.DATA_PRODUCT_TYPES['photometry'][0],
+                                                                           settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]])
     else:
         datums = get_objects_for_user(context['request'].user,
                                       'tom_dataproducts.view_reduceddatum',
                                       klass=ReducedDatum.objects.filter(
                                           target=target,
-                                          data_type=settings.DATA_PRODUCT_TYPES['photometry'][0]))
+                                          data_type__in=[settings.DATA_PRODUCT_TYPES['photometry'][0],
+                                                         settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]]))
 
     for datum in datums:
         values = json.loads(datum.value)
@@ -49,6 +52,7 @@ def photometry_for_target(context, target):
         ) for filter_name, filter_values in photometry_data.items()]
     layout = go.Layout(
         yaxis=dict(autorange='reversed'),
+        xaxis=dict(title='UTC time'),
         height=600,
         width=700
     )
