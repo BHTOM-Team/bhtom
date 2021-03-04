@@ -109,7 +109,7 @@ DEBUG = False
 #SECURE_HSTS_PRELOAD  = True
 #SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 #SECURE_HSTS_SECONDS = 3600
-ALLOWED_HOSTS = ['dev.bh-tom.astrolabs.pl', '164.132.150.21']
+ALLOWED_HOSTS = ['bh-tom.astrolabs.pl', '164.132.150.21']
 #ALLOWED_HOSTS = ['bh-tom.astrolabs.pl']
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 
