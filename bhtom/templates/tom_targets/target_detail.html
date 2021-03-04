@@ -16,54 +16,55 @@
     <h3>{{ target.name }}</h3>
       {% if object.future_observations %}
       <div class="alert alert-success">
-        {{ object.future_observations|length }} upcoming observation{{ object.future_observations|pluralize }}
+        {{ object.future_observations|length }} upcoming observation {{ object.future_observations|pluralize }}
       </div>
       {% endif %}
 
       {% target_data object %}
       {% if object.type == 'SIDEREAL' %}
-      {% aladin object %}
+        {% aladin object %}
       {% endif %}
     </div>
   </div>
   <div class="col-md-8">
     <ul class="nav nav-tabs" id="tabs">
       {% if perms.tom_targets.view_target %}
-      <li class="nav-item">
-        <span class="nav-link active" data-target="#photometry" data-toggle="tab">Photometry</span>
-      </li>
+        <li class="nav-item">
+          <span class="nav-link active" data-target="#photometry" data-toggle="tab">Photometry</span>
+        </li>
       {% endif %}
       {% if perms.tom_targets.view_target %}
-      <li class="nav-item">
-        <span class="nav-link" data-target="#spectroscopy" data-toggle="tab">Spectroscopy</span>
-      </li>
+        <li class="nav-item">
+          <span class="nav-link" data-target="#spectroscopy" data-toggle="tab">Spectroscopy</span>
+        </li>
       {% endif %}
       {% if perms.tom_dataproducts.add_dataproduct %}
-      <li class="nav-item">
-        <span class="nav-link" data-target="#upload" data-toggle="tab">Upload</span>
-      </li>
+        <li class="nav-item">
+          <span class="nav-link" data-target="#upload" data-toggle="tab">Upload</span>
+        </li>
       {% endif %}
       {% if user.is_staff %}
-      <li class="nav-item">
-        <span class="nav-link" data-target="#observe" data-toggle="tab">Observe</span>
-      </li>
+        <li class="nav-item">
+          <span class="nav-link" data-target="#observe" data-toggle="tab">Observe</span>
+        </li>
       {% endif %}
       {% if user.is_staff %}
-      <li class="nav-item">
-        <span class="nav-link" data-target="#observations" data-toggle="tab">Observations</span>
-      </li>
+        <li class="nav-item">
+          <span class="nav-link" data-target="#observations" data-toggle="tab">Observations</span>
+        </li>
       {% endif %}
       {% if perms.tom_targets.view_target %}
-      <li class="nav-item">
-        <span class="nav-link" data-target="#manage-groups" data-toggle="tab">Manage Groups</span>
-      </li>
+        <li class="nav-item">
+          <span class="nav-link" data-target="#manage-groups" data-toggle="tab">Manage Groups</span>
+        </li>
       {% endif %}
       {% if perms.tom_targets.view_target %}
-       <li class="nav-item">
-        <span class="nav-link" data-target="#data" data-toggle="tab">Data</span>
-      </li>
+         <li class="nav-item">
+          <span class="nav-link" data-target="#data" data-toggle="tab">Data</span>
+        </li>
       {% endif %}
     </ul>
+
     <div class="tab-content">
       {% if user.is_staff %}
       <div class="tab-pane" id="observe">
@@ -73,7 +74,7 @@
         {% observingstrategy_run object %}
         <hr/>
         <h4>Plan</h4>
-        {% if object.type == 'SIDEREAL' %}
+        {% if object.type == 'SIDEREAL'%}
           {% target_plan %}
           {% moon_distance object %}
         {% elif target.type == 'NON_SIDEREAL' %}
@@ -81,6 +82,7 @@
         {% endif %}
       </div>
       {% endif %}
+
       {% if user.is_staff %}
       <div class="tab-pane" id="observations">
         <h4>Observations</h4>
@@ -88,6 +90,7 @@
         {% observation_list object %}
       </div>
       {% endif %}
+
       {% if perms.tom_dataproducts.add_dataproduct %}
       <div class="tab-pane" id="upload">
         {% if user.is_authenticated %}
@@ -95,11 +98,13 @@
         {% endif %}
       </div>
       {% endif %}
+
       {% if perms.tom_targets.view_target %}
       <div class="tab-pane" id="manage-groups">
         {% target_groups target %}
       </div>
       {% endif %}
+
       {% if perms.tom_targets.view_target %}
       <div class="tab-pane active" id="photometry">
         <div class="row menu-row">
@@ -141,6 +146,7 @@
 
       </div>
       {% endif %}
+
       {% if perms.tom_targets.view_target %}
       <div class="tab-pane" id="spectroscopy">
         <div class="plot-container">
@@ -159,11 +165,11 @@
         <hr/>
         <h5>Comments</h5>
         {% if comments_are_enabled %}
-        {% render_comment_list for object %}
-        {% url 'bhlist_detail' object.id as next %}
-        {% if user.is_authenticated %}
-        {% render_comment_form for object %}
-        {% endif %}
+          {% render_comment_list for object %}
+          {% url 'bhlist_detail' object.id as next %}
+          {% if user.is_authenticated %}
+            {% render_comment_form for object %}
+          {% endif %}
         {% endif %}
 
       </div>
@@ -178,17 +184,19 @@
     </div>
   </div>
 </div>
+
 {% endblock %}
+
 {% block extra_javascript %}
-<script type="text/javascript">
-  function open_photometry() {
-    window.open('{% url "bhlist_i_photometry" target.id %}', 'newwindow', 'width=800,height=700');
-  }
-  function download_photometry() {
-    window.open('{% url "bhlist_download_photometry_data" target.id %}')
-  }
-  function download_spectroscopy() {
-    window.open('{% url "bhlist_download_spectroscopy_data" target.id %}')
-  }
+  <script type="text/javascript">
+    function open_photometry() {
+      window.open('{% url "bhlist_i_photometry" target.id %}', 'newwindow', 'width=800,height=700');
+    }
+    function download_photometry() {
+      window.open('{% url "bhlist_download_photometry_data" target.id %}')
+    }
+    function download_spectroscopy() {
+      window.open('{% url "bhlist_download_spectroscopy_data" target.id %}')
+    }
 </script>
 {% endblock %}

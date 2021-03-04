@@ -326,7 +326,7 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
     """
     View that handles updating a target. Requires authorization.
     """
-    permission_required = ('tom_targets.add_target', 'tom_targets.change_target')
+
     model = Target
     fields = '__all__'
 
@@ -344,7 +344,7 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
             messages.error(self.request, secret.NOT_ACTIVATE)
             return False
-        elif not self.request.user.has_perm('tom_targets.add_target', 'tom_targets.change_target'):
+        elif not self.request.user.has_perm('tom_targets.change_target'):
             messages.error(self.request, secret.NOT_PERMISSION)
             return False
         return True
@@ -1434,8 +1434,6 @@ class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
 
 class fits_download(PermissionRequiredMixin, View):
 
-    permission_required = 'tom_dataproducts.view_dataproduct'
-
     def handle_no_permission(self):
         if self.request.META.get('HTTP_REFERER') is None:
             return HttpResponseRedirect('/')
@@ -1476,8 +1474,6 @@ class fits_download(PermissionRequiredMixin, View):
                 return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
 class photometry_download(PermissionRequiredMixin, View):
-
-    permission_required = 'tom_dataproducts.view_dataproduct'
 
     def handle_no_permission(self):
         if self.request.META.get('HTTP_REFERER') is None:
@@ -1524,8 +1520,6 @@ class photometry_download(PermissionRequiredMixin, View):
                 return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
 class data_download(PermissionRequiredMixin, View):
-
-    permission_required = 'tom_dataproducts.view_dataproduct'
 
     def handle_no_permission(self):
         if self.request.META.get('HTTP_REFERER') is None:
