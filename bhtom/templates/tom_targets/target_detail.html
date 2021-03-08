@@ -74,7 +74,7 @@
         {% observingstrategy_run object %}
         <hr/>
         <h4>Plan</h4>
-        {% if object.type == 'SIDEREAL' %}
+        {% if object.type == 'SIDEREAL'%}
           {% target_plan %}
           {% moon_distance object %}
         {% elif target.type == 'NON_SIDEREAL' %}
@@ -117,43 +117,36 @@
                title="Update Light Curve" style="float:right; margin-right:10px">Check for new data</a>
           </div>
         </div>
-          <div class="row">
-              <div class="col-md-12">
-                  <div class="plot-container">
-                      {% photometry_for_target_static target form.aavso_data.value %}
-                  </div>
-              </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="plot-container">
+              {% photometry_for_target_static target form.aavso_data.value %}
+            </div>
           </div>
+        </div>
 
-
+        {% if perms.tom_dataproducts.add_dataproduct %}
           <div class="row">
-              <div class="col-md-9">
-                  {% if perms.tom_dataproducts.add_dataproduct %}
-                      <button onclick="download_photometry()" class="btn btn-info" role="button">Download photometry
-                          data
-                      </button>
-                  {% endif %}
-              </div>
-              <div class="col-md-3">
-                  <a href="{% url 'bhlist_open_prefilled_asassn' target.id %}" class="btn btn-primary"
-                     id="asas-sn_link" style="float:right; margin-right:10px">ASAS-SN form</a>
-              </div>
+            <div class="col-md-12">
+              <button onclick="download_photometry()" class="btn btn-info" role="button">Download photometry data</button>
+            </div>
           </div>
+        {% endif %}
 
-
-          {% comments_enabled as comments_are_enabled %}
-          <hr/>
-          <h5>Comments</h5>
-          {% if comments_are_enabled %}
-              {% render_comment_list for object %}
-              {% url 'bhlist_detail' object.id as next %}
-              {% if user.is_authenticated %}
-                  {% render_comment_form for object %}
+        {% comments_enabled as comments_are_enabled %}
+        <hr/>
+        <h5>Comments</h5>
+        {% if comments_are_enabled %}
+          {% render_comment_list for object %}
+          {% url 'bhlist_detail' object.id as next %}
+          {% if user.is_authenticated %}
+           {% render_comment_form for object %}
           {% endif %}
         {% endif %}
 
       </div>
       {% endif %}
+
       {% if perms.tom_targets.view_target %}
       <div class="tab-pane" id="spectroscopy">
         <div class="plot-container">
@@ -172,11 +165,11 @@
         <hr/>
         <h5>Comments</h5>
         {% if comments_are_enabled %}
-        {% render_comment_list for object %}
-        {% url 'bhlist_detail' object.id as next %}
-        {% if user.is_authenticated %}
-        {% render_comment_form for object %}
-        {% endif %}
+          {% render_comment_list for object %}
+          {% url 'bhlist_detail' object.id as next %}
+          {% if user.is_authenticated %}
+            {% render_comment_form for object %}
+          {% endif %}
         {% endif %}
 
       </div>
@@ -191,28 +184,19 @@
     </div>
   </div>
 </div>
+
 {% endblock %}
+
 {% block extra_javascript %}
-<script type="text/javascript">
-  function open_photometry() {
-    window.open('{% url "bhlist_i_photometry" target.id %}', 'newwindow', 'width=800,height=700');
-  }
-  function download_photometry() {
-    window.open('{% url "bhlist_download_photometry_data" target.id %}')
-  }
-  function download_spectroscopy() {
-    window.open('{% url "bhlist_download_spectroscopy_data" target.id %}')
-  }
-
-  window.onload = function() {
-      let user_agent = window.navigator.userAgent;
-      let asassn_link = document.getElementById("asas-sn_link");
-      if ((user_agent.indexOf("Firefox") > -1) || (user_agent.indexOf("Edge") > -1) || (user_agent.indexOf("Chrome") > -1)) {
-          asassn_link.classList.remove("disabled");
-      } else {
-          asassn_link.classList.add("disabled");
-      }
-  };
-
+  <script type="text/javascript">
+    function open_photometry() {
+      window.open('{% url "bhlist_i_photometry" target.id %}', 'newwindow', 'width=800,height=700');
+    }
+    function download_photometry() {
+      window.open('{% url "bhlist_download_photometry_data" target.id %}')
+    }
+    function download_spectroscopy() {
+      window.open('{% url "bhlist_download_spectroscopy_data" target.id %}')
+    }
 </script>
 {% endblock %}
