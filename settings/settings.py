@@ -474,5 +474,6 @@ TARGET_PERMISSIONS_ONLY = True
 AAVSO_DATA_FETCH_URL = "https://www.aavso.org/vsx/index.php"
 GAIA_ALERT_URL = "http://gsaweb.ast.cam.ac.uk/alerts/alert"
 TNS_URL = "https://www.wis-tns.org/api/get"
+ASASSN_QUERY_URL = "https://asas-sn.osu.edu/"
 
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
