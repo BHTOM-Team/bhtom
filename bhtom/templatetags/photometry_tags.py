@@ -1,12 +1,14 @@
 import json
 import logging
 
+import numpy as np
 import plotly.graph_objs as go
 from django import template
 from django.conf import settings
 from guardian.shortcuts import get_objects_for_user
 from plotly import offline
-from tom_dataproducts.models import ReducedDatum
+
+from bhtom.models import ViewReducedDatum
 
 logger = logging.getLogger(__name__)
 register = template.Library()
@@ -23,22 +25,28 @@ def photometry_for_target(context, target):
 
     photometry_data = {}
     if settings.TARGET_PERMISSIONS_ONLY:
-        datums = ReducedDatum.objects.filter(target=target, data_type__in=[settings.DATA_PRODUCT_TYPES['photometry'][0],
-                                                                           settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]])
+        datums = ViewReducedDatum.objects.filter(target=target,
+                                                 data_type__in=[
+                                                     settings.DATA_PRODUCT_TYPES['photometry'][0],
+                                                     settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]])
+
     else:
         datums = get_objects_for_user(context['request'].user,
-                                      'tom_dataproducts.view_reduceddatum',
-                                      klass=ReducedDatum.objects.filter(
+                                      'bhtom_viewreduceddatum',
+                                      klass=ViewReducedDatum.objects.filter(
                                           target=target,
                                           data_type__in=[settings.DATA_PRODUCT_TYPES['photometry'][0],
                                                          settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]]))
 
     for datum in datums:
         values = json.loads(datum.value)
+        extra_data = json.loads(datum.rd_extra_data) if datum.rd_extra_data is not None else {}
         photometry_data.setdefault(values['filter'], {})
         photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
         photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
         photometry_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
+        photometry_data[values['filter']].setdefault('owner', []).append(extra_data.get('owner', ''))
+        photometry_data[values['filter']].setdefault('facility', []).append(extra_data.get('facility', ''))
 
     plot_data = [
         go.Scatter(
@@ -48,8 +56,11 @@ def photometry_for_target(context, target):
             name=filter_name,
             error_y=dict(type='data',
                          array=filter_values['error'],
-                         visible=True)
+                         visible=True),
+            customdata=np.stack((filter_values['owner'], filter_values['facility']), axis=-1),
+            hovertemplate='Owner: %{customdata[0]} <br>Facility: %{customdata[1]}',
         ) for filter_name, filter_values in photometry_data.items()]
+
     layout = go.Layout(
         yaxis=dict(autorange='reversed'),
         xaxis=dict(title='UTC time'),
