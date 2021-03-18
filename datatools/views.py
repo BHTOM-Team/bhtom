@@ -120,7 +120,8 @@ class FetchTargetNames(LoginRequiredMixin, RedirectView):
             return None
 
     def get(self, request, *args, **kwargs):
-        from .utils.catalog_name_lookup import get_tns_id, get_tns_internal, query_simbad_for_names
+        from .utils.catalog_name_lookup import get_tns_id, get_tns_internal, query_simbad_for_names, \
+            TNSReplyError, TNSConnectionError
 
         target_id = request.GET.get('target_id', None)
         try:
@@ -137,18 +138,28 @@ class FetchTargetNames(LoginRequiredMixin, RedirectView):
             # If there is no TNS ID, it can be fetched from Gaia Alerts website
             # based on the internal name
             if not tns_id:
-                tns_id: Optional[str] = get_tns_id(target)
-                if tns_id:
-                    extras_to_update['TNS_ID'] = tns_id
+                try:
+                    tns_id: Optional[str] = get_tns_id(target)
+                    if tns_id:
+                        extras_to_update['TNS_ID'] = tns_id
+                except TNSConnectionError as e:
+                    messages.error(self.request, e.message)
+                except TNSReplyError as e:
+                    messages.error(self.request, e.message)
 
             # If there is either no Gaia Alerts or ZTF name, these can be fetched from the TNS server
             if tns_id and not (gaia_alert_name and ztf_alert_name):
-                tns_response: Dict[str, str] = get_tns_internal(tns_id)
+                try:
+                    tns_response: Dict[str, str] = get_tns_internal(tns_id)
+                    if not gaia_alert_name and tns_response.get('Gaia'):
+                        extras_to_update['gaia_alert_name'] = tns_response['Gaia']
+                    if not ztf_alert_name and tns_response.get('ZTF'):
+                        extras_to_update['ztf_alert_name'] = tns_response['ZTF']
 
-                if not gaia_alert_name and tns_response.get('Gaia'):
-                    extras_to_update['gaia_alert_name'] = tns_response['Gaia']
-                if not ztf_alert_name and tns_response.get('ZTF'):
-                    extras_to_update['ztf_alert_name'] = tns_response['ZTF']
+                except TNSConnectionError as e:
+                    messages.error(self.request, e.message)
+                except TNSReplyError as e:
+                    messages.error(self.request, e.message)
 
             # If there is no AAVSO or Gaia DR2, query Simbad
             if not (aavso_name and gaia_dr_2_id):
@@ -159,9 +170,10 @@ class FetchTargetNames(LoginRequiredMixin, RedirectView):
                 if not gaia_dr_2_id and simbad_response.get(alert_name_keys['GAIA DR2']):
                     extras_to_update[alert_name_keys['GAIA DR2']] = simbad_response[alert_name_keys['GAIA DR2']]
 
-            target.save(extras=extras_to_update)
-
-            messages.success(self.request, f'Updated target names')
+            # If anything was updated
+            if extras_to_update:
+                target.save(extras=extras_to_update)
+                messages.success(self.request, f'Updated target names')
 
         except Exception as e:
             messages.error(self.request, f'Error while fetching target names: {e}')
