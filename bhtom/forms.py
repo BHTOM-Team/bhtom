@@ -212,7 +212,7 @@ class CustomUserCreationForm(UserCreationForm):
         required=False
     )
 
-   # captcha = ReCaptchaField()
+    #captcha = ReCaptchaField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
