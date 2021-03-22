@@ -33,7 +33,7 @@ from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView, Ta
 from bhtom.views import DeleteObservatory, UpdateObservatory, ObservatoryList, CreateObservatory
 from bhtom.views import DeleteInstrument, UpdateInstrument, CreateInstrument, DataProductDeleteView
 from bhtom.views import RegisterUser, DataProductFeatureView, UserUpdateView, photometry_download, fits_download
-from bhtom.views import data_download, CommentDeleteView
+from bhtom.views import data_download, CommentDeleteView, TargetAddRemoveGroupingView
 
 router = routers.DefaultRouter()
 router.register('upload', views.fits_upload)
@@ -75,6 +75,8 @@ urlpatterns = [
     path('download/fits/<int:file_id>/', fits_download.as_view(), name='fits_download'),
     path('download/photometry/<int:file_id>/', photometry_download.as_view(), name='photometry_download'),
     path('download/data/<int:file_id>/', data_download.as_view(), name='data_download'),
+
+    path('add_remove_grouping/', TargetAddRemoveGroupingView.as_view(), name='add_remove_grouping'),
 
     # The static helper below only works in development see
     # https://docs.djangoproject.com/en/2.1/howto/static-files/#serving-files-uploaded-by-a-user-during-development
