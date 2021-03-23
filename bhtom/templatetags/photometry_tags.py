@@ -1,5 +1,4 @@
 import json
-import logging
 
 import numpy as np
 import plotly.graph_objs as go
@@ -10,7 +9,10 @@ from plotly import offline
 
 from bhtom.models import ViewReducedDatum
 
-logger = logging.getLogger(__name__)
+from datatools.utils.logger.bhtom_logger import BHTOMLogger
+
+logger: BHTOMLogger = BHTOMLogger(__name__, "[Photometry tags]")
+
 register = template.Library()
 
 

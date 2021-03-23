@@ -5,7 +5,6 @@ import json
 import os
 import os.path
 import numpy as np
-import logging
 import requests
 import base64
 
@@ -13,7 +12,6 @@ from tom_targets.views import TargetCreateView
 from tom_targets.templatetags.targets_extras import target_extra_field
 from tom_targets.models import Target, TargetList
 from bhtom.forms import (SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset)
-from tom_targets.filters import TargetFilter
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
 
@@ -32,7 +30,7 @@ from bhtom.hooks import send_to_cpcs, delete_point_cpcs, create_target_in_cpcs
 from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
 from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
 
-from django.http import HttpResponseServerError, Http404, FileResponse
+from django.http import HttpResponseServerError, Http404, FileResponse, HttpResponseForbidden
 from django.views.generic.edit import FormView
 from django.views.generic import View
 from django.conf import settings
@@ -59,12 +57,14 @@ from django.http import HttpResponseRedirect
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
 
+from datatools.utils.logger.bhtom_logger import BHTOMLogger
+
 try:
     from settings import local_settings as secret
 except ImportError:
     pass
 
-logger = logging.getLogger(__name__)
+logger: BHTOMLogger = BHTOMLogger(__name__, "[Views]")
 
 def make_magrecent(all_phot, jd_now):
     all_phot = json.loads(all_phot)

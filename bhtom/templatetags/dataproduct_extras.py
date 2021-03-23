@@ -14,10 +14,11 @@ from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 
 from bhtom.models import BHTomFits, Instrument
-import logging
+from datatools.utils.logger.bhtom_logger import BHTOMLogger
+
+logger: BHTOMLogger = BHTOMLogger(__name__, "[Dataproduct extras]")
 
 register = template.Library()
-logger = logging.getLogger(__name__)
 
 
 @register.inclusion_tag('tom_dataproducts/partials/detail_fits_upload.html')

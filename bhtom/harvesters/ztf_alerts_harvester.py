@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 from typing import Dict, List, Optional
 
@@ -7,6 +6,7 @@ import numpy as np
 import requests
 from astropy.time import Time, TimezoneInfo
 from tom_dataproducts.models import ReducedDatum
+from datatools.utils.logger.bhtom_logger import BHTOMLogger
 
 ### how to pass those variables from settings?
 from bhtom.models import ReducedDatumExtraData, refresh_reduced_data_view
@@ -34,7 +34,8 @@ except:
 
 MARS_URL: str = 'https://mars.lco.global/'
 ZTF_OBSERVATORY_NAME: str = 'Palomar'
-logger: logging.Logger = logging.getLogger(__name__)
+
+logger: BHTOMLogger = BHTOMLogger(__name__, "[ZTF alerts harvester]")
 filters: Dict[int, str] = {1: 'g_ZTF', 2: 'r_ZTF', 3: 'i_ZTF'}
 
 # reads light curve from Gaia Alerts - used in updatereduceddata_gaia

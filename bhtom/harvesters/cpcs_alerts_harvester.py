@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 from typing import Optional
 
@@ -8,6 +7,7 @@ import numpy as np
 from astropy.time import Time, TimezoneInfo
 from tom_dataproducts.models import ReducedDatum
 
+from datatools.utils.logger.bhtom_logger import BHTOMLogger
 from .utils.last_jd import update_last_jd
 ### how to pass those variables from settings?
 from ..models import ReducedDatumExtraData, refresh_reduced_data_view
@@ -34,12 +34,12 @@ except:
 
 base_url = 'http://gsaweb.ast.cam.ac.uk/alerts'
 
-logger = logging.getLogger(__name__)
+logger: BHTOMLogger = BHTOMLogger(__name__, "[CPCS alerts harvester]")
 
 def update_cpcs_lc(target):
     try:
         cpcs_name: Optional[str] = target.targetextra_set.get(key='calib_server_name').value
-    except:
+    except Exception as e:
         cpcs_name: Optional[str] = None
         logger.error(f'Error while accessing calib_server_name for {target}: {e}')
     if cpcs_name:

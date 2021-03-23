@@ -1,11 +1,11 @@
 from django import template
 from django.conf import settings
 
+from datatools.utils.logger.bhtom_logger import BHTOMLogger
+
 register = template.Library()
 
-import logging
-
-logger = logging.getLogger(__name__)
+logger: BHTOMLogger = BHTOMLogger(__name__, "[Target data with permissions]")
 
 register = template.Library()
 

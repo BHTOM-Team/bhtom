@@ -6,9 +6,10 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import smart_str
 
 import django_comments
-import logging
 
-logger = logging.getLogger(__name__)
+from datatools.utils.logger.bhtom_logger import BHTOMLogger
+
+logger: BHTOMLogger = BHTOMLogger(__name__, "[Comments list]")
 register = template.Library()
 
 class BaseCommentNode(template.Node):

@@ -1,29 +1,29 @@
-from plotly import offline
-import plotly.graph_objs as go
-from django import template
-
-from tom_targets.models import Target
-from tom_observations import utils, facility
-from tom_dataproducts.models import DataProduct, ReducedDatum, ObservationRecord
-
-from astroplan import Observer, FixedTarget, AtNightConstraint, time_grid_from_range, moon_illumination
 import datetime
 import json
-from astropy.time import Time
-
-from astropy import units as u
-from astropy.coordinates import get_moon, get_sun, SkyCoord, AltAz
-import numpy as np
 import math
 
-import logging
-logger = logging.getLogger(__name__)
+import numpy as np
+import plotly.graph_objs as go
+from astroplan import Observer, FixedTarget, time_grid_from_range, moon_illumination
+from astropy import units as u
+from astropy.coordinates import get_moon, get_sun, SkyCoord
+from astropy.time import Time
+from django import template
+from plotly import offline
+from tom_dataproducts.models import DataProduct, ReducedDatum
+from tom_observations import facility
+from tom_targets.models import Target
+
+from datatools.utils.logger.bhtom_logger import BHTOMLogger
+
+logger: BHTOMLogger = BHTOMLogger(__name__, "[BHTOM tags]")
 
 register = template.Library()
 
+
 @register.inclusion_tag('settings/airmass_collapse.html')
 def airmass_collapse(target):
-    interval = 30 #min
+    interval = 30  # min
     airmass_limit = 3.0
 
     obj = Target

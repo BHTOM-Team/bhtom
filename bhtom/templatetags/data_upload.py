@@ -1,12 +1,11 @@
-import logging
-
 from django import template
 from tom_dataproducts.models import DataProduct
 
 from bhtom.models import BHTomFits, Observatory, Instrument, BHTomData
+from datatools.utils.logger.bhtom_logger import BHTOMLogger
 
 register = template.Library()
-logger = logging.getLogger(__name__)
+logger: BHTOMLogger = BHTOMLogger(__name__, "[Data upload]")
 
 
 @register.inclusion_tag('tom_dataproducts/partials/dataproduct_upload_list.html', takes_context=True)

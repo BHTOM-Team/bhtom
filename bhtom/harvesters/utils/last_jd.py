@@ -1,9 +1,9 @@
 from tom_targets.models import Target
-import logging
 from typing import Optional
 
+from datatools.utils.logger.bhtom_logger import BHTOMLogger
 
-logger: logging.Logger = logging.getLogger(__name__)
+logger: BHTOMLogger = BHTOMLogger(__name__, "[ZTF alerts harvester]")
 
 
 def update_last_jd(target: Target,

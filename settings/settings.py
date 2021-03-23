@@ -274,6 +274,12 @@ LOGGING = {
         }
     },
     'handlers': {
+        'graypy': {
+            'level': 'INFO',
+            'class': 'graypy.GELFTCPHandler',
+            'host': 'localhost',
+            'port': 12201,
+        },
         'file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
@@ -287,7 +293,7 @@ LOGGING = {
     },
     'loggers': {
         '': {
-            'handlers': ['file'],
+            'handlers': ['graypy', 'file'],
             'level': 'INFO',
             'propagate': True,
         },

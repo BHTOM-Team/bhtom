@@ -1,26 +1,21 @@
+from astropy import units as u
+from astropy.coordinates import Angle
 from django import forms
 from django.conf import settings
-
-from tom_targets.models import Target
-from tom_observations.models import ObservationRecord
-from bhtom.models import Observatory, Instrument, Catalogs, BHTomUser
-from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import UserCreationForm, UsernameField
-
-from astropy.coordinates import Angle
-from astropy import units as u
+from django.contrib.auth.models import User, Group
 from django.forms import ValidationError, inlineformset_factory
-from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
-
+from tom_observations.models import ObservationRecord
 from tom_targets.models import (
     Target, TargetExtra, TargetName, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
     REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 )
 
-from captcha.fields import ReCaptchaField
+from bhtom.models import Observatory, Instrument, Catalogs, BHTomUser
+from datatools.utils.logger.bhtom_logger import BHTOMLogger
 
-import logging
-logger = logging.getLogger(__name__)
+logger: BHTOMLogger = BHTOMLogger(__name__, "[Forms]")
+
 
 class ObservatoryChoiceField(forms.ModelChoiceField):
 

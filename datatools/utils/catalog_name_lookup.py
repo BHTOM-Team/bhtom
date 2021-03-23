@@ -1,16 +1,15 @@
 import json
 from collections import OrderedDict
 from enum import auto, Enum
-from logging import Logger, getLogger
 from typing import Any, Dict, List, Optional
 
 import requests
 from astroquery.simbad import Simbad
 from django.conf import settings
 from tom_targets.models import Target
+from .logger.bhtom_logger import BHTOMLogger
 
-logger: Logger = getLogger(__name__)
-LOG_PREFIX: str = "[Catalog name lookup]"
+logger: BHTOMLogger = BHTOMLogger(__name__, "[Catalog name lookup]")
 
 alert_name_keys: Dict[str, str] = settings.ALERT_NAME_KEYS
 
@@ -60,7 +59,7 @@ class TNSReplyError(RuntimeError):
 
 
 def request_tns(target_url: str, payload: Dict[str, str]) -> Dict[str, Any]:
-    logger.info(f'{LOG_PREFIX} Requesting {target_url}...')
+    logger.info(f'Requesting {target_url}...')
     api_key: str = settings.TNS_API_KEY
 
     search_data = [('api_key', (None, api_key)),
@@ -69,17 +68,17 @@ def request_tns(target_url: str, payload: Dict[str, str]) -> Dict[str, Any]:
     try:
         response: requests.Response = requests.post(target_url, files=search_data)
     except requests.exceptions.ConnectionError:
-        logger.error(f'{LOG_PREFIX} Connection error while requesting TNS')
+        logger.error(f'Connection error while requesting TNS')
         raise TNSConnectionError(f'Connection error while requesting TNS. Please try again later.')
     except requests.exceptions.Timeout:
-        logger.error(f'{LOG_PREFIX} Timeout while requesting TNS')
+        logger.error(f'Timeout while requesting TNS')
         raise TNSConnectionError(f'Timeout while requesting TNS. Please try again later.')
-    except requests.exceptions.RequestException:
-        logger.error(f'{LOG_PREFIX} Request exception while requesting TNS: {e}')
+    except requests.exceptions.RequestException as e:
+        logger.error(f'Request exception while requesting TNS: {e}')
         raise TNSConnectionError(f'Unexpected network error occurred while requesting TNS.')
 
     if not response:
-        logger.error(f'{LOG_PREFIX} No respose returned for {target_url}')
+        logger.error(f'No respose returned for {target_url}')
         raise TNSConnectionError(f'No response from TNS. Please try again later.')
 
     response_payload: Dict[Any, Any] = json.loads(response.content.decode("utf-8"))
@@ -87,11 +86,11 @@ def request_tns(target_url: str, payload: Dict[str, str]) -> Dict[str, Any]:
 
     if response_code == 200:
         if 'data' not in response_payload.keys() or 'reply' not in response_payload['data'].keys():
-            logger.error(f'{LOG_PREFIX} TNS returned an invalid response: {response_payload}')
+            logger.error(f'TNS returned an invalid response: {response_payload}')
             raise TNSConnectionError(f'TNS has returned an invalid response. Please try again later.')
         return response_payload['data']['reply']
     else:
-        logger.error(f'{LOG_PREFIX} TNS returned {response_code}.')
+        logger.error(f'TNS returned {response_code}.')
         raise TNSConnectionError(f'TNS returned with status code {response_code}. Please try again later.')
 
 
@@ -120,7 +119,7 @@ def get_tns_id(target: Target) -> Optional[str]:
                                            search_json)
 
     if len(response) < 1:
-        logger.error(f'{LOG_PREFIX} No TNS ID found in response {data}')
+        logger.error(f'No TNS ID found in response {response}')
         raise TNSReplyError(f'No TNS ID found in TNS response.')
     else:
         data: Dict[str, str] = response[0]
@@ -128,11 +127,11 @@ def get_tns_id(target: Target) -> Optional[str]:
         object_name: Optional[str] = data.get("objname")
 
         if prefix and object_name:
-            logger.info(f'{LOG_PREFIX} '
+            logger.info(f''
                         f'Read names as {prefix}{object_name}')
             return f'{prefix}{object_name}'
         else:
-            logger.error(f'{LOG_PREFIX} No prefix and/or object name in TNS reply: {data}')
+            logger.error(f'No prefix and/or object name in TNS reply: {data}')
             raise TNSConnectionError(f'No TNS ID in expected format found in TNS response. Please try again later.')
 
 
@@ -157,25 +156,25 @@ def get_tns_internal(tns_id: str) -> Dict[str, str]:
 
     if response.get("internal_names"):
         internal_names: List[str] = [n.strip() for n in response.get("internal_names").split(',')]
-        logger.info(f'{LOG_PREFIX} Read internal names as {internal_names}')
+        logger.info(f'Read internal names as {internal_names}')
 
         result_dict: Dict[str, str] = {}
 
         for internal_name in internal_names:
             matched_group: List[str] = assign_group_to_internal_name(internal_name)
-            logger.info(f'{LOG_PREFIX} Attempting to read internal name for {matched_group}...')
+            logger.info(f'Attempting to read internal name for {matched_group}...')
 
             if len(matched_group) > 0:
                 try:
                     result_dict[matched_group[0][0]] = internal_name
                     logger.info(
-                        f'{LOG_PREFIX} Read internal name for {matched_group[0][0]}: {internal_name}')
+                        f'Read internal name for {matched_group[0][0]}: {internal_name}')
                 except:
                     continue
 
         return result_dict
     else:
-        logger.error(f'{LOG_PREFIX} No TNS internal names found in response {response}')
+        logger.error(f'No TNS internal names found in response {response}')
         raise TNSReplyError(f'No TNS internal names in response.')
 
 
@@ -184,7 +183,7 @@ def query_simbad_for_names(target: Target) -> Dict[str, str]:
     import re
 
     try:
-        logger.info(f'{LOG_PREFIX} Querying Simbad for target {target.name}...')
+        logger.info(f'Querying Simbad for target {target.name}...')
 
         result_table: Optional[Table] = Simbad.query_objectids(object_name=target.name)
         result_dict: Dict[str] = {}
@@ -194,15 +193,15 @@ def query_simbad_for_names(target: Target) -> Dict[str, str]:
 
             for row in result_table['ID']:
                 if 'AAVSO' in row:
-                    logger.info(f'{LOG_PREFIX} Found AAVSO name...')
+                    logger.info(f'Found AAVSO name...')
                     result_dict[alert_name_keys['AAVSO']] = re.sub(r'^AAVSO( )*', '', row)
                 elif 'Gaia DR2' in row:
-                    logger.info(f'{LOG_PREFIX} Found Gaia DR2 name...')
+                    logger.info(f'Found Gaia DR2 name...')
                     result_dict[alert_name_keys['GAIA DR2']] = re.sub(r'^Gaia( )*DR2( )*', '', row)
 
         return result_dict
     except Exception as e:
-        logger.error(f'{LOG_PREFIX} Error while querying Simbad for target {target.name}: {e}')
+        logger.error(f'Error while querying Simbad for target {target.name}: {e}')
         return {}
 
 

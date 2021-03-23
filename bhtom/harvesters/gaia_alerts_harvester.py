@@ -1,8 +1,9 @@
 import json
-import logging
 import os
 from datetime import datetime
 from decimal import Decimal
+from typing import Optional
+
 import requests
 from astropy import units as u
 from astropy.coordinates import get_sun, SkyCoord
@@ -11,11 +12,10 @@ from tom_catalogs.harvester import AbstractHarvester
 from tom_dataproducts.models import ReducedDatum
 from tom_targets.models import Target
 
-from typing import Optional
-
 ### how to pass those variables from settings?
 from bhtom.models import ReducedDatumExtraData, refresh_reduced_data_view
 from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointExtraData
+from datatools.utils.logger.bhtom_logger import BHTOMLogger
 
 try:
     from settings import local_settings as secret
@@ -36,7 +36,7 @@ except:
 
 base_url = 'http://gsaweb.ast.cam.ac.uk/alerts'
 
-logger = logging.getLogger(__name__)
+logger: BHTOMLogger = BHTOMLogger(__name__, "[Gaia alerts harvester]")
 
 
 # queries alerts.csv and searches for the name
