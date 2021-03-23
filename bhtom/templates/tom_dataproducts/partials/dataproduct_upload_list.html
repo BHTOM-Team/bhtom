@@ -18,11 +18,11 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th></th>
                     <th>File</th>
                     <th>Photometry</th>
                     <th>Type</th>
                     <th>Observatory</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -30,12 +30,6 @@
                 {% for Fit_id, Data_id, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type, feature, Fits_owner, data_stored in tabData %}
 
                 <tr>
-                    {% if not feature %}
-                        <td><a href="{% url 'bhtom_feature' pk=Data_id %}?target_id={{ target.id }}" title="Make Featured Image" class="btn btn-primary">Feature</a></td>
-                    {% else %}
-                        <td><span class="btn btn-secondary active featured">Featured</span></td>
-                    {% endif %}
-
                    {% if type != 'photometry_cpcs' %}
                         <td><div title="{{File}}">{{ File|truncatechars:15 }}</div></td>
                    {% else %}
@@ -60,6 +54,12 @@
                    {% else %}
                        <td></td>
                    {% endif %}
+
+                    {% if Status != None %}
+                        <td><div title="{{Status}}">{{ Status|truncatechars:22 }}</div></td>
+                    {% else %}
+                        <td></td>
+                    {% endif %}
                 </tr>
 
                 {% endfor %}
@@ -72,7 +72,6 @@
             <table class="table">
                   <thead>
                     <tr>
-                      <th></th>
                       <th>File</th>
                       <th>Photometry</th>
                       <th>Type</th>
@@ -88,12 +87,6 @@
 
                     {% if user.id == Fits_owner %}
                       <tr>
-                           {% if not feature %}
-                             <td><a href="{% url 'bhtom_feature' pk=Data_id %}?target_id={{ target.id }}" title="Make Featured Image" class="btn btn-primary">Feature</a></td>
-                            {% else %}
-                             <td><span class="btn btn-secondary active featured">Featured</span></td>
-                            {% endif %}
-
                             {% if type != 'photometry_cpcs' %}
                                 {% if data_stored == True %}
                                     {% if type != 'photometry_cpcs' %}
