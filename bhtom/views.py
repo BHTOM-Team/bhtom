@@ -1177,13 +1177,13 @@ class ObservatoryList(PermissionRequiredMixin, ListView):
     def get_context_data(self, *args, **kwargs):
 
         context = super().get_context_data(*args, **kwargs)
-        instrument = Instrument.objects.filter(user_id=self.request.user)
+        instrument = Instrument.objects.filter(user_id=self.request.user).order_by('observatory_id__obsName')
 
         observatory_user_list = []
         for ins in instrument:
             observatory_user_list.append([ins.id, ins.hashtag, ins.isActive, ins.comment,  Observatory.objects.get(id=ins.observatory_id.id)])
 
-        context['observatory_list'] = Observatory.objects.filter(isVerified=True)
+        context['observatory_list'] = Observatory.objects.filter(isVerified=True).order_by('obsName')
         context['observatory_user_list'] = observatory_user_list
 
         return context

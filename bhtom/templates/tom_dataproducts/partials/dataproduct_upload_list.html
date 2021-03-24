@@ -22,6 +22,7 @@
                     <th>Photometry</th>
                     <th>Type</th>
                     <th>Observatory</th>
+                    <th>Owner</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -51,6 +52,12 @@
 
                    {% if Observatory != None %}
                         <td><div title="{{Observatory}}">{{ Observatory }}</div></td>
+                   {% else %}
+                       <td></td>
+                   {% endif %}
+
+                   {% if Fits_owner != None %}
+                        <td><div title="{{Fits_owner.first_name}} {{Fits_owner.last_name}}">{{ Fits_owner.first_name}} {{Fits_owner.last_name}}</div></td>
                    {% else %}
                        <td></td>
                    {% endif %}
@@ -85,7 +92,7 @@
 
                   {% for Fit_id, Data_id, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type, feature, Fits_owner, data_stored in tabData %}
 
-                    {% if user.id == Fits_owner %}
+                    {% if user.id == Fits_owner.id %}
                       <tr>
                             {% if type != 'photometry_cpcs' %}
                                 {% if data_stored == True %}
