@@ -45,11 +45,11 @@ def dataproduct_list(context, target):
                 status_message = fit.status_message
                 mjd = fit.mjd
                 expTime = fit.expTime
-                data_user = instrument.user_id.id
+                data_user = instrument.user_id
                 data_stored = fit.data_stored
             else:
                 if bhtomData is not None:
-                    data_user = bhtomData.user_id.id
+                    data_user = bhtomData.user_id
                     data_stored = bhtomData.data_stored
                 else:
                     data_user = -1

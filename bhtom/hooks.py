@@ -26,7 +26,7 @@ from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 from django.utils import timezone
 import json
-
+import unicodedata
 from django.core.mail import send_mail
 from typing import Optional
 
@@ -189,13 +189,14 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
     if instance.hashtag == None or instance.hashtag == '' and observatory.cpcsOnly == False:
         try:
             obsName = observatory.obsName + ', ' + instance.user_id.first_name + ' ' + instance.user_id.last_name
+            obsName = unicodedata.normalize('NFD', obsName).encode('ascii', 'ignore')
 
             response = requests.post(url_cpcs,
                                      {'obsName': obsName, 'lon': observatory.lon, 'lat': observatory.lat,
                                       'allow_upload': 1,
                                       'prefix': secret.CPCS_PREFIX_HASTAG + observatory.prefix + '_' + str(instance.user_id) + '_',
                                       'hashtag': secret.CPCS_Admin_Hashtag})
-
+#
             if response.status_code == 200:
                 instance.hashtag = response.content.decode('utf-8').split(': ')[1]
                 logger.info('Create_cpcs_user')

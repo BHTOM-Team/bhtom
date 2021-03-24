@@ -6,7 +6,6 @@ from django.db.models import ExpressionWrapper, FloatField, Q
 from django.db.models.functions.math import ACos, Cos, Radians, Pi, Sin
 from tom_targets.models import Target, TargetList
 
-
 def filter_for_field(field):
     if field['type'] == 'number':
         return django_filters.NumericRangeFilter(field_name=field['name'], method=filter_number)
@@ -86,19 +85,20 @@ class TargetFilter(django_filters.FilterSet):
     dec: django_filters.RangeFilter = django_filters.NumericRangeFilter(method='filter_dec', label='Dec')
 
     def filter_ra(self, queryset, name, value):
-        if value.start and value.stop:
+
+        if value.start is not None and value.stop is not None:
             return queryset.filter(Q(ra__gte=value.start) & Q(ra__lte=value.stop))
-        elif value.start:
+        elif value.start is not None:
             return queryset.filter(Q(ra__gte=value.start))
-        elif value.stop:
+        elif value.stop is not None:
             return queryset.filter(Q(ra__lte=value.stop))
 
     def filter_dec(self, queryset, name, value):
-        if value.start and value.stop:
+        if value.start is not None and value.stop is not None:
             return queryset.filter(Q(dec__gte=value.start) & Q(dec__lte=value.stop))
-        elif value.start:
+        elif value.start is not None:
             return queryset.filter(Q(dec__gte=value.start))
-        elif value.stop:
+        elif value.stop is not None:
             return queryset.filter(Q(dec__lte=value.stop))
 
     def filter_cone_search(self, queryset, name, value):

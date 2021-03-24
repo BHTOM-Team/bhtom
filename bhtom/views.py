@@ -55,7 +55,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django_filters.views import FilterView
 
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, QueryDict
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
 
@@ -1177,13 +1177,13 @@ class ObservatoryList(PermissionRequiredMixin, ListView):
     def get_context_data(self, *args, **kwargs):
 
         context = super().get_context_data(*args, **kwargs)
-        instrument = Instrument.objects.filter(user_id=self.request.user)
+        instrument = Instrument.objects.filter(user_id=self.request.user).order_by('observatory_id__obsName')
 
         observatory_user_list = []
         for ins in instrument:
             observatory_user_list.append([ins.id, ins.hashtag, ins.isActive, ins.comment,  Observatory.objects.get(id=ins.observatory_id.id)])
 
-        context['observatory_list'] = Observatory.objects.filter(isVerified=True)
+        context['observatory_list'] = Observatory.objects.filter(isVerified=True).order_by('obsName')
         context['observatory_user_list'] = observatory_user_list
 
         return context
@@ -1578,3 +1578,173 @@ class CommentDeleteView(LoginRequiredMixin, DeleteView):
             return super().delete(request, *args, **kwargs)
         else:
             return HttpResponseForbidden('Not authorized')
+
+
+
+
+def add_selected_to_grouping(targets_ids, grouping_object, request):
+    """
+    Adds all selected targets to a ``TargetList``. Successes, warnings, and errors result in messages being added to the
+    request with the appropriate message level.
+
+    :param targets_ids: list of selected targets
+    :type targets_ids: list
+
+    :param grouping_object: ``TargetList`` to add targets to
+    :type grouping_object: TargetList
+
+    :param request: request object passed to the calling view
+    :type request: HTTPRequest
+    """
+    success_targets = []
+    warning_targets = []
+    failure_targets = []
+    for target_id in targets_ids:
+        try:
+            target_object = Target.objects.get(pk=target_id)
+            logger.info(target_object)
+            logger.info(request.user.has_perm(target_object))
+            logger.info(request.user.has_perm('tom_targets.view_targetlist', target_object))
+
+            if not request.user.has_perm('tom_targets.view_target', target_object):
+                failure_targets.append((target_object.name, 'Permission denied.',))
+            elif target_object in grouping_object.targets.all():
+                warning_targets.append(target_object.name)
+            else:
+                grouping_object.targets.add(target_object)
+                success_targets.append(target_object.name)
+        except Exception as e:
+            failure_targets.append((target_object.pk, e,))
+    messages.success(request, "{} target(s) successfully added to group '{}'."
+                              .format(len(success_targets), grouping_object.name))
+    if warning_targets:
+        messages.warning(request, "{} target(s) already in group '{}': {}"
+                                  .format(len(warning_targets), grouping_object.name, ', '.join(warning_targets)))
+    for failure_target in failure_targets:
+        messages.error(request, "Failed to add target with id={} to group '{}'; {}"
+                                .format(failure_target[0], grouping_object.name, failure_target[1]))
+
+
+class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
+    """
+    View that handles addition and removal of targets to target groups. Requires authentication.
+    """
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handles the POST requests to this view. Routes the information from the request and query parameters to the
+        appropriate utility method in ``groups.py``.
+
+        :param request: the request object passed to this view
+        :type request: HTTPRequest
+        """
+
+        query_string = request.POST.get('query_string', '')
+        grouping_id = request.POST.get('grouping')
+        filter_data = QueryDict(query_string)
+
+        try:
+            grouping_object = TargetList.objects.get(pk=grouping_id)
+        except Exception as e:
+            messages.error(request, 'Cannot find the target group with id={}; {}'.format(grouping_id, e))
+            return redirect(reverse('bhlist'))
+        if not request.user.has_perm('tom_targets.view_targetlist', grouping_object):
+            messages.error(request, 'Permission denied.')
+            return redirect(reverse('bhlist'))
+
+        if 'add' in request.POST:
+            if request.POST.get('isSelectAll') == 'True':
+                add_all_to_grouping(filter_data, grouping_object, request)
+            else:
+                targets_ids = request.POST.getlist('selected-target')
+                add_selected_to_grouping(targets_ids, grouping_object, request)
+        if 'remove' in request.POST:
+            if request.POST.get('isSelectAll') == 'True':
+                remove_all_from_grouping(filter_data, grouping_object, request)
+            else:
+                targets_ids = request.POST.getlist('selected-target')
+                remove_selected_from_grouping(targets_ids, grouping_object, request)
+        return redirect(reverse('bhlist'))
+
+
+def add_all_to_grouping(filter_data, grouping_object, request):
+    """
+    Adds all targets displayed by a particular filter to a ``TargetList``. Successes, warnings, and errors result in
+    messages being added to the request with the appropriate message level.
+
+    :param filter_data: target filter data passed to the calling view
+    :type filter_data: django.http.QueryDict
+
+    :param grouping_object: ``TargetList`` to add targets to
+    :type grouping_object: TargetList
+
+    :param request: request object passed to the calling view
+    :type request: HTTPRequest
+    """
+    success_targets = []
+    warning_targets = []  # targets that are already in the grouping
+    failure_targets = []
+    try:
+        target_queryset = TargetFilter(request=request, data=filter_data, queryset=Target.objects.all()).qs
+    except Exception as e:
+        messages.error(request, "Error with filter parameters. No target(s) were added to group '{}'."
+                                .format(grouping_object.name))
+        return
+    for target_object in target_queryset:
+        try:
+            #if not request.user.has_perm('tom_targets.view_target', target_object):
+           #     failure_targets.append((target_object.name, 'Permission denied.',))
+            if target_object in grouping_object.targets.all():
+                warning_targets.append(target_object.name)
+            else:
+                grouping_object.targets.add(target_object)
+                success_targets.append(target_object.name)
+        except Exception as e:
+            failure_targets.append((target_object.pk, e,))
+    messages.success(request, "{} target(s) successfully added to group '{}'."
+                              .format(len(success_targets), grouping_object.name))
+    if warning_targets:
+        messages.warning(request, "{} target(s) already in group '{}': {}"
+                                  .format(len(warning_targets), grouping_object.name, ', '.join(warning_targets)))
+    for failure_target in failure_targets:
+        messages.error(request, "Failed to add target with id={} to group '{}'; {}"
+                                .format(failure_target[0], grouping_object.name, failure_target[1]))
+
+
+def add_selected_to_grouping(targets_ids, grouping_object, request):
+    """
+    Adds all selected targets to a ``TargetList``. Successes, warnings, and errors result in messages being added to the
+    request with the appropriate message level.
+
+    :param targets_ids: list of selected targets
+    :type targets_ids: list
+
+    :param grouping_object: ``TargetList`` to add targets to
+    :type grouping_object: TargetList
+
+    :param request: request object passed to the calling view
+    :type request: HTTPRequest
+    """
+    success_targets = []
+    warning_targets = []
+    failure_targets = []
+    for target_id in targets_ids:
+        try:
+            target_object = Target.objects.get(pk=target_id)
+        #    if not request.user.has_perm('tom_targets.view_target', target_object):
+          #      failure_targets.append((target_object.name, 'Permission denied.',))
+            if target_object in grouping_object.targets.all():
+                warning_targets.append(target_object.name)
+            else:
+                grouping_object.targets.add(target_object)
+                success_targets.append(target_object.name)
+        except Exception as e:
+            failure_targets.append((target_object.pk, e,))
+    messages.success(request, "{} target(s) successfully added to group '{}'."
+                              .format(len(success_targets), grouping_object.name))
+    if warning_targets:
+        messages.warning(request, "{} target(s) already in group '{}': {}"
+                                  .format(len(warning_targets), grouping_object.name, ', '.join(warning_targets)))
+    for failure_target in failure_targets:
+        messages.error(request, "Failed to add target with id={} to group '{}'; {}"
+                                .format(failure_target[0], grouping_object.name, failure_target[1]))
