@@ -194,7 +194,7 @@ class InstrumentCreationForm(forms.Form):
 
         self.fields['observatory'] = ObservatoryChoiceField(
 
-            queryset=Observatory.objects.exclude(id__in=insTab).filter(isVerified=True),
+            queryset=Observatory.objects.exclude(id__in=insTab).filter(isVerified=True).order_by('obsName'),
             widget=forms.Select(),
             required=True
         )
