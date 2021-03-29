@@ -4,18 +4,19 @@
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
 {% endblock %}
+
 {% bootstrap_javascript jquery='True' %}
 {% block content %}
 <h4>List of observatories</h4>
 <p>
-List of your registered observatories/instruments you can use for uploading the data for processing. 
+List of your registered observatories/instruments you can use for uploading the data for processing.
 You should register an observatory in your account if you want a datapoint to be labeled with your name.
 <br>
 Here you can add a new observatory to your list if you are planning to upload images or instrumental photometry for it.
-You can choose one from the list of already registered observatories, or create a new one. 
+You can choose one from the list of already registered observatories, or create a new one.
 Note that different instrument (e.g. CCD) on the same telescope counts as a different observatory.
 <br>
-CPCS Hashtags are your unique login details per observatory, which can be used in 
+CPCS Hashtags are your unique login details per observatory, which can be used in
 the <a href="http://gsaweb.ast.cam.ac.uk/followup/">Cambridge Photometric Calibration Server</a>.
 However, you can also upload your data to the CPCS directly from BHTOM instead.
 </p>
@@ -32,7 +33,8 @@ However, you can also upload your data to the CPCS directly from BHTOM instead.
     </ul>
     <div class="tab-content">
       <div class="tab-pane" id="all">
-          <table class="table table-striped">
+        <script type="text/javascript" src="{% static 'bhtom/sorttable.js' %}"></script>
+          <table class="table table-striped sortable">
           <thead>
             <tr>
               <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>Prefix</th><th>Matching radius</th><th>Comment</th><th>Only Instrumental photometry file</th>
@@ -66,11 +68,11 @@ However, you can also upload your data to the CPCS directly from BHTOM instead.
       </div>
       <div class="tab-pane active" id="user">
            <a href="{% url 'instrument_create' %}" title="Add new observatory" class="btn btn-outline-primary">Add new observatory</a>
-        <table class="table table-striped">
+        <table class="table table-striped sortable">
           <thead>
             <tr>
               <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>CPCS Hashtag</th><th>Activation</th><th>Comment</th>
-              <th>Update</th><th>Delete</th>
+              <th style="pointer-events:none">Update</th><th style="pointer-events:none">Delete</th>
             </tr>
           </thead>
           <tbody>

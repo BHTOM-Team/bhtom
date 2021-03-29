@@ -31,6 +31,7 @@ from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializ
 from bhtom.hooks import send_to_cpcs, delete_point_cpcs, create_target_in_cpcs
 from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
 from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
+from bhtom.group import add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping
 
 from django.http import HttpResponseServerError, Http404, FileResponse
 from django.views.generic.edit import FormView
@@ -55,7 +56,7 @@ from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django_filters.views import FilterView
 
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, QueryDict
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
 
@@ -1177,13 +1178,13 @@ class ObservatoryList(PermissionRequiredMixin, ListView):
     def get_context_data(self, *args, **kwargs):
 
         context = super().get_context_data(*args, **kwargs)
-        instrument = Instrument.objects.filter(user_id=self.request.user)
+        instrument = Instrument.objects.filter(user_id=self.request.user).order_by('observatory_id__obsName')
 
         observatory_user_list = []
         for ins in instrument:
             observatory_user_list.append([ins.id, ins.hashtag, ins.isActive, ins.comment,  Observatory.objects.get(id=ins.observatory_id.id)])
 
-        context['observatory_list'] = Observatory.objects.filter(isVerified=True)
+        context['observatory_list'] = Observatory.objects.filter(isVerified=True).order_by('obsName')
         context['observatory_user_list'] = observatory_user_list
 
         return context
@@ -1578,3 +1579,47 @@ class CommentDeleteView(LoginRequiredMixin, DeleteView):
             return super().delete(request, *args, **kwargs)
         else:
             return HttpResponseForbidden('Not authorized')
+
+
+class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
+    """
+    View that handles addition and removal of targets to target groups. Requires authentication.
+    """
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handles the POST requests to this view. Routes the information from the request and query parameters to the
+        appropriate utility method in ``groups.py``.
+
+        :param request: the request object passed to this view
+        :type request: HTTPRequest
+        """
+
+        query_string = request.POST.get('query_string', '')
+        grouping_id = request.POST.get('grouping')
+        filter_data = QueryDict(query_string)
+
+        try:
+            grouping_object = TargetList.objects.get(pk=grouping_id)
+        except Exception as e:
+            messages.error(request, 'Cannot find the target group with id={}; {}'.format(grouping_id, e))
+            return redirect(reverse('bhlist'))
+        if not request.user.has_perm('tom_targets.view_targetlist', grouping_object):
+            messages.error(request, 'Permission denied.')
+            return redirect(reverse('bhlist'))
+
+        if 'add' in request.POST:
+            if request.POST.get('isSelectAll') == 'True':
+                add_all_to_grouping(filter_data, grouping_object, request)
+            else:
+                targets_ids = request.POST.getlist('selected-target')
+                add_selected_to_grouping(targets_ids, grouping_object, request)
+        if 'remove' in request.POST:
+            if request.POST.get('isSelectAll') == 'True':
+                remove_all_from_grouping(filter_data, grouping_object, request)
+            else:
+                targets_ids = request.POST.getlist('selected-target')
+                remove_selected_from_grouping(targets_ids, grouping_object, request)
+        return redirect(reverse('bhlist'))
+
+

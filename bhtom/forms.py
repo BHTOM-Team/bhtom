@@ -194,7 +194,7 @@ class InstrumentCreationForm(forms.Form):
 
         self.fields['observatory'] = ObservatoryChoiceField(
 
-            queryset=Observatory.objects.exclude(id__in=insTab).filter(isVerified=True),
+            queryset=Observatory.objects.exclude(id__in=insTab).filter(isVerified=True).order_by('obsName'),
             widget=forms.Select(),
             required=True
         )
@@ -212,7 +212,7 @@ class CustomUserCreationForm(UserCreationForm):
         required=False
     )
 
-   # captcha = ReCaptchaField()
+    #captcha = ReCaptchaField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
