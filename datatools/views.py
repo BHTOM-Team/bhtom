@@ -13,6 +13,10 @@ from tom_targets.models import Target
 from bhtom.models import BHTomUser, Observatory
 from typing import List, Dict, Optional
 
+try:
+    from settings import local_settings as secret
+except ImportError:
+    pass
 
 alert_name_keys: Dict[str, str] = settings.ALERT_NAME_KEYS
 
