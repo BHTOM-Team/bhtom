@@ -1451,7 +1451,8 @@ class fits_download(PermissionRequiredMixin, View):
         elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
             messages.error(self.request, secret.NOT_PERMISSION)
             return False
-        elif self.request.user != BHTomFits.objects.get(dataproduct_id=self.kwargs['file_id']).instrument_id.user_id:
+        elif self.request.user != BHTomFits.objects.get(dataproduct_id=self.kwargs['file_id']).instrument_id.user_id\
+                and not self.request.user.is_staff:
             messages.error(self.request, secret.NOT_PERMISSION)
             return False
         return True
@@ -1492,7 +1493,8 @@ class photometry_download(PermissionRequiredMixin, View):
         elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
             messages.error(self.request, secret.NOT_PERMISSION)
             return False
-        elif self.request.user != BHTomFits.objects.get(file_id=self.kwargs['file_id']).instrument_id.user_id:
+        elif self.request.user != BHTomFits.objects.get(file_id=self.kwargs['file_id']).instrument_id.user_id\
+                and not self.request.user.is_staff:
             messages.error(self.request, secret.NOT_PERMISSION)
             return False
         return True
