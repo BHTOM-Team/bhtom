@@ -31,13 +31,27 @@
                 {% for Fit_id, Data_id, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type, feature, Fits_owner, data_stored in tabData %}
 
                 <tr>
-                   {% if type != 'photometry_cpcs' %}
-                        <td><div title="{{File}}">{{ File|truncatechars:15 }}</div></td>
-                   {% else %}
+                    {% if type != 'photometry_cpcs' %}
+                        {% if data_stored == True  and user.is_staff %}
+                            {% if type == 'fits_file' %}
+                                <td><div title="{{File}}"><a href="{% url 'fits_download' file_id=Data_id %} ">{{ File|truncatechars:15 }}</a></div></td>
+                            {% else %}
+                                <td><div title="{{File}}"><a href="{% url 'data_download' file_id=Data_id %} ">{{ File|truncatechars:15 }}</a></div></td>
+                            {% endif %}
+                        {% else %}
+                            <td><div title="{{File}}">{{ File|truncatechars:15 }}</div></td>
+                        {% endif %}
+
+                    {% else %}
                         <td></td>
-                   {% endif %}
+                    {% endif %}
+
                    {% if Photometry != None %}
-                         <td><div title="{{Photometry}}">{{ Photometry|truncatechars:15 }}</div></td>
+                        {% if user.is_staff and Fit_id is not None %}
+                            <td><div title="{{Photometry}}"><a href="{% url 'photometry_download' file_id=Fit_id %}">{{ Photometry|truncatechars:10 }}</a></div></td>
+                        {% else %}
+                            <td><div title="{{Photometry}}">{{ Photometry|truncatechars:15 }}</div></td>
+                        {% endif %}
                    {% else %}
                         <td></td>
                    {% endif %}
@@ -96,13 +110,12 @@
                       <tr>
                             {% if type != 'photometry_cpcs' %}
                                 {% if data_stored == True %}
-                                    {% if type != 'photometry_cpcs' %}
-                                        {% if type == 'fits_file' %}
-                                            <td><div title="{{File}}"><a href="{% url 'fits_download' file_id=Data_id %} ">{{ File|truncatechars:15 }}</a></div></td>
-                                        {% else %}
-                                            <td><div title="{{File}}"><a href="{% url 'data_download' file_id=Data_id %} ">{{ File|truncatechars:15 }}</a></div></td>
-                                        {% endif %}
+                                    {% if type == 'fits_file' %}
+                                        <td><div title="{{File}}"><a href="{% url 'fits_download' file_id=Data_id %} ">{{ File|truncatechars:15 }}</a></div></td>
+                                    {% else %}
+                                        <td><div title="{{File}}"><a href="{% url 'data_download' file_id=Data_id %} ">{{ File|truncatechars:15 }}</a></div></td>
                                     {% endif %}
+
                                 {% else %}
                                      <td><div title="{{File}}">{{ File|truncatechars:15 }}</div></td>
                                 {% endif %}
