@@ -67,7 +67,7 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
                                           'webhook_id': secret.CCDPHOTD_WEBHOOK_ID, 'priority': priority,
                                           'instrument_prefix': observatory.prefix}, files={'fits_file': file})
                 if response.status_code == 201:
-                    logger.info('successful send to CCDPHOTD')
+                    logger.info('successfull send to CCDPHOTD, fits id: ' + str(instance.file_id))
                     instance.status = 'S'
                     instance.status_message = 'Sent to photometry'
                     instance.save()
@@ -129,7 +129,7 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
 
 def send_to_cpcs(result, fits, eventID):
     url_cpcs = secret.CPCS_URL + 'upload'
-    logger.info('Send file to cpcs: ' + fits.file_id)
+    logger.info('Send file to cpcs: ' + str(fits.file_id))
 
     try:
         if eventID == None or eventID == '':
@@ -223,7 +223,7 @@ def target_pre_save(sender, instance, **kwargs):
     logger.info('Target pre save hook: %s', str(instance))
 
 def delete_point_cpcs(instance):
-    logger.info('Delete in cpcs: %s', instance.data)
+    logger.info('Delete in cpcs: %s', str(instance.data))
     url_cpcs = secret.CPCS_URL + 'delpoint'
     fit = BHTomFits.objects.get(dataproduct_id=instance)
 
@@ -235,7 +235,7 @@ def delete_point_cpcs(instance):
         if response.status_code == 201 or response.status_code == 200:
             logger.info('Successfully deleted ')
         else:
-            error_message = 'Cpcs error: %s' % response.content.decode()
+            error_message = 'Cpcs error: %s' % str(response.content.decode())
             logger.info(error_message)
     except Exception as e:
         logger.error('delete_point_cpcs error: ' + str(e))
@@ -276,7 +276,7 @@ def BHTomUser_pre_save(sender, instance, **kwargs):
             if user_email is not None:
                 send_mail(secret.EMAILTET_ACTIVATEUSER_TITLE, secret.EMAILTET_ACTIVATEUSER,
                           settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)
-                logger.info('Ativate user, Send mail: ' + user_email.email)
+                logger.info('Ativate user, Send mail: ' + str(user_email.email))
 
 @receiver(pre_save, sender=Observatory)
 def Observatory_pre_save(sender, instance, **kwargs):
@@ -292,14 +292,14 @@ def Observatory_pre_save(sender, instance, **kwargs):
                 user_email = User.objects.get(id=instance.user.id)
             except BHTomFits.DoesNotExist:
                 user_email = None
-            logger.info(user_email.email)
+
             if user_email is not None:
                 send_mail(secret.EMAILTEXT_ACTIVATEOBSERVATORY_TITLE, secret.EMAILTEXT_ACTIVATEOBSERVATORY,
                           settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)
                 logger.info('Ativate observatory' + instance.obsName + ', Send mail: ' + user_email.email)
 
 def create_target_in_cpcs(user, instance):
-    logger.info('Create target in cpcs: %s', instance.extra_fields['calib_server_name'])
+    logger.info('Create target in cpcs: %s', str(instance.extra_fields['calib_server_name']))
     url_cpcs = secret.CPCS_URL + 'newevent'
     hastag = None
 
@@ -315,9 +315,9 @@ def create_target_in_cpcs(user, instance):
                                                 'outputFormat': 'json'})
 
            if response.status_code == 201 or response.status_code == 200:
-               logger.info('Successfully created target, user: %s' %user)
+               logger.info('Successfully created target, user: %s' %str(user))
            else:
-               error_message = 'Cpcs error: %s' % response.content.decode()
+               error_message = 'Cpcs error: %s' %str(response.content.decode())
                logger.info(error_message)
         else:
             logger.info('Hastag or calib_server_name is none')
