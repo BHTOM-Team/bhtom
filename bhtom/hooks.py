@@ -67,7 +67,7 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
                                           'webhook_id': secret.CCDPHOTD_WEBHOOK_ID, 'priority': priority,
                                           'instrument_prefix': observatory.prefix}, files={'fits_file': file})
                 if response.status_code == 201:
-                    logger.info('successfull send to CCDPHOTD, fits id: ' + str(instance.id))
+                    logger.info('successfull send to CCDPHOTD, fits id: ' + str(instance.file_id))
                     instance.status = 'S'
                     instance.status_message = 'Sent to photometry'
                     instance.save()
