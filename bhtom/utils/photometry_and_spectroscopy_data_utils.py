@@ -87,9 +87,10 @@ def get_spectroscopy_observation_time_jd(reduced_datum: ViewReducedDatum) -> Opt
 
 def save_data_to_temporary_file(data: List[List[Any]],
                                 columns: List[str],
-                                filename: str) -> Tuple[NamedTemporaryFile, str]:
+                                filename: str,
+                                sort_by: str = 'JD') -> Tuple[NamedTemporaryFile, str]:
     df: pd.DataFrame = pd.DataFrame(data=data,
-                                    columns=columns).sort_values(by='JD')
+                                    columns=columns).sort_values(by=sort_by)
 
     tmp: NamedTemporaryFile = NamedTemporaryFile(mode="w+",
                                                  suffix=".csv",
@@ -101,6 +102,51 @@ def save_data_to_temporary_file(data: List[List[Any]],
                   index=False)
 
     return tmp, filename
+
+
+def get_photometry_data_stats(target_id: int) -> Tuple[NamedTemporaryFile, str]:
+    from astropy.time import Time
+
+    target: Target = Target.objects.get(pk=target_id)
+    datums: ViewReducedDatum = ViewReducedDatum.objects.filter(target=target,
+                                                               data_type__in=[
+                                                                   settings.DATA_PRODUCT_TYPES['photometry'][0],
+                                                                   settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]])
+
+    columns: List[str] = ['JD', 'Magnitude', 'Error', 'Facility', 'Filter', 'Owner']
+    data: List[List[Any]] = []
+
+    for datum in datums:
+        values = json.loads(datum.value)
+
+        data.append([Time(datum.timestamp).jd,
+                     values.get('magnitude'),
+                     values.get('error'),
+                     get_observation_facility(datum),
+                     values.get('filter'),
+                     get_observer_name(datum)])
+
+    df: pd.DataFrame = pd.DataFrame(data=data,
+                                    columns=columns).sort_values(by='JD')
+
+    # For now, ignore anything after the ',' character if present
+    # This is because sometimes Facility is in form "Facility, Observer"
+    # and we only want to take the Facility name
+    df['Facility'] = df['Facility'].apply(lambda x: x.split(',', 1)[0].replace(',', ''))
+
+    facilities = df['Facility'].unique()
+
+    columns: List[str] = ['Facility', 'Filters', 'Datapoints']
+    stats: List[List[Any]] = []
+
+    for facility in facilities:
+        datapoints = len(df[df['Facility'] == facility].index)
+        filters = df[df['Facility'] == facility]['Filter'].unique()
+        stats.append([facility, ", ".join(filters), datapoints])
+
+    filename: str = "target_%s_photometry_stats.csv" % target.name
+
+    return save_data_to_temporary_file(stats, columns, filename, 'Datapoints')
 
 
 def save_photometry_data_for_target_to_csv_file(target_id: int) -> Tuple[NamedTemporaryFile, str]:

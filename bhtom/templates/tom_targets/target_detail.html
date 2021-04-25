@@ -129,6 +129,7 @@
           <div class="row">
             <div class="col-md-12">
               <button onclick="download_photometry()" class="btn btn-info" role="button">Download photometry data</button>
+              <button onclick="download_photometry_stats()" class="btn btn-info" role="button">Download photometry stats</button>
             </div>
           </div>
         {% endif %}
@@ -194,6 +195,9 @@
     }
     function download_photometry() {
       window.open('{% url "bhlist_download_photometry_data" target.id %}')
+    }
+    function download_photometry_stats() {
+      window.open('{% url "bhlist_download_photometry_stats" target.id %}')
     }
     function download_spectroscopy() {
       window.open('{% url "bhlist_download_spectroscopy_data" target.id %}')
