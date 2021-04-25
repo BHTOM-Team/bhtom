@@ -906,6 +906,31 @@ class TargetDownloadPhotometryDataView(PermissionRequiredMixin, View):
             os.remove(tmp.name)
 
 
+class TargetDownloadPhotometryStatsView(PermissionRequiredMixin, View):
+
+    permission_required = 'tom_dataproducts.add_dataproduct'
+
+    def get(self, request, *args, **kwargs):
+        import os
+        from django.http import FileResponse
+        from bhtom.utils.photometry_and_spectroscopy_data_utils import get_photometry_data_stats
+
+        target_id: int = kwargs.get('pk', None)
+        logger.info(f'Generating photometry CSV file for target with id={target_id}...')
+
+        tmp = None
+        try:
+            tmp, filename = get_photometry_data_stats(target_id)
+            return FileResponse(open(tmp.name, 'rb'),
+                                as_attachment=True,
+                                filename=filename)
+        except Exception as e:
+            logger.error(f'Error while generating photometry CSV file for target with id={target_id}: {e}')
+        finally:
+            if tmp:
+                os.remove(tmp.name)
+
+
 class TargetDownloadSpectroscopyDataView(PermissionRequiredMixin, View):
 
     permission_required = 'tom_dataproducts.add_dataproduct'
@@ -918,6 +943,7 @@ class TargetDownloadSpectroscopyDataView(PermissionRequiredMixin, View):
         target_id: int = kwargs.get('pk', None)
         logger.info(f'Generating spectroscopy CSV file for target with id={target_id}...')
 
+        tmp = None
         try:
             tmp, filename = save_spectroscopy_data_for_target_to_csv_file(target_id)
             return FileResponse(open(tmp.name, 'rb'),
@@ -926,7 +952,8 @@ class TargetDownloadSpectroscopyDataView(PermissionRequiredMixin, View):
         except Exception as e:
             logger.error(f'Error while generating spectroscopy CSV file for target with id={target_id}: {e}')
         finally:
-            os.remove(tmp.name)
+            if tmp:
+                os.remove(tmp.name)
 
 
 class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
