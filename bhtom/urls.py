@@ -23,8 +23,8 @@ from rest_framework import routers
 
 from bhtom import views
 from bhtom.views import DataProductUploadView, TargetDetailView, TargetInteractivePhotometryView, \
-    TargetDownloadPhotometryDataView, TargetDownloadPhotometryStatsView,\
-    TargetDownloadSpectroscopyDataView, TargetFileDetailView
+    TargetDownloadPhotometryDataView, TargetDownloadPhotometryStatsView, \
+    TargetDownloadSpectroscopyDataView, TargetFileDetailView, TargetDownloadPhotometryStatsLatexTableView
 from bhtom.views import DeleteInstrument, UpdateInstrument, CreateInstrument, DataProductDeleteView
 from bhtom.views import DeleteObservatory, UpdateObservatory, ObservatoryList, CreateObservatory
 from bhtom.views import RegisterUser, DataProductFeatureView, UserUpdateView, photometry_download, fits_download
@@ -54,6 +54,9 @@ urlpatterns = [
     path('bhlist/<int:pk>/download-photometry-stats',
          TargetDownloadPhotometryStatsView.as_view(),
          name='bhlist_download_photometry_stats'),
+    path('bhlist/<int:pk>/download-photometry-stats-latex',
+         TargetDownloadPhotometryStatsLatexTableView.as_view(),
+         name='bhlist_download_photometry_stats_latex'),
     path('bhlist/<int:pk>/download-spectroscopy', TargetDownloadSpectroscopyDataView.as_view(), name='bhlist_download_spectroscopy_data'),
     path('bhlist/grouping/', TargetGroupingView.as_view(), name='targetgrouping'),
     path('bhlist/<int:pk_target>/file/<int:pk>/delete/', DataProductDeleteView.as_view(), name='data_delete'),
