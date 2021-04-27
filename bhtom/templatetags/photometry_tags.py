@@ -44,7 +44,7 @@ def photometry_for_target(context, target):
     for datum in datums:
         values = json.loads(datum.value)
         extra_data = json.loads(datum.rd_extra_data) if datum.rd_extra_data is not None else {}
-        if values.get('error', 0.0) < 99.0:
+        if values.get('error', 0.0) < 99.0 and values.get('magnitude') < 99.0:
             photometry_data.setdefault(values['filter'], {})
             photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
             photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
@@ -52,13 +52,15 @@ def photometry_for_target(context, target):
             photometry_data[values['filter']].setdefault('owner', []).append(extra_data.get('owner', ''))
             photometry_data[values['filter']].setdefault('facility', []).append(extra_data.get('facility', ''))
         # Non-detection
-        else:
+        elif values.get('magnitude') < 99.0:
             non_detection_data.setdefault(values['filter'], {})
             non_detection_data[values['filter']].setdefault('time', []).append(datum.timestamp)
             non_detection_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
             non_detection_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
             non_detection_data[values['filter']].setdefault('owner', []).append(extra_data.get('owner', ''))
             non_detection_data[values['filter']].setdefault('facility', []).append(extra_data.get('facility', ''))
+
+        # TODO: hovering arror down in case of 99.99 mag?
 
     plot_data = [
         go.Scatter(
