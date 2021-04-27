@@ -122,7 +122,7 @@ def get_photometry_stats(target_id: int) -> Tuple[List[List[str]], List[str]]:
     # For now, ignore anything after the ',' character if present
     # This is because sometimes Facility is in form "Facility, Observer"
     # and we only want to take the Facility name
-    df['Facility'] = df['Facility'].apply(lambda x: x.split(',', 1)[0].replace(',', ''))
+    df['Facility'] = df['Facility'].dropna().apply(lambda x: x.split(',', 1)[0].replace(',', ''))
 
     facilities = df['Facility'].unique()
 
