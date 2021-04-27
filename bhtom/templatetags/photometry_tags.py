@@ -24,6 +24,9 @@ def photometry_for_target(context, target):
     """
 
     photometry_data = {}
+
+    # Marked in ASAS-SN with error 99 mag
+    non_detection_data = {}
     if settings.TARGET_PERMISSIONS_ONLY:
         datums = ViewReducedDatum.objects.filter(target=target,
                                                  data_type__in=[
@@ -41,12 +44,21 @@ def photometry_for_target(context, target):
     for datum in datums:
         values = json.loads(datum.value)
         extra_data = json.loads(datum.rd_extra_data) if datum.rd_extra_data is not None else {}
-        photometry_data.setdefault(values['filter'], {})
-        photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
-        photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
-        photometry_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
-        photometry_data[values['filter']].setdefault('owner', []).append(extra_data.get('owner', ''))
-        photometry_data[values['filter']].setdefault('facility', []).append(extra_data.get('facility', ''))
+        if values.get('error', 0.0) < 99.0:
+            photometry_data.setdefault(values['filter'], {})
+            photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
+            photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
+            photometry_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
+            photometry_data[values['filter']].setdefault('owner', []).append(extra_data.get('owner', ''))
+            photometry_data[values['filter']].setdefault('facility', []).append(extra_data.get('facility', ''))
+        # Non-detection
+        else:
+            non_detection_data.setdefault(values['filter'], {})
+            non_detection_data[values['filter']].setdefault('time', []).append(datum.timestamp)
+            non_detection_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
+            non_detection_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
+            non_detection_data[values['filter']].setdefault('owner', []).append(extra_data.get('owner', ''))
+            non_detection_data[values['filter']].setdefault('facility', []).append(extra_data.get('facility', ''))
 
     plot_data = [
         go.Scatter(
@@ -59,7 +71,16 @@ def photometry_for_target(context, target):
                          visible=True),
             customdata=np.stack((filter_values['owner'], filter_values['facility']), axis=-1),
             hovertemplate='Owner: %{customdata[0]} <br>Facility: %{customdata[1]}',
-        ) for filter_name, filter_values in photometry_data.items()]
+        ) for filter_name, filter_values in photometry_data.items()] + [
+        go.Scatter(
+            x=filter_values['time'],
+            y=filter_values['magnitude'],
+            mode='markers',
+            marker_symbol=6,
+            name=f'{filter_name}',
+            customdata=np.stack((filter_values['owner'], filter_values['facility']), axis=-1),
+            hovertemplate='Owner: %{customdata[0]} <br>Facility: %{customdata[1]}',
+        ) for filter_name, filter_values in non_detection_data.items()]
 
     layout = go.Layout(
         yaxis=dict(autorange='reversed'),
