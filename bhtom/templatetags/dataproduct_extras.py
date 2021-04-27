@@ -96,6 +96,9 @@ def photometry_for_target_static(context, target, include_aavso):
     following keys in the JSON representation: magnitude, error, filter
     """
     photometry_data = {}
+
+    # Marked in ASAS-SN with error 99 mag
+    non_detection_data = {}
     if settings.TARGET_PERMISSIONS_ONLY:
         datums = ReducedDatum.objects.filter(target=target, data_type__in=[settings.DATA_PRODUCT_TYPES['photometry'][0],
                                                                        settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]])
@@ -109,10 +112,17 @@ def photometry_for_target_static(context, target, include_aavso):
 
     for datum in datums:
         values = json.loads(datum.value)
-        photometry_data.setdefault(values['filter'], {})
-        photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
-        photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
-        photometry_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
+
+        if values.get('error', 0.0) < 99.0:
+            photometry_data.setdefault(values['filter'], {})
+            photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
+            photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
+            photometry_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
+        else:
+            non_detection_data.setdefault(values['filter'], {})
+            non_detection_data[values['filter']].setdefault('time', []).append(datum.timestamp)
+            non_detection_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
+            non_detection_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
 
     figure: plt.Figure = plt.figure(figsize=(9, 6))
     ax = figure.add_axes((0.1, 0.15, 0.7, 0.8))
@@ -131,6 +141,17 @@ def photometry_for_target_static(context, target, include_aavso):
 
     ax.tick_params(axis='x', colors='#2A3F5F')
     ax.tick_params(axis='y', colors="#2A3F5F")
+
+    for filter_name, filter_values in non_detection_data.items():
+        ax.errorbar(x=filter_values['time'],
+                    y=filter_values['magnitude'],
+                    yerr=0.0,
+                    fmt='v',
+                    ms=2.5,
+                    capsize=1,
+                    elinewidth=1,
+                    markeredgewidth=1,
+                    label=filter_name)
 
     for filter_name, filter_values in photometry_data.items():
         ax.errorbar(x=filter_values['time'],
