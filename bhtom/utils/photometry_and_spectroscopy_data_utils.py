@@ -1,4 +1,6 @@
 import json
+import math
+import operator
 from tempfile import NamedTemporaryFile
 from typing import Any, List, Optional, Tuple
 from astropy.time import Time
@@ -122,7 +124,13 @@ def get_photometry_stats(target_id: int) -> Tuple[List[List[str]], List[str]]:
     # For now, ignore anything after the ',' character if present
     # This is because sometimes Facility is in form "Facility, Observer"
     # and we only want to take the Facility name
-    df['Facility'] = df['Facility'].dropna().apply(lambda x: x.split(',', 1)[0].replace(',', ''))
+    # If Facility is not present, then fill it with Owner value
+    # If the Owner is blank too, fill it with "Unspecified"
+    df['Facility'] = df['Facility'] \
+        .apply(lambda x: None if (isinstance(x, float) and math.isnan(x)) else x) \
+        .fillna(df['Owner']) \
+        .fillna('Unspecified') \
+        .apply(lambda x: str(x).split(',', 1)[0])
 
     facilities = df['Facility'].unique()
 
@@ -133,6 +141,8 @@ def get_photometry_stats(target_id: int) -> Tuple[List[List[str]], List[str]]:
         datapoints = len(df[df['Facility'] == facility].index)
         filters = df[df['Facility'] == facility]['Filter'].unique()
         stats.append([facility, ", ".join(filters), datapoints])
+
+    stats = sorted(stats, key=operator.itemgetter(2), reverse=True)
 
     return stats, columns
 
@@ -180,7 +190,7 @@ def get_photometry_stats_latex(target_id: int) -> Tuple[NamedTemporaryFile, str]
 
     data, columns = get_photometry_stats(target_id)
 
-    filename: str = "target_%s_photometry_stats.txt" % target.name
+    filename: str = "target_%s_photometry_stats.tex" % target.name
 
     return save_data_to_latex_table(data, columns, filename)
 
