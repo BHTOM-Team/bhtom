@@ -119,6 +119,14 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
                     # If there are information in the comments, then update the DataProduct
                     dp.extra_data = extra_data.to_json_str()
                     dp.save(update_fields=["extra_data"])
+            elif dp.data_product_type == 'photometry_asassn':
+                # ASAS-SN photometry should have ASAS-SN added as the facility
+                extra_data: Optional[ObservationDatapointExtraData] = \
+                    get_comments_extra_info_for_photometry_file(dp)
+                if extra_data:
+                    # If there are information in the comments, then update the DataProduct
+                    dp.extra_data = ObservationDatapointExtraData(facility_name="ASAS-SN", owner="ASAS-SN").to_json_str()
+                    dp.save(update_fields=["extra_data"])
 
             instance = BHTomData.objects.create(user_id=user, dataproduct_id=dp, comment=comment, data_stored=True)
             logger.info('successful create: ' + str(dp.data_product_type))
