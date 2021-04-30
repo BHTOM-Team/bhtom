@@ -111,8 +111,7 @@ class DataProductUploadForm(forms.Form):
     )
 
     facility = forms.CharField(
-        label='Facility Name',
-        required=False
+        label='Facility Name'
     )
 
     def __init__(self, *args, **kwargs):
@@ -153,6 +152,8 @@ class DataProductUploadForm(forms.Form):
             required=False,
             label='Comment',
         )
+
+        self.fields['observer'].initial = f'{user.first_name} {user.last_name}'
 
 class ObservatoryCreationForm(forms.ModelForm):
 

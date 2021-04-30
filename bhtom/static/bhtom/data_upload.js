@@ -22,6 +22,8 @@ function dataProductSelect() {
         matchDist.setAttribute("required", true);
         observatory.setAttribute("required", true);
         filter.setAttribute("required", true);
+        observer.removeAttribute("required");
+        facility.removeAttribute("required");
 
         mjd.parentElement.style.display = "block";
         ExpTime.parentElement.style.display = "block";
@@ -41,6 +43,8 @@ function dataProductSelect() {
         matchDist.setAttribute("required", true);
         observatory.setAttribute("required", true);
         filter.setAttribute("required", true);
+        observer.removeAttribute("required");
+        facility.removeAttribute("required");
 
         mjd.parentElement.style.display = "none";
         ExpTime.parentElement.style.display = "none";
@@ -60,6 +64,8 @@ function dataProductSelect() {
         matchDist.removeAttribute("required");
         observatory.removeAttribute("required");
         filter.removeAttribute("required");
+        observer.setAttribute("required", true);
+        facility.setAttribute("required", true);
 
         mjd.parentElement.style.display = "none";
         ExpTime.parentElement.style.display = "none";
@@ -79,6 +85,8 @@ function dataProductSelect() {
         matchDist.removeAttribute("required");
         observatory.removeAttribute("required");
         filter.removeAttribute("required");
+        observer.removeAttribute("required");
+        facility.removeAttribute("required");
 
         mjd.parentElement.style.display = "none";
         ExpTime.parentElement.style.display = "none";
