@@ -105,6 +105,16 @@ class DataProductUploadForm(forms.Form):
         widget=forms.HiddenInput()
     )
 
+    observer = forms.CharField(
+        label='Observer\'s Name',
+        required=False
+    )
+
+    facility = forms.CharField(
+        label='Facility Name',
+        required=False
+    )
+
     def __init__(self, *args, **kwargs):
 
         user = kwargs.pop('user')

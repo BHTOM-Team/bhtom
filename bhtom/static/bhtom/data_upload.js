@@ -12,8 +12,10 @@ function dataProductSelect() {
     var dryRun = document.getElementById("id_dryRun");
     var observatory = document.getElementById("id_observatory");
     var filter = document.getElementById("id_filter");
+    var observer = document.getElementById("id_observer");
+    var facility = document.getElementById("id_facility");
 
-    if (data_type_0 == true){
+    if (data_type_0 === true){
 
         mjd.setAttribute("required", true);
         ExpTime.setAttribute("required", true);
@@ -27,10 +29,12 @@ function dataProductSelect() {
         dryRun.parentElement.style.display = "block";
         observatory.parentElement.style.display = "block";
         filter.parentElement.style.display = "block";
+        observer.parentElement.style.display = "none";
+        facility.parentElement.style.display = "none";
 
     }
 
-    if (data_type_1 == true){
+    if (data_type_1 === true){
 
         mjd.removeAttribute("required");
         ExpTime.removeAttribute("required");
@@ -44,10 +48,12 @@ function dataProductSelect() {
         dryRun.parentElement.style.display = "block";
         observatory.parentElement.style.display = "block";
         filter.parentElement.style.display = "block";
+        observer.parentElement.style.display = "none";
+        facility.parentElement.style.display = "none";
 
     }
 
-    if (data_type_2 == true || data_type_3 == true || data_type_4 == true){
+    if (data_type_2 === true || data_type_3 === true) {
 
         mjd.removeAttribute("required");
         ExpTime.removeAttribute("required");
@@ -61,6 +67,27 @@ function dataProductSelect() {
         dryRun.parentElement.style.display = "none";
         observatory.parentElement.style.display = "none";
         filter.parentElement.style.display = "none";
+        observer.parentElement.style.display = "block";
+        facility.parentElement.style.display = "block";
+
+    }
+
+    if (data_type_4 === true) {
+
+        mjd.removeAttribute("required");
+        ExpTime.removeAttribute("required");
+        matchDist.removeAttribute("required");
+        observatory.removeAttribute("required");
+        filter.removeAttribute("required");
+
+        mjd.parentElement.style.display = "none";
+        ExpTime.parentElement.style.display = "none";
+        matchDist.parentElement.style.display = "none";
+        dryRun.parentElement.style.display = "none";
+        observatory.parentElement.style.display = "none";
+        filter.parentElement.style.display = "none";
+        observer.parentElement.style.display = "none";
+        facility.parentElement.style.display = "none";
 
     }
 
