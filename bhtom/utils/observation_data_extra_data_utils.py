@@ -9,9 +9,7 @@ FACILITY_NAME_KEY: str = "facility"
 OBSERVATION_TIME_KEY: str = "observation_time"
 OWNER_KEY: str = "owner"
 
-COMMENTS_FACILITY_KEY: str = "facility"
 COMMENTS_OBSERVATION_TIME_KEY: str = "date-obs"
-COMMENTS_OBSERVER_NAME_KEY: str = "obs-name"
 
 
 class ObservationDatapointExtraData:
@@ -96,11 +94,7 @@ def get_comments_extra_info_for_ascii_file(data_product: DataProduct,
     except Exception as e:
         return None
 
-    include_info = [COMMENTS_FACILITY_KEY,
-                    COMMENTS_OBSERVER_NAME_KEY]
-
-    if include_obs_time:
-        include_info.append(COMMENTS_OBSERVATION_TIME_KEY)
+    include_info: List[str] = [COMMENTS_OBSERVATION_TIME_KEY] if include_obs_time else []
 
     for comment in comments:
         for info_key in include_info:
@@ -109,9 +103,6 @@ def get_comments_extra_info_for_ascii_file(data_product: DataProduct,
                     info[info_key] = comment.split(':')[1].strip()
                 except IndexError:
                     info[info_key] = None
-
-    facility_name = facility_name if facility_name else info.get(COMMENTS_FACILITY_KEY)
-    observer_name = observer_name if observer_name else info.get(COMMENTS_OBSERVER_NAME_KEY)
 
     return ObservationDatapointExtraData(facility_name=facility_name,
                                          observation_time=info.get(COMMENTS_OBSERVATION_TIME_KEY),
