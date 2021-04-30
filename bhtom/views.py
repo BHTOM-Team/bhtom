@@ -781,6 +781,8 @@ class DataProductUploadView(FormView):
         matchDist = form.cleaned_data['matchDist']
         dryRun = form.cleaned_data['dryRun']
         comment = form.cleaned_data['comment']
+        facility = form.cleaned_data['facility']
+        observer = form.cleaned_data['observer']
         user = self.request.user
 
         if dp_type =='fits_file' and observatory.cpcsOnly == True:
@@ -799,9 +801,9 @@ class DataProductUploadView(FormView):
             dp.save()
 
             try:
-                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun, matchDist, comment, user, -100)
+                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun,
+                         matchDist, comment, user, -100, facility, observer)
 
-                #if dp.data_product_type == 'photometry':
                 run_data_processor(dp)
 
                 successful_uploads.append(str(dp).split('/')[-1])
