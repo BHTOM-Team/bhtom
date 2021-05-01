@@ -111,7 +111,8 @@ class DataProductUploadForm(forms.Form):
     )
 
     facility = forms.CharField(
-        label='Facility Name'
+        label='Facility Name',
+        required=False
     )
 
     def __init__(self, *args, **kwargs):
