@@ -821,9 +821,12 @@ class DataProductUploadView(FormView):
                 logger.error(e)
                 messages.error(self.request, 'There was a problem processing your file: {0}'.format(str(dp)))
         if successful_uploads:
+            message: str = 'Successfully uploaded: {0}.'.format('\n'.join([p for p in successful_uploads]))
+            if dp_type == 'fits_file' or dp_type == 'photometry_cpcs':
+                message += 'Your file is processing. This might take several minutes'
             messages.success(
                 self.request,
-                'Successfully uploaded: {0}. Your file is processing. This might take several minutes'.format('\n'.join([p for p in successful_uploads]))
+                message
             )
 
         return redirect(form.cleaned_data.get('referrer', '/'))
