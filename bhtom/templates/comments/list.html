@@ -1,0 +1,20 @@
+{% load gravatar %}
+<ul class="list-unstyled">
+  {% for c in comment_list %}
+  <li class="media ml-2 mt-1">
+    <img class="mr-3 rounded-circle img-fluid avatar" src="{% gravatar_url c.comment.user.email 50 %}" alt="{{ c.comment.user.email }}">
+    <div class="media-body">
+      <small class="mt-0 mb-1">
+          <a href="{% url 'bhlist_detail' c.target.id %}">{{ c.target }}</a> {{ c.comment.user.first_name }} {{ c.comment.user.last_name }}
+        {{ c.comment.submit_date|date }}
+        {% if c.comment.user == user or user.is_superuser %}
+          <a href="{% url 'c.comment-delete' c.comment.id %}" class="btn btn-sm btn-danger float-right">✖</a>
+        {% endif %}
+      </small>
+      <p class="mr-1">{{ c.comment.comment|truncatewords:30 }}</p>
+    </div>
+  </li>
+  {% empty %}
+  <p>No comments yet.</p>
+  {% endfor %}
+</ul>
