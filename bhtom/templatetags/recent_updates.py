@@ -13,6 +13,7 @@ def recent_comments_with_targets(limit=5):
     with_targets = []
     for comment in Comment.objects.all().order_by('-submit_date')[:limit]:
         target: Target = Target.objects.get(pk=comment.object_pk)
-        with_targets.append({'target': target,
-                             'comment': comment})
+        if target:
+            with_targets.append({'target': target,
+                                 'comment': comment})
     return {'comment_list': with_targets}
