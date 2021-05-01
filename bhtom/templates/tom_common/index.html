@@ -1,5 +1,5 @@
 {% extends 'tom_common/base.html' %}
-{% load static targets_extras observation_extras dataproduct_extras tom_common_extras %}
+{% load static targets_extras observation_extras dataproduct_extras tom_common_extras recent_updates %}
 {% block title %}Home{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
@@ -27,44 +27,47 @@
     photometric and spectroscopic data of time-domain targets, and for requesting and managing follow-up observations
     obtained with a network of telescopes.
     </p>
-    <p>
-    Version 1.1 (Dec.2020): processing of fits images (PSF or aperture photometry) is now available, along with photometric calibrations using Cambridge Photometric Calibration Server.   
-    </p>
-    <p class="text-center"; style="font-size:18px">
+<p>
+    Version 1.1 (Dec.2020): processing of fits images (PSF or aperture photometry) is now available, along with
+    photometric calibrations using Cambridge Photometric Calibration Server.
+</p>
+<p class="text-center" ; style="font-size:18px">
     <a href="http://visata.astrouw.edu.pl/~wyrzykow/2021.01-BHTOM-manual-v.1.1.pdf">BH TOM MANUAL (v.1.1)</a></p>
 
-    <!-- CREDITS -->
-    <p>
-      The BHTOM was built within Time-Domain Work Package of the <a href="https://www.astro-opticon.org/">OPTICON</a> EC/Horizon2020 grant no. 730890. 
-    </p>
-     <!-- Akond Lab -->
-    <p>
-      The BHTOM is co-developed and integrated by the <a href="https://www.akond.com/">Akond Lab</a>  company.
-    </p>
-    <!-- LOGOS -->
-    <p class="text-center"><img src="https://www.astrouw.edu.pl/~wyrzykow/logo-opticon.png" class="img-fluid mx-auto">
-        <img src="https://www.astrouw.edu.pl/~wyrzykow/logo-uniwarsaw.png" class="img-fluid mx-auto">
-      </p> 
-    <p class="text-center"><img src="/bhtom/static/tom_common/img/logo_akondlab.png" class="img-fluid mx-auto" style="width:380px">
-    </p>
-  </div>
+<!-- CREDITS -->
+<p>
+    The BHTOM was built within Time-Domain Work Package of the <a href="https://www.astro-opticon.org/">OPTICON</a>
+    EC/Horizon2020 grant no. 730890.
+</p>
+<!-- Akond Lab -->
+<p>
+    The BHTOM is co-developed and integrated by the <a href="https://www.akond.com/">Akond Lab</a> company.
+</p>
+<!-- LOGOS -->
+<p class="text-center"><img src="https://www.astrouw.edu.pl/~wyrzykow/logo-opticon.png" class="img-fluid mx-auto">
+    <img src="https://www.astrouw.edu.pl/~wyrzykow/logo-uniwarsaw.png" class="img-fluid mx-auto">
+</p>
+<p class="text-center"><img src="/bhtom/static/tom_common/img/logo_akondlab.png" class="img-fluid mx-auto"
+                            style="width:380px">
+</p>
+</div>
 {% if user.is_authenticated %}
-      <div class="comments col-md-4" >
-    <div class="card">
-      <div class="card-header">
-        Latest Comments
-      </div>
-      {% recent_comments %}
+    <div class="comments col-md-4">
+        <div class="card">
+            <div class="card-header">
+                Latest Targets
+            </div>
+            {% recent_targets %}
+        </div>
+        <br/>
+        <div class="card">
+            <div class="card-header">
+                Latest Comments
+            </div>
+            {% recent_comments_with_targets %}
+        </div>
     </div>
-    <br/>
-    <div class="card">
-      <div class="card-header">
-        Latest Targets
-      </div>
-      {% recent_targets %}
-  </div>
-</div>
 
-</div>
+    </div>
 {% endif %}
 {% endblock %}
