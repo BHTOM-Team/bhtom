@@ -60,6 +60,11 @@
       {% endif %}
       {% if perms.tom_targets.view_target %}
          <li class="nav-item">
+          <span class="nav-link" data-target="#publication" data-toggle="tab">Publication</span>
+        </li>
+      {% endif %}
+      {% if perms.tom_targets.view_target %}
+         <li class="nav-item">
           <span class="nav-link" data-target="#data" data-toggle="tab">Data</span>
         </li>
       {% endif %}
@@ -176,6 +181,17 @@
       {% endif %}
 
       {% if perms.tom_targets.view_target %}
+      <div class="tab-pane" id="publication">
+          <div class="row">
+            <div class="col-md-12">
+              <button onclick="download_photometry_stats_latex()" class="btn btn-info" role="button">Download photometry stats latex table</button>
+              <button onclick="download_photometry_stats()" class="btn btn-info" role="button">Download photometry stats</button>
+            </div>
+          </div>
+      </div>
+      {% endif %}
+
+      {% if perms.tom_targets.view_target %}
       <div class="tab-pane" id="data">
          {% dataproduct_list object %}
       </div>
@@ -194,6 +210,12 @@
     }
     function download_photometry() {
       window.open('{% url "bhlist_download_photometry_data" target.id %}')
+    }
+    function download_photometry_stats() {
+      window.open('{% url "bhlist_download_photometry_stats" target.id %}')
+    }
+    function download_photometry_stats_latex() {
+      window.open('{% url "bhlist_download_photometry_stats_latex" target.id %}')
     }
     function download_spectroscopy() {
       window.open('{% url "bhlist_download_spectroscopy_data" target.id %}')
