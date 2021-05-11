@@ -13,24 +13,27 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.urls import path, include
 
+from .views import BlackHoleListView
+
+from django.contrib import admin
+
+from django.urls import path
+from django.urls import include
+from django.views.generic import TemplateView
+from django.contrib.auth.views import LoginView, LogoutView
 from django.conf import settings
 from django.conf.urls.static import static
-from django.urls import include
-from django.urls import path
-from django.views.generic import TemplateView
-from rest_framework import routers
-
+from rest_framework import routers, permissions
 from bhtom import views
-from bhtom.views import DataProductUploadView, TargetDetailView, TargetInteractivePhotometryView, \
-    TargetDownloadPhotometryDataView, TargetDownloadPhotometryStatsView, \
-    TargetDownloadSpectroscopyDataView, TargetFileDetailView, TargetDownloadPhotometryStatsLatexTableView
-from bhtom.views import DeleteInstrument, UpdateInstrument, CreateInstrument, DataProductDeleteView
-from bhtom.views import DeleteObservatory, UpdateObservatory, ObservatoryList, CreateObservatory
-from bhtom.views import RegisterUser, DataProductFeatureView, UserUpdateView, photometry_download, fits_download
+from bhtom.views import DataProductUploadView, TargetDetailView, TargetInteractivePhotometryView,\
+    TargetDownloadPhotometryDataView, TargetDownloadSpectroscopyDataView, TargetFileDetailView
 from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView, TargetGroupingView
+from bhtom.views import DeleteObservatory, UpdateObservatory, ObservatoryList, CreateObservatory
+from bhtom.views import DeleteInstrument, UpdateInstrument, CreateInstrument, DataProductDeleteView
+from bhtom.views import RegisterUser, DataProductFeatureView, UserUpdateView, photometry_download, fits_download
 from bhtom.views import data_download, CommentDeleteView, TargetAddRemoveGroupingView
-from .views import BlackHoleListView
 
 router = routers.DefaultRouter()
 router.register('upload', views.fits_upload)
@@ -51,12 +54,6 @@ urlpatterns = [
     path('bhlist/<int:pk>/', TargetDetailView.as_view(), name='bhlist_detail'),
     path('bhlist/<int:pk>/iphotometry', TargetInteractivePhotometryView.as_view(), name='bhlist_i_photometry'),
     path('bhlist/<int:pk>/download-photometry', TargetDownloadPhotometryDataView.as_view(), name='bhlist_download_photometry_data'),
-    path('bhlist/<int:pk>/download-photometry-stats',
-         TargetDownloadPhotometryStatsView.as_view(),
-         name='bhlist_download_photometry_stats'),
-    path('bhlist/<int:pk>/download-photometry-stats-latex',
-         TargetDownloadPhotometryStatsLatexTableView.as_view(),
-         name='bhlist_download_photometry_stats_latex'),
     path('bhlist/<int:pk>/download-spectroscopy', TargetDownloadSpectroscopyDataView.as_view(), name='bhlist_download_spectroscopy_data'),
     path('bhlist/grouping/', TargetGroupingView.as_view(), name='targetgrouping'),
     path('bhlist/<int:pk_target>/file/<int:pk>/delete/', DataProductDeleteView.as_view(), name='data_delete'),
