@@ -13,10 +13,6 @@
   <br>
   For photometric FITS processing choose the observatory from the list. 
   You can add a new instrument <a href="{% url 'observatory_create' %}">here.</a>
-  <br>
-  <br>
-    For ASCII and CSV files you can provide facility and observer's name manually- this will override any information in the comments.
-    If not provided by form, comment will be parsed according to the format as in photometry and spectroscopy file example.
 </p>
 
   <form method="POST" action="{% url 'data_upload' %}" enctype="multipart/form-data">

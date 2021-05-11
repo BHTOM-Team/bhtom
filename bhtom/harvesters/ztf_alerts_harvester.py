@@ -103,22 +103,20 @@ def update_ztf_lc(target, requesting_user_id):
                 )
 
         refresh_reduced_data_view()
+        jdlast = np.array(jdarr).max()
 
-        if jdarr:
-            jdlast = np.array(jdarr).max()
+        # modifying jd of last obs
 
-            # modifying jd of last obs
+        previousjd = 0
 
-            previousjd = 0
-
-            try:
-                previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
-                logger.debug("DEBUG-ZTF prev= ", previousjd, " this= ", jdlast)
-            except Exception as e:
-                logger.error(f'Error while updating last JD for {target}: {e}')
-            if (jdlast > previousjd):
-                target.save(extras={'jdlastobs': jdlast})
-                logger.debug("DEBUG saving new jdlast from ZTF: ", jdlast)
+        try:
+            previousjd = float(target.targetextra_set.get(key='jdlastobs').value)
+            logger.debug("DEBUG-ZTF prev= ", previousjd, " this= ", jdlast)
+        except Exception as e:
+            logger.error(f'Error while updating last JD for {target}: {e}')
+        if (jdlast > previousjd):
+            target.save(extras={'jdlastobs': jdlast})
+            logger.debug("DEBUG saving new jdlast from ZTF: ", jdlast)
 
 
 def getmars(objectId: int):  # gets mars data for ZTF objects

@@ -9,7 +9,9 @@ FACILITY_NAME_KEY: str = "facility"
 OBSERVATION_TIME_KEY: str = "observation_time"
 OWNER_KEY: str = "owner"
 
+COMMENTS_FACILITY_KEY: str = "facility"
 COMMENTS_OBSERVATION_TIME_KEY: str = "date-obs"
+COMMENTS_OBSERVER_NAME_KEY: str = "obs-name"
 
 
 class ObservationDatapointExtraData:
@@ -54,30 +56,29 @@ def decode_datapoint_extra_data(data: Dict[str, Any]) -> ObservationDatapointExt
                                          owner=data.get(OWNER_KEY, None))
 
 
-def get_comments_extra_info_for_spectroscopy_file(data_product: DataProduct,
-                                                  facility_name: Optional[str],
-                                                  observer_name: Optional[str]) -> Optional[ObservationDatapointExtraData]:
+def get_comments_extra_info_for_spectroscopy_file(data_product: DataProduct) -> Optional[ObservationDatapointExtraData]:
     """
         Returns the facility name, observer's name and observation time if provided in the comment section
         of the file
     """
-    return get_comments_extra_info_for_ascii_file(data_product, facility_name, observer_name, include_obs_time=True)
+    return get_comments_extra_info_for_ascii_file(data_product,
+                                                  [COMMENTS_FACILITY_KEY,
+                                                   COMMENTS_OBSERVER_NAME_KEY,
+                                                   COMMENTS_OBSERVATION_TIME_KEY])
 
 
-def get_comments_extra_info_for_photometry_file(data_product: DataProduct,
-                                                facility_name: Optional[str],
-                                                observer_name: Optional[str]) -> Optional[ObservationDatapointExtraData]:
+def get_comments_extra_info_for_photometry_file(data_product: DataProduct) -> Optional[ObservationDatapointExtraData]:
     """
         Returns the facility name and observer's if provided in the comment section
         of the file
     """
-    return get_comments_extra_info_for_ascii_file(data_product, facility_name, observer_name)
+    return get_comments_extra_info_for_ascii_file(data_product,
+                                                  [COMMENTS_FACILITY_KEY,
+                                                   COMMENTS_OBSERVER_NAME_KEY])
 
 
 def get_comments_extra_info_for_ascii_file(data_product: DataProduct,
-                                           facility_name: Optional[str],
-                                           observer_name: Optional[str],
-                                           include_obs_time: bool = False) -> Optional[ObservationDatapointExtraData]:
+                                           include_info: List[str]) -> Optional[ObservationDatapointExtraData]:
     """
         Returns the facility name and observer's if provided in the comment section
         of the file
@@ -94,8 +95,6 @@ def get_comments_extra_info_for_ascii_file(data_product: DataProduct,
     except Exception as e:
         return None
 
-    include_info: List[str] = [COMMENTS_OBSERVATION_TIME_KEY] if include_obs_time else []
-
     for comment in comments:
         for info_key in include_info:
             if info_key in comment.lower():
@@ -104,6 +103,6 @@ def get_comments_extra_info_for_ascii_file(data_product: DataProduct,
                 except IndexError:
                     info[info_key] = None
 
-    return ObservationDatapointExtraData(facility_name=facility_name,
+    return ObservationDatapointExtraData(facility_name=info.get(COMMENTS_FACILITY_KEY),
                                          observation_time=info.get(COMMENTS_OBSERVATION_TIME_KEY),
-                                         owner=observer_name)
+                                         owner=info.get(COMMENTS_OBSERVER_NAME_KEY))

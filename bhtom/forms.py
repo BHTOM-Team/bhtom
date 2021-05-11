@@ -105,16 +105,6 @@ class DataProductUploadForm(forms.Form):
         widget=forms.HiddenInput()
     )
 
-    observer = forms.CharField(
-        label='Observer\'s Name',
-        required=False
-    )
-
-    facility = forms.CharField(
-        label='Facility Name',
-        required=False
-    )
-
     def __init__(self, *args, **kwargs):
 
         user = kwargs.pop('user')
@@ -153,8 +143,6 @@ class DataProductUploadForm(forms.Form):
             required=False,
             label='Comment',
         )
-
-        self.fields['observer'].initial = f'{user.first_name} {user.last_name}'
 
 class ObservatoryCreationForm(forms.ModelForm):
 

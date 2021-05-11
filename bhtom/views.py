@@ -9,12 +9,11 @@ import logging
 import requests
 import base64
 
-from abc import ABC, abstractmethod
-
 from tom_targets.views import TargetCreateView
 from tom_targets.templatetags.targets_extras import target_extra_field
 from tom_targets.models import Target, TargetList
 from bhtom.forms import (SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset)
+from tom_targets.filters import TargetFilter
 from tom_common.hooks import run_hook
 from tom_common.hints import add_hint
 
@@ -60,10 +59,6 @@ from django_filters.views import FilterView
 from django.http import HttpResponseRedirect, QueryDict
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
-
-from bhtom.utils.photometry_and_spectroscopy_data_utils import save_photometry_data_for_target_to_csv_file, \
-    get_photometry_data_stats, save_data_to_latex_table, save_spectroscopy_data_for_target_to_csv_file, \
-    get_photometry_stats_latex
 
 try:
     from settings import local_settings as secret
@@ -781,8 +776,6 @@ class DataProductUploadView(FormView):
         matchDist = form.cleaned_data['matchDist']
         dryRun = form.cleaned_data['dryRun']
         comment = form.cleaned_data['comment']
-        facility = form.cleaned_data['facility']
-        observer = form.cleaned_data['observer']
         user = self.request.user
 
         if dp_type =='fits_file' and observatory.cpcsOnly == True:
@@ -801,9 +794,9 @@ class DataProductUploadView(FormView):
             dp.save()
 
             try:
-                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun,
-                         matchDist, comment, user, -100, facility, observer)
+                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun, matchDist, comment, user, -100)
 
+                #if dp.data_product_type == 'photometry':
                 run_data_processor(dp)
 
                 successful_uploads.append(str(dp).split('/')[-1])
@@ -821,12 +814,9 @@ class DataProductUploadView(FormView):
                 logger.error(e)
                 messages.error(self.request, 'There was a problem processing your file: {0}'.format(str(dp)))
         if successful_uploads:
-            message: str = 'Successfully uploaded: {0}.'.format('\n'.join([p for p in successful_uploads]))
-            if dp_type == 'fits_file' or dp_type == 'photometry_cpcs':
-                message += 'Your file is processing. This might take several minutes'
             messages.success(
                 self.request,
-                message
+                'Successfully uploaded: {0}. Your file is processing. This might take several minutes'.format('\n'.join([p for p in successful_uploads]))
             )
 
         return redirect(form.cleaned_data.get('referrer', '/'))
@@ -893,51 +883,50 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
         return super().get(request, *args, **kwargs)
 
 
-class TargetDownloadDataView(ABC, PermissionRequiredMixin, View):
-    permission_required = 'tom_dataproducts.add_dataproduct'
+class TargetDownloadPhotometryDataView(PermissionRequiredMixin, View):
 
-    @abstractmethod
-    def generate_data_method(self, target_id):
-        pass
+    permission_required = 'tom_dataproducts.add_dataproduct'
 
     def get(self, request, *args, **kwargs):
         import os
         from django.http import FileResponse
+        from bhtom.utils.photometry_and_spectroscopy_data_utils import save_photometry_data_for_target_to_csv_file
 
         target_id: int = kwargs.get('pk', None)
         logger.info(f'Generating photometry CSV file for target with id={target_id}...')
 
-        tmp = None
         try:
-            tmp, filename = self.generate_data_method(target_id)
+            tmp, filename = save_photometry_data_for_target_to_csv_file(target_id)
             return FileResponse(open(tmp.name, 'rb'),
                                 as_attachment=True,
                                 filename=filename)
         except Exception as e:
             logger.error(f'Error while generating photometry CSV file for target with id={target_id}: {e}')
         finally:
-            if tmp:
-                os.remove(tmp.name)
+            os.remove(tmp.name)
 
 
-class TargetDownloadPhotometryDataView(TargetDownloadDataView):
-    def generate_data_method(self, target_id):
-        return save_photometry_data_for_target_to_csv_file(target_id)
+class TargetDownloadSpectroscopyDataView(PermissionRequiredMixin, View):
 
+    permission_required = 'tom_dataproducts.add_dataproduct'
 
-class TargetDownloadPhotometryStatsView(TargetDownloadDataView):
-    def generate_data_method(self, target_id):
-        return get_photometry_data_stats(target_id)
+    def get(self, request, *args, **kwargs):
+        import os
+        from django.http import FileResponse
+        from bhtom.utils.photometry_and_spectroscopy_data_utils import save_spectroscopy_data_for_target_to_csv_file
 
+        target_id: int = kwargs.get('pk', None)
+        logger.info(f'Generating spectroscopy CSV file for target with id={target_id}...')
 
-class TargetDownloadPhotometryStatsLatexTableView(TargetDownloadDataView):
-    def generate_data_method(self, target_id):
-        return get_photometry_stats_latex(target_id)
-
-
-class TargetDownloadSpectroscopyDataView(TargetDownloadDataView):
-    def generate_data_method(self, target_id):
-        return save_spectroscopy_data_for_target_to_csv_file(target_id)
+        try:
+            tmp, filename = save_spectroscopy_data_for_target_to_csv_file(target_id)
+            return FileResponse(open(tmp.name, 'rb'),
+                                as_attachment=True,
+                                filename=filename)
+        except Exception as e:
+            logger.error(f'Error while generating spectroscopy CSV file for target with id={target_id}: {e}')
+        finally:
+            os.remove(tmp.name)
 
 
 class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):

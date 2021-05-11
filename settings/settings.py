@@ -155,7 +155,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'bhtom.middleware.external_service_middleware.ExternalServiceMiddleware',
+    'tom_common.middleware.ExternalServiceMiddleware',
 ]
 
 ROOT_URLCONF = 'bhtom.urls'
@@ -448,7 +448,7 @@ TOM_HARVESTER_CLASSES = [
     'tom_catalogs.harvesters.ned.NEDHarvester',
     'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',
     'tom_catalogs.harvesters.mpc.MPCHarvester',
-    'bhtom.harvesters.tns.TNSHarvester',
+    'tom_catalogs.harvesters.tns.TNSHarvester',
     ]
 
 REST_FRAMEWORK = {
