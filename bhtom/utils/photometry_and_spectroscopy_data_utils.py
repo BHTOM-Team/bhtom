@@ -1,8 +1,12 @@
 import json
+import math
+import operator
 from tempfile import NamedTemporaryFile
 from typing import Any, List, Optional, Tuple
+from astropy.time import Time
 
 import pandas as pd
+
 from django.conf import settings
 from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_targets.models import Target
@@ -68,6 +72,7 @@ def decode_owner(extra_data_json_str: str) -> Optional[str]:
     extra_data: Optional[ObservationDatapointExtraData] = decode_datapoint_extra_data(json.loads(extra_data_json_str))
     return getattr(extra_data, 'owner', None)
 
+
 def get_spectroscopy_observation_time_jd(reduced_datum: ViewReducedDatum) -> Optional[float]:
     from dateutil import parser
     from datetime import datetime
@@ -85,25 +90,7 @@ def get_spectroscopy_observation_time_jd(reduced_datum: ViewReducedDatum) -> Opt
     return None
 
 
-def save_data_to_temporary_file(data: List[List[Any]],
-                                columns: List[str],
-                                filename: str) -> Tuple[NamedTemporaryFile, str]:
-    df: pd.DataFrame = pd.DataFrame(data=data,
-                                    columns=columns).sort_values(by='JD')
-
-    tmp: NamedTemporaryFile = NamedTemporaryFile(mode="w+",
-                                                 suffix=".csv",
-                                                 prefix=filename,
-                                                 delete=False)
-
-    with open(tmp.name, 'w') as f:
-        df.to_csv(f.name,
-                  index=False)
-
-    return tmp, filename
-
-
-def save_photometry_data_for_target_to_csv_file(target_id: int) -> Tuple[NamedTemporaryFile, str]:
+def get_photometry_data_table(target_id: int) -> Tuple[List[List[str]], List[str]]:
     from astropy.time import Time
 
     target: Target = Target.objects.get(pk=target_id)
@@ -124,6 +111,105 @@ def save_photometry_data_for_target_to_csv_file(target_id: int) -> Tuple[NamedTe
                      get_observation_facility(datum),
                      values.get('filter'),
                      get_observer_name(datum)])
+
+    return data, columns
+
+
+def get_photometry_stats(target_id: int) -> Tuple[List[List[str]], List[str]]:
+    data, columns = get_photometry_data_table(target_id)
+
+    df: pd.DataFrame = pd.DataFrame(data=data,
+                                    columns=columns)
+
+    # For now, ignore anything after the ',' character if present
+    # This is because sometimes Facility is in form "Facility, Observer"
+    # and we only want to take the Facility name
+    # If Facility is not present, then fill it with Owner value
+    # If the Owner is blank too, fill it with "Unspecified"
+    df['Facility'] = df['Facility'] \
+        .apply(lambda x: None if (isinstance(x, float) and math.isnan(x)) else x) \
+        .fillna(df['Owner']) \
+        .fillna('Unspecified') \
+        .apply(lambda x: str(x).split(',', 1)[0])
+
+    facilities = df['Facility'].unique()
+
+    columns: List[str] = ['Facility', 'Filters', 'Data_points']
+    stats: List[List[Any]] = []
+
+    for facility in facilities:
+        datapoints = len(df[df['Facility'] == facility].index)
+        filters = df[df['Facility'] == facility]['Filter'].unique()
+        stats.append([facility, ", ".join(filters), datapoints])
+
+    stats = sorted(stats, key=operator.itemgetter(2), reverse=True)
+
+    return stats, columns
+
+
+def save_data_to_temporary_file(data: List[List[Any]],
+                                columns: List[str],
+                                filename: str,
+                                sort_by: str = 'JD',
+                                sort_by_asc: bool = True) -> Tuple[NamedTemporaryFile, str]:
+    df: pd.DataFrame = pd.DataFrame(data=data,
+                                    columns=columns).sort_values(by=sort_by, ascending=sort_by_asc)
+
+    tmp: NamedTemporaryFile = NamedTemporaryFile(mode="w+",
+                                                 suffix=".csv",
+                                                 prefix=filename,
+                                                 delete=False)
+
+    with open(tmp.name, 'w') as f:
+        df.to_csv(f.name,
+                  index=False)
+
+    return tmp, filename
+
+
+def save_data_to_latex_table(data: List[List[Any]],
+                             columns: List[str],
+                             filename: str) -> Tuple[NamedTemporaryFile, str]:
+    from .latex_utils import data_to_latex_table
+
+    latex_table_str: str = data_to_latex_table(data=data, columns=columns, filename=filename)
+
+    tmp: NamedTemporaryFile = NamedTemporaryFile(mode="w+",
+                                                 suffix=".csv",
+                                                 prefix=filename,
+                                                 delete=False)
+
+    with open(tmp.name, 'w') as f:
+        f.write(latex_table_str)
+
+    return tmp, filename
+
+
+def get_photometry_stats_latex(target_id: int) -> Tuple[NamedTemporaryFile, str]:
+    target: Target = Target.objects.get(pk=target_id)
+
+    data, columns = get_photometry_stats(target_id)
+
+    filename: str = "target_%s_photometry_stats.tex" % target.name
+
+    return save_data_to_latex_table(data, columns, filename)
+
+
+def get_photometry_data_stats(target_id: int) -> Tuple[NamedTemporaryFile, str]:
+    target: Target = Target.objects.get(pk=target_id)
+
+    stats, columns = get_photometry_stats(target_id)
+
+    filename: str = "target_%s_photometry_stats.csv" % target.name
+
+    return save_data_to_temporary_file(stats, columns, filename, 'Data_points', False)
+
+
+def save_photometry_data_for_target_to_csv_file(target_id: int) -> Tuple[NamedTemporaryFile, str]:
+
+    target: Target = Target.objects.get(pk=target_id)
+
+    data, columns = get_photometry_data_table(target_id)
 
     filename: str = "target_%s_photometry.csv" % target.name
 
