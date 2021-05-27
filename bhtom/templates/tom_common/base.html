@@ -16,7 +16,16 @@
 
     {% bootstrap_javascript jquery='True' %}
 
-    <title>BHTOM | {% block title %}{% endblock %}</title>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-C6NWTCL3HF"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-C6NWTCL3HF');
+  </script>
+
+  <title>BHTOM | {% block title %}{% endblock %}</title>
   </head>
   <body>
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
