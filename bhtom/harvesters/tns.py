@@ -14,6 +14,7 @@ from tom_common.exceptions import ImproperCredentialsException
 from bhtom.exceptions.external_service import NoResultException
 
 TNS_URL = 'https://www.wis-tns.org'
+TNS_USER_AGENT = settings.TNS_USER_AGENT
 NO_RESULT_ID: int = 110
 
 try:
@@ -42,6 +43,11 @@ def get(term):
     # change term to json format
     json_list = [("objname", term)]
     json_file = OrderedDict(json_list)
+
+    # header with bot name and ID
+    headers = {
+        'User-Agent': TNS_USER_AGENT
+    }
 
     # construct the list of (key,value) pairs
     get_data = [('api_key', (None, TNS_API_KEY)),
