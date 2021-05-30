@@ -62,12 +62,17 @@ class TNSReplyError(RuntimeError):
 def request_tns(target_url: str, payload: Dict[str, str]) -> Dict[str, Any]:
     logger.info(f'{LOG_PREFIX} Requesting {target_url}...')
     api_key: str = settings.TNS_API_KEY
+    user_agent: str = settings.TNS_USER_AGENT
+
+    headers = {
+        'User-Agent': user_agent
+    }
 
     search_data = [('api_key', (None, api_key)),
                    ('data', (None, json.dumps(OrderedDict(payload))))]
 
     try:
-        response: requests.Response = requests.post(target_url, files=search_data)
+        response: requests.Response = requests.post(target_url, files=search_data, headers=headers)
     except requests.exceptions.ConnectionError:
         logger.error(f'{LOG_PREFIX} Connection error while requesting TNS')
         raise TNSConnectionError(f'Connection error while requesting TNS. Please try again later.')

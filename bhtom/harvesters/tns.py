@@ -53,7 +53,7 @@ def get(term):
     get_data = [('api_key', (None, TNS_API_KEY)),
                 ('data', (None, json.dumps(json_file)))]
 
-    response = requests.post(get_url, files=get_data)
+    response = requests.post(get_url, files=get_data, headers=headers)
     response_data = json.loads(response.text)
 
     if 400 <= response_data.get('id_code') <= 403:
