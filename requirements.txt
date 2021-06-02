@@ -95,7 +95,7 @@ tom-lt==0.4.0
 tomtoolkit==1.5.0
 tornado==6.0.3
 traitlets==4.3.3
-urllib3==1.25.7
+urllib3==1.26.5
 wcwidth==0.1.7
 webencodings==0.5.1
 whitenoise==4.1.4
