@@ -7,13 +7,11 @@ import mechanize
 import numpy as np
 from astropy.time import Time, TimezoneInfo
 from tom_dataproducts.models import ReducedDatum
+from django.conf import settings
 
 from .utils.last_jd import update_last_jd
-### how to pass those variables from settings?
 from ..models import ReducedDatumExtraData, refresh_reduced_data_view
 from ..utils.observation_data_extra_data_utils import ObservationDatapointExtraData
-
-# from tom_targets.templatetags.targets_extras import target_extra_field
 
 try:
     from settings import local_settings as secret
@@ -32,7 +30,7 @@ except:
     TWITTER_ACCESSSECRET = os.environ['TWITTER_ACCESSSECRET']
     CPCS_DATA_ACCESS_HASHTAG = os.environ['CPCS_DATA_ACCESS_HASHTAG']
 
-base_url = 'http://gsaweb.ast.cam.ac.uk/alerts'
+cpcs_base_url = settings.CPCS_BASE_URL
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +44,7 @@ def update_cpcs_lc(target):
         logger.debug("Starting CPCS update for ", cpcs_name)
         nam = cpcs_name[6:]  # removing ivo://
         br = mechanize.Browser()
-        followuppage = br.open('http://gsaweb.ast.cam.ac.uk/followup/')
+        br.open(cpcs_base_url)
         req = br.click_link(text='Login')
         br.open(req)
         br.select_form(nr=0)
@@ -54,7 +52,7 @@ def update_cpcs_lc(target):
         br.submit()
 
         try:
-            page = br.open('http://gsaweb.ast.cam.ac.uk/followup/get_alert_lc_data?alert_name=ivo:%%2F%%2F%s' % nam)
+            page = br.open(f'{cpcs_base_url}/get_alert_lc_data?alert_name=ivo://%s' % nam)
             pagetext = page.read()
             data1 = json.loads(pagetext)
             if len(set(data1["filter"]) & set(
@@ -93,8 +91,7 @@ def update_cpcs_lc(target):
                     datum_f = filter[i] + "(" + catalog[i] + ")"
                     datum_err = float(magerr[i])
                     datum_source = obs[i]
-                    sourcelink = (
-                                             'http://gsaweb.ast.cam.ac.uk/followup/get_alert_lc_data?alert_name=ivo:%%2F%%2F%s' % nam) + "&" + str(
+                    sourcelink = (f'{cpcs_base_url}/get_alert_lc_data?alert_name=ivo://%s' % nam) + "&" + str(
                         ids[i])
                     observer = obs[i]
 
