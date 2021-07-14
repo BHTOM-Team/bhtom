@@ -65,6 +65,8 @@ from bhtom.utils.photometry_and_spectroscopy_data_utils import save_photometry_d
     get_photometry_data_stats, save_data_to_latex_table, save_spectroscopy_data_for_target_to_csv_file, \
     get_photometry_stats_latex
 
+from sentry_sdk import capture_exception
+
 try:
     from settings import local_settings as secret
 except ImportError:
@@ -526,7 +528,8 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
                     with open(url_base, "rb") as image_file:
                         encoded_string = base64.b64encode(image_file.read())
                         context['cpcs_plot'] = str(encoded_string, "utf-8")
-                except IOError:
+                except IOError as e:
+                    capture_exception(e)
                     logger.info('Get plot from cpcs %s' %url_base)
                     url_cpcs = fits.cpcs_plot
                     response = requests.get(url_cpcs, {'hashtag': instrument.hashtag})
@@ -559,6 +562,7 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
             else:
                 filter = fits.filter
         except Exception as e:
+            capture_exception(e)
             logger.error('TargetFileDetailView error: ' + str(e))
 
         context['target'] = target
@@ -634,6 +638,7 @@ class fits_upload(viewsets.ModelViewSet):
                 fits_quantity = BHTomFits.objects.filter(start_time__gte=time_threshold).count()
                 fits_quantity = fits_quantity*10
         except Exception as e:
+            capture_exception(e)
             logger.error('data upload error: ' + str(e))
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -656,11 +661,12 @@ class fits_upload(viewsets.ModelViewSet):
                 successful_uploads.append(str(dp))
 
             except InvalidFileFormatException as iffe:
-
+                capture_exception(iffe)
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
 
-            except Exception:
+            except Exception as e:
+                capture_exception(e)
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
 
@@ -708,6 +714,7 @@ class result_fits(viewsets.ModelViewSet):
                 instance.status_message = 'Photometry error'
                 instance.save()
         except Exception as e:
+            capture_exception(e)
             logger.error('result_fits error: ' + str(e))
             return HttpResponseServerError(e)
 
@@ -914,6 +921,7 @@ class TargetDownloadDataView(ABC, PermissionRequiredMixin, View):
                                 as_attachment=True,
                                 filename=filename)
         except Exception as e:
+            capture_exception(e)
             logger.error(f'Error while generating photometry CSV file for target with id={target_id}: {e}')
         finally:
             if tmp:
@@ -1017,6 +1025,7 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
                       settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
 
         except Exception as e:
+            capture_exception(e)
             logger.error('CreateInstrument error: ' + str(e))
             messages.error(self.request, 'Error with creating the instrument')
             instrument.delete()
@@ -1616,6 +1625,7 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
         try:
             grouping_object = TargetList.objects.get(pk=grouping_id)
         except Exception as e:
+            capture_exception(e)
             messages.error(request, 'Cannot find the target group with id={}; {}'.format(grouping_id, e))
             return redirect(reverse('bhlist'))
         if not request.user.has_perm('tom_targets.view_targetlist', grouping_object):
