@@ -14,6 +14,9 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 import os
 import tempfile
 
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
 #reads all secret settings and apis, which will not be stored in git repo
 try:
     from . import local_settings as secret
@@ -478,3 +481,10 @@ GAIA_ALERT_URL = "http://gsaweb.ast.cam.ac.uk/alerts/alert"
 TNS_URL = "https://www.wis-tns.org/api/get"
 
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+
+sentry_sdk.init(
+    dsn=secret.SENTRY_SDK_DSN,
+    integrations=[DjangoIntegration()],
+    traces_sample_rate=1.0,
+    send_default_pii=True
+)

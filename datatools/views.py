@@ -13,6 +13,8 @@ from tom_targets.models import Target
 from bhtom.models import BHTomUser, Observatory
 from typing import List, Dict, Optional
 
+from sentry_sdk import capture_exception
+
 try:
     from settings import local_settings as secret
 except ImportError:
@@ -161,8 +163,10 @@ class FetchTargetNames(LoginRequiredMixin, RedirectView):
                         extras_to_update['ztf_alert_name'] = tns_response['ZTF']
 
                 except TNSConnectionError as e:
+                    capture_exception(e)
                     messages.error(self.request, e.message)
                 except TNSReplyError as e:
+                    capture_exception(e)
                     messages.error(self.request, e.message)
 
             # If there is no AAVSO or Gaia DR2, query Simbad
@@ -180,6 +184,7 @@ class FetchTargetNames(LoginRequiredMixin, RedirectView):
                 messages.success(self.request, f'Updated target names')
 
         except Exception as e:
+            capture_exception(e)
             messages.error(self.request, f'Error while fetching target names: {e}')
 
         return HttpResponseRedirect(self.get_redirect_url(*args, **kwargs))
