@@ -149,6 +149,10 @@ INSTALLED_APPS = [
     'captcha',
 ]
 
+CRON_CLASSES = [
+    'datatools.jobs.update_all_lightcurves.UpdateAllLightcurvesJob'
+]
+
 SITE_ID = 2
 
 MIDDLEWARE = [
