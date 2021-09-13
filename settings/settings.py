@@ -127,6 +127,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'django_cron',
     'django_extensions',
     'guardian',
     'tom_common',
@@ -146,6 +147,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'tom_publications',
     'captcha',
+]
+
+CRON_CLASSES = [
+    'datatools.jobs.update_all_lightcurves.UpdateAllLightcurvesJob'
 ]
 
 SITE_ID = 2
