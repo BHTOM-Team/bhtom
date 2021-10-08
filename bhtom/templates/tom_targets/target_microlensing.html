@@ -1,0 +1,8 @@
+{% load bootstrap4 tom_common_extras dataproduct_extras static cache microlensing_tags %}
+<head>
+    <title>Microlensing for {{target}}</title>
+</head>
+{% bootstrap_javascript jquery='True' %}
+{% block body %}
+    {% microlensing_for_target target %}
+{% endblock %}
