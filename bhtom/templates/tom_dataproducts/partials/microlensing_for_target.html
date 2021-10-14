@@ -8,9 +8,10 @@
     <p>Confidence level: <span style="position: absolute; right: 2rem">{{ confidenceLevel_value|safe }}</span></p>
     <p>Significance level: <span style="position: absolute; right: 2rem">{{ significanceLevel_value|safe }}</span></p>
     <p>Maximum accepted error: <span style="position: absolute; right: 2rem">{{ maximumError_value|safe }}</span></p>
-    <form method="post">
+    <form method="get" >
         <label for="fname">New significance level: </label>
-        <span style="position: absolute; right: 2rem"><select id="clevel" name="clevel" style="font-family: 'Montserrat', sans-serif">
+        <span style="position: absolute; right: 2rem">
+            <select id="slevel" name="slevel" style="font-family: 'Montserrat', sans-serif">
             <option value="0.995">0.995</option>
             <option value="0.975">0.975</option>
             <option value="0.2">0.2</option>
@@ -22,10 +23,14 @@
             <option value="0.005">0.005</option>
             <option value="0.002">0.002</option>
             <option value="0.001">0.001</option>
-        </select></span><br><br>
+            </select>
+        </span><br><br>
         <label for="fname">New maximum accepted error [0-1]:</label>
-        <span style="position: absolute; right: 2rem"><input type="number" id="slevel" name="slevel" min="0" max="1" step="0.01" style="font-family: 'Montserrat', sans-serif"></span><br><br>
-        <input type="submit" style="color: whitesmoke; background: #1b6d85; border: none; border-radius: 5px;padding: 10px"min="1" max="5" value="Reload program">
+        <span style="position: absolute; right: 2rem">
+            <input type="number" id="clevel" name="clevel" min="0" max="1" step="0.01" value="0.05" style="font-family: 'Montserrat', sans-serif">
+        </span>
+        <br><br>
+        <input type="submit" style="color: whitesmoke; background: #1b6d85; border: none; border-radius: 5px;padding: 10px">
     </form>
     <hr>
     <p>{{ criticalLevel|safe }}<span style="position: absolute; right: 2rem">{{ criticalLevel_value|safe }}</span></p>

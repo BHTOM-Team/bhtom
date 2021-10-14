@@ -34,7 +34,7 @@ from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, Observat
 from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
 from bhtom.group import add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping
 
-from django.http import HttpResponseServerError, Http404, FileResponse
+from django.http import HttpResponseServerError, Http404, FileResponse, HttpResponseForbidden, HttpResponse
 from django.views.generic.edit import FormView
 from django.views.generic import View
 from django.conf import settings
@@ -977,6 +977,19 @@ class TargetMicrolensingView(PermissionRequiredMixin, DetailView):
     template_name = 'tom_targets/target_microlensing.html'
     model = Target
 
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('clevel', ''):
+            clevel = request.GET.get('clevel', '')
+            slevel = request.GET.get('slevel', '')
+        else:
+            clevel = str(0.05)
+            slevel = str(0.05)
+        self.object = self.get_object()
+        context = self.get_context_data(object=self.object)
+        context['clevel'] = clevel
+        context['slevel'] = slevel
+        return self.render_to_response(context)
+
     def handle_no_permission(self):
 
         if self.request.META.get('HTTP_REFERER') is None:
@@ -1606,7 +1619,6 @@ class data_download(PermissionRequiredMixin, View):
                 return HttpResponseRedirect('/')
             else:
                 return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
-
 
 class CommentDeleteView(LoginRequiredMixin, DeleteView):
     """

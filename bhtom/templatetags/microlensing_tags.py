@@ -22,8 +22,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('tom_dataproducts/partials/microlensing_for_target.html', takes_context=True)
-def microlensing_for_target(context, target):
-    photometry_data = {}
+def microlensing_for_target(context, target, slevel, clevel):
     if settings.TARGET_PERMISSIONS_ONLY:
         datums = ViewReducedDatum.objects.filter(target=target,
                                                  data_type__in=[
@@ -51,9 +50,12 @@ def microlensing_for_target(context, target):
             X_timestamp.append(pd.to_datetime(dt))
             Y.append(float(values.get('magnitude')))
             err.append(calculate_error(float(values.get('magnitude'))))
-
-    alfa = 0.05
-    errorSignificance = 0.05
+    if slevel == '':
+        slevel = '0.05'
+    if clevel == '':
+        clevel = '0.05'
+    alfa = float(slevel)
+    errorSignificance = float(clevel)
     # reading file and data to plot
 
     chi2_file_path = '/home/kacper/Desktop/Studia_2020-21/Licencjat/bhtom/bhtom/chi2.csv'
