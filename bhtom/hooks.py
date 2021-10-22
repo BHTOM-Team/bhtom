@@ -29,8 +29,9 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, dry_run,
-                             matchDist, comment, user, priority, facility_name=None, observer_name=None):
+def data_product_post_upload(dp, target, observatory, observation_filter, MJD, expTime, dry_run,
+                             matchDist, comment, user, priority, facility_name=None, observer_name=None,
+                             hashtag=None):
     url = 'data/' + format(dp)
     logger.info('Running post upload hook for DataProduct: {}'.format(url))
 
@@ -58,7 +59,10 @@ def data_product_post_upload(dp, observatory, observation_filter, MJD, expTime, 
                 response = requests.post(secret.CCDPHOTD_URL,
                                          {'job_id': instance.file_id, 'instrument': observatory.obsName,
                                           'webhook_id': secret.CCDPHOTD_WEBHOOK_ID, 'priority': priority,
-                                          'instrument_prefix': observatory.prefix}, files={'fits_file': file})
+                                          'instrument_prefix': observatory.prefix,
+                                          'target_name': target.name,
+                                          'user': user.username,
+                                          'hashtag': hashtag}, files={'fits_file': file})
                 if response.status_code == 201:
                     logger.info('successfull send to CCDPHOTD, fits id: ' + str(instance.file_id))
                     instance.status = 'S'

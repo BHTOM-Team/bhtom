@@ -654,7 +654,8 @@ class fits_upload(viewsets.ModelViewSet):
             dp.save()
 
             try:
-                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun,
+                run_hook('data_product_post_upload', dp, target, observatory, observation_filter, MJD, ExpTime,
+                         dryRun,
                          matchDist, comment, user, fits_quantity)
 
                 run_data_processor(dp)
