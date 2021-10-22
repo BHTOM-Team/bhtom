@@ -1,5 +1,7 @@
 # importing the required module
 import logging
+from os import path
+
 from django import template
 import csv
 import math
@@ -9,13 +11,13 @@ from scipy import optimize
 from datetime import date
 import time
 import pandas as pd
-import datetime
 import warnings
 import plotly.graph_objs as go
 from plotly import offline
-from django.conf import settings
 import json
 from bhtom.models import ViewReducedDatum
+
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 register = template.Library()
@@ -41,7 +43,11 @@ def microlensing_for_target(context, target, slevel, clevel):
     X_fit_timestamp = []
 
     for datum in datums:
-        values = json.loads(datum.value)
+        if type(datum.value) is dict:
+            values = datum.value
+        else:
+            values = json.loads(datum.value)
+
         extra_data = json.loads(datum.rd_extra_data) if datum.rd_extra_data is not None else {}
         if str(extra_data.get('facility')) == "Gaia":
             X.append(float(values.get('jd')))
@@ -58,7 +64,13 @@ def microlensing_for_target(context, target, slevel, clevel):
     errorSignificance = float(clevel)
     # reading file and data to plot
 
-    chi2_file_path = '/home/kacper/Desktop/Studia_2020-21/Licencjat/bhtom/bhtom/chi2.csv'
+    try:
+        chi2_file_path = path.join(settings.BASE_DIR, 'bhtom/chi2.csv')
+    except Exception as e:
+        return {
+            'errors': "ERROR: No chi2 file found",
+        }
+
     y = np.asarray(Y)
     x = np.asarray(X)
     x_timestamp = np.asarray(X_timestamp)
