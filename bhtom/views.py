@@ -592,6 +592,7 @@ class fits_upload(viewsets.ModelViewSet):
 
         self.check_permissions(request)
         observatory, MJD, ExpTime, dryRun, matchDist, comment = None, None, None, None, None, None
+        hashtag = None
         fits_quantity = None
 
         try:
@@ -654,8 +655,10 @@ class fits_upload(viewsets.ModelViewSet):
             dp.save()
 
             try:
-                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun,
-                         matchDist, comment, user, fits_quantity)
+                run_hook('data_product_post_upload', dp, target, observatory, observation_filter, MJD, ExpTime,
+                         dryRun,
+                         matchDist, comment, user, fits_quantity,
+                         hashtag=hashtag)
 
                 run_data_processor(dp)
                 successful_uploads.append(str(dp))
