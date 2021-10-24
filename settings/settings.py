@@ -74,7 +74,8 @@ SUCCESSFULLY_REGISTERED: str = read_secret('SUCCESSFULLY_REGISTERED')
 EMAILTEXT_REGISTEUSER_TITLE: str = read_secret('EMAILTEXT_REGISTEUSER_TITLE')
 EMAILTEXT_REGISTEUSER: str = read_secret('EMAILTEXT_REGISTEUSER_TITLE')
 
-ALLOWED_HOST: str = read_secret('ALLOWED_HOST', '127.0.0.1')
+ALLOWED_HOST: str = read_secret('ALLOWED_HOST', 'localhost')
+ALLOWED_HOST_IP: str = read_secret('ALLOWED_HOST_IP', '127.0.0.1')
 SITE_ID: int = int(read_secret('SITE_ID', 1))
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
