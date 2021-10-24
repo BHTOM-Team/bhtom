@@ -34,7 +34,7 @@ from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, Observat
 from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
 from bhtom.group import add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping
 
-from django.http import HttpResponseServerError, Http404, FileResponse, HttpResponseForbidden, HttpResponse
+from django.http import HttpResponseServerError, Http404, FileResponse, HttpResponseForbidden
 from django.views.generic.edit import FormView
 from django.views.generic import View
 from django.conf import settings
@@ -59,10 +59,10 @@ from django_filters.views import FilterView
 
 from django.http import HttpResponseRedirect, QueryDict
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
-from guardian.shortcuts import get_objects_for_user, get_groups_with_perms
+from guardian.shortcuts import get_objects_for_user
 
 from bhtom.utils.photometry_and_spectroscopy_data_utils import save_photometry_data_for_target_to_csv_file, \
-    get_photometry_data_stats, save_data_to_latex_table, save_spectroscopy_data_for_target_to_csv_file, \
+    get_photometry_data_stats, save_spectroscopy_data_for_target_to_csv_file, \
     get_photometry_stats_latex
 
 from sentry_sdk import capture_exception
@@ -70,7 +70,12 @@ from sentry_sdk import capture_exception
 try:
     from settings import local_settings as secret
 except ImportError:
-    pass
+    secret = None
+
+
+def read_secret(secret_key: str, default_value: str = '') -> str:
+    return getattr(secret, secret_key, default_value) if secret else default_value
+
 
 logger = logging.getLogger(__name__)
 
@@ -119,13 +124,13 @@ class BlackHoleListView(PermissionRequiredMixin, FilterView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
  #       elif not BHTomUser.objects.get(user=self.request.user).is_activate:
- #           messages.error(self.request, secret.NOT_ACTIVATE)
+ #           messages.error(self.request, read_secret('NOT_ACTIVATE'))
   #          return False
         elif not self.request.user.has_perm('tom_targets.view_target'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -219,13 +224,13 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('tom_targets.add_target'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -347,13 +352,13 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('tom_targets.change_target'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -451,13 +456,13 @@ class TargetDeleteView(PermissionRequiredMixin, DeleteView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('tom_targets.delete_target'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -482,16 +487,16 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         elif self.request.user != BHTomFits.objects.get(file_id=self.kwargs['pk_fit']).instrument_id.user_id:
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -862,13 +867,13 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('tom_targets.view_target'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -965,13 +970,13 @@ class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('tom_targets.view_target'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -1002,13 +1007,13 @@ class TargetMicrolensingView(PermissionRequiredMixin, DetailView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('tom_targets.view_target'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 class CreateInstrument(PermissionRequiredMixin, FormView):
@@ -1029,13 +1034,13 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('bhtom.add_instrument'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -1060,8 +1065,8 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
             #instrument.save()
 
             logger.info('Send mail, %s, %s' % (observatoryID.obsName, str(user)))
-            send_mail('Stworzono nowy instrument', secret.EMAILTEXT_CREATE_INSTRUMENT + str(user) + ', ' + observatoryID.obsName,
-                      settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+            send_mail('Stworzono nowy instrument', read_secret('EMAILTEXT_CREATE_INSTRUMENT') + str(user) + ', ' + observatoryID.obsName,
+                      settings.EMAIL_HOST_USER, read_secret('RECIPIENTEMAIL'), fail_silently=False)
 
         except Exception as e:
             capture_exception(e)
@@ -1088,13 +1093,13 @@ class DeleteInstrument(PermissionRequiredMixin, DeleteView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('bhtom.delete_instrument'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -1124,13 +1129,13 @@ class UpdateInstrument(PermissionRequiredMixin, UpdateView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('bhtom.change_instrument'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -1155,13 +1160,13 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('bhtom.add_observatory'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -1199,8 +1204,8 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
 
             observatory.save()
             logger.info('Send mail, create new obserwatory:  %s' % str(obsName))
-            send_mail('Stworzono nowe obserwatorium', secret.EMAILTEXT_CREATE_OBSERVATORY + str(obsName), settings.EMAIL_HOST_USER,
-                      secret.RECIPIENTEMAIL, fail_silently=False)
+            send_mail('Stworzono nowe obserwatorium', read_secret('EMAILTEXT_CREATE_OBSERVATORY') + str(obsName), settings.EMAIL_HOST_USER,
+                      read_secret('RECIPIENTEMAIL'), fail_silently=False)
         except Exception as e:
             logger.error('CreateObservatory error: ' + str(e))
             messages.error(self.request, 'Error with creating the instrument %s' % obsName)
@@ -1224,13 +1229,13 @@ class ObservatoryList(PermissionRequiredMixin, ListView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('bhtom.view_observatory'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -1264,13 +1269,13 @@ class UpdateObservatory(PermissionRequiredMixin, UpdateView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('bhtom.change_observatory'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -1295,13 +1300,13 @@ class DeleteObservatory(PermissionRequiredMixin, DeleteView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('bhtom.delete_observatory'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -1331,13 +1336,16 @@ class RegisterUser(CreateView):
         email_params = "'{0}', '{1}', '{2}', '{3}'".format(self.object.username, self.object.first_name,
                                                            self.object.last_name, self.object.email)
 
-        send_mail(secret.EMAILTEXT_REGISTEADMIN_TITLE, secret.EMAILTEXT_REGISTEADMIN + email_params, settings.EMAIL_HOST_USER,
-                  secret.RECIPIENTEMAIL, fail_silently=False)
+        try:
+            send_mail(settings.EMAILTEXT_REGISTEADMIN_TITLE, settings.EMAILTEXT_REGISTEADMIN + email_params, settings.EMAIL_HOST_USER,
+                      settings.RECIPIENTEMAIL, fail_silently=False)
 
-        send_mail(secret.EMAILTEXT_REGISTEUSER_TITLE, secret.EMAILTEXT_REGISTEUSER, settings.EMAIL_HOST_USER,
-                  [self.object.email], fail_silently=False)
+            send_mail(settings.EMAILTEXT_REGISTEUSER_TITLE, settings.EMAILTEXT_REGISTEUSER, settings.EMAIL_HOST_USER,
+                      [self.object.email], fail_silently=False)
+        except Exception as e:
+            logger.error(f'Exception when sending registration confirmation: {e}')
 
-        messages.success(self.request, secret.SUCCESSFULLY_REGISTERED)
+        messages.success(self.request, settings.SUCCESSFULLY_REGISTERED)
         return redirect(self.get_success_url())
 
 class UserUpdateView(LoginRequiredMixin, UpdateView):
@@ -1425,13 +1433,13 @@ class TargetGroupingView(PermissionRequiredMixin, ListView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('tom_targets.view_targetlist'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -1453,13 +1461,13 @@ class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('tom_dataproducts.delete_dataproduct'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -1502,17 +1510,17 @@ class fits_download(PermissionRequiredMixin, View):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         elif self.request.user != BHTomFits.objects.get(dataproduct_id=self.kwargs['file_id']).instrument_id.user_id\
                 and not self.request.user.is_staff:
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -1544,17 +1552,17 @@ class photometry_download(PermissionRequiredMixin, View):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         elif self.request.user != BHTomFits.objects.get(file_id=self.kwargs['file_id']).instrument_id.user_id\
                 and not self.request.user.is_staff:
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 
@@ -1591,17 +1599,17 @@ class data_download(PermissionRequiredMixin, View):
 
     def has_permission(self):
         if not self.request.user.is_authenticated:
-            messages.error(self.request, secret.NOT_AUTHENTICATED)
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
         elif not BHTomUser.objects.get(user=self.request.user).is_activate:
-            messages.error(self.request, secret.NOT_ACTIVATE)
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
             return False
         elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         elif self.request.user != BHTomData.objects.get(dataproduct_id=self.kwargs['file_id']).user_id\
                 and not self.request.user.is_staff:
-            messages.error(self.request, secret.NOT_PERMISSION)
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
 

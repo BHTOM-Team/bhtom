@@ -24,9 +24,13 @@ from .utils.observation_data_extra_data_utils import ObservationDatapointExtraDa
 try:
     from settings import local_settings as secret
 except ImportError:
-    pass
+    secret = None
 
 logger = logging.getLogger(__name__)
+
+
+def read_secret(secret_key: str, default_value: str = '') -> str:
+    return getattr(secret, secret_key, default_value) if secret else default_value
 
 
 def data_product_post_upload(dp, target, observatory, observation_filter, MJD, expTime, dry_run,
@@ -56,9 +60,9 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
                                                     matchDist=matching_radius, priority=priority,
                                                     comment=comment, data_stored=True)
 
-                response = requests.post(secret.CCDPHOTD_URL,
+                response = requests.post(read_secret('CCDPHOTD_URL'),
                                          {'job_id': instance.file_id, 'instrument': observatory.obsName,
-                                          'webhook_id': secret.CCDPHOTD_WEBHOOK_ID, 'priority': priority,
+                                          'webhook_id': read_secret('CCDPHOTD_WEBHOOK_ID'), 'priority': priority,
                                           'instrument_prefix': observatory.prefix,
                                           'target_name': target.name,
                                           'user': user.username,
@@ -129,7 +133,7 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
             raise Exception(str(e))
 
 def send_to_cpcs(result, fits, eventID):
-    url_cpcs = secret.CPCS_URL + 'upload'
+    url_cpcs = settings.CPCS_BASE_URL + 'upload'
     logger.info('Send file to cpcs: ' + str(fits.file_id))
 
     try:
@@ -184,7 +188,7 @@ def send_to_cpcs(result, fits, eventID):
 
 @receiver(pre_save, sender=Instrument)
 def create_cpcs_user_profile(sender, instance, **kwargs):
-    url_cpcs = secret.CPCS_URL + 'newuser'
+    url_cpcs = settings.CPCS_BASE_URL + 'newuser'
     observatory = Observatory.objects.get(id=instance.observatory_id.id)
 
     if instance.hashtag == None or instance.hashtag == '' and observatory.cpcsOnly == False:
@@ -195,18 +199,18 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
             response = requests.post(url_cpcs,
                                      {'obsName': obsName, 'lon': observatory.lon, 'lat': observatory.lat,
                                       'allow_upload': 1,
-                                      'prefix': secret.CPCS_PREFIX_HASTAG + observatory.prefix + '_' + str(instance.user_id) + '_',
-                                      'hashtag': secret.CPCS_Admin_Hashtag})
+                                      'prefix': read_secret('CPCS_PREFIX_HASTAG') + observatory.prefix + '_' + str(instance.user_id) + '_',
+                                      'hashtag': read_secret('CPCS_Admin_Hashtag')})
 #
             if response.status_code == 200:
                 instance.hashtag = response.content.decode('utf-8').split(': ')[1]
                 logger.info('Create_cpcs_user' + str(obsName))
-                send_mail('Wygenerowano hastag', secret.EMAILTEXT_CREATE_HASTAG + str(observatory.obsName) + ', ' + str(instance.user_id),
-                          settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+                send_mail('Wygenerowano hastag', read_secret('EMAILTEXT_CREATE_HASTAG') + str(observatory.obsName) + ', ' + str(instance.user_id),
+                          settings.EMAIL_HOST_USER, read_secret('RECIPIENTEMAIL'), fail_silently=False)
             else:
                 logger.error('Error from hastag' + str(obsName))
-                send_mail('Blad przy generowaniu hastagu', secret.EMAILTEXT_ERROR_CREATE_HASTAG + str(observatory.obsName)+ ', ' + str(instance.user_id),
-                          settings.EMAIL_HOST_USER, secret.RECIPIENTEMAIL, fail_silently=False)
+                send_mail('Blad przy generowaniu hastagu', read_secret('EMAILTEXT_ERROR_CREATE_HASTAG') + str(observatory.obsName)+ ', ' + str(instance.user_id),
+                          settings.EMAIL_HOST_USER, read_secret('RECIPIENTEMAIL'), fail_silently=False)
 
                 instance.isActive = False
                 raise Exception(response.content.decode('utf-8')) from None
@@ -225,7 +229,7 @@ def target_pre_save(sender, instance, **kwargs):
 
 def delete_point_cpcs(instance):
     logger.info('Delete in cpcs: %s', str(instance.data))
-    url_cpcs = secret.CPCS_URL + 'delpoint'
+    url_cpcs = settings.CPCS_BASE_URL + 'delpoint'
     fit = BHTomFits.objects.get(dataproduct_id=instance)
 
     try:
@@ -243,7 +247,7 @@ def delete_point_cpcs(instance):
 
 @receiver(post_save, sender=BHTomFits)
 def BHTomFits_pre_save(sender, instance, **kwargs):
-    time_threshold = timezone.now() - timedelta(days=secret.DAYS_DELETE_FILES)
+    time_threshold = timezone.now() - timedelta(days=read_secret('DAYS_DELETE_FILES'))
     fits = BHTomFits.objects.filter(start_time__lte=time_threshold).exclude(data_stored=False)
 
     BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -275,7 +279,7 @@ def BHTomUser_pre_save(sender, instance, **kwargs):
                 user_email = None
 
             if user_email is not None:
-                send_mail(secret.EMAILTET_ACTIVATEUSER_TITLE, secret.EMAILTET_ACTIVATEUSER,
+                send_mail(read_secret('EMAILTET_ACTIVATEUSER_TITLE'), read_secret('EMAILTET_ACTIVATEUSER'),
                           settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)
                 logger.info('Ativate user, Send mail: ' + str(user_email.email))
 
@@ -295,18 +299,18 @@ def Observatory_pre_save(sender, instance, **kwargs):
                 user_email = None
 
             if user_email is not None:
-                send_mail(secret.EMAILTEXT_ACTIVATEOBSERVATORY_TITLE, secret.EMAILTEXT_ACTIVATEOBSERVATORY,
+                send_mail(read_secret('EMAILTEXT_ACTIVATEOBSERVATORY_TITLE'), read_secret('EMAILTEXT_ACTIVATEOBSERVATORY'),
                           settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)
                 logger.info('Ativate observatory' + instance.obsName + ', Send mail: ' + user_email.email)
 
 def create_target_in_cpcs(user, instance):
     logger.info('Create target in cpcs: %s', str(instance.extra_fields['calib_server_name']))
-    url_cpcs = secret.CPCS_URL + 'newevent'
+    url_cpcs = settings.CPCS_BASE_URL + 'newevent'
     hastag = None
 
     try:
         hastag = Instrument.objects.filter(user_id=user.id).exclude(hashtag__isnull=True).first().hashtag
-        url = secret.url + 'bhlist/' + str(instance.id) + '/'
+        url = read_secret('url') + 'bhlist/' + str(instance.id) + '/'
 
         if hastag is not None and hastag != '' and instance.extra_fields['calib_server_name'] != '':
 

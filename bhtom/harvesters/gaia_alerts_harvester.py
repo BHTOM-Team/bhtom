@@ -11,7 +11,7 @@ from tom_catalogs.harvester import AbstractHarvester
 from tom_dataproducts.models import ReducedDatum
 from tom_targets.models import Target
 
-from typing import Optional
+from typing import Optional, Any
 
 ### how to pass those variables from settings?
 from bhtom.models import ReducedDatumExtraData, refresh_reduced_data_view
@@ -20,19 +20,18 @@ from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointEx
 try:
     from settings import local_settings as secret
 except ImportError:
-    pass
-try:
-    TWITTER_APIKEY = secret.TWITTER_APIKEY
-    TWITTER_SECRET = secret.TWITTER_SECRET
-    TWITTER_ACCESSTOKEN = secret.TWITTER_ACCESSTOKEN
-    TWITTER_ACCESSSECRET = secret.TWITTER_ACCESSSECRET
-    CPCS_DATA_ACCESS_HASHTAG = secret.CPCS_DATA_ACCESS_HASHTAG
-except:
-    TWITTER_APIKEY = os.environ['TWITTER_APIKEY']
-    TWITTER_SECRET = os.environ['TWITTER_SECRET']
-    TWITTER_ACCESSTOKEN = os.environ['TWITTER_ACCESSTOKEN']
-    TWITTER_ACCESSSECRET = os.environ['TWITTER_ACCESSSECRET']
-    CPCS_DATA_ACCESS_HASHTAG = os.environ['CPCS_DATA_ACCESS_HASHTAG']
+    secret = None
+    
+
+def read_secret(secret_key: str, default_value: Any = '') -> str:
+    return getattr(secret, secret_key, default_value) if secret else default_value
+
+    
+TWITTER_APIKEY = read_secret('TWITTER_APIKEY')
+TWITTER_SECRET = read_secret('TWITTER_SECRET')
+TWITTER_ACCESSTOKEN = read_secret('TWITTER_ACCESSTOKEN')
+TWITTER_ACCESSSECRET = read_secret('TWITTER_ACCESSSECRET')
+CPCS_DATA_ACCESS_HASHTAG = read_secret('CPCS_DATA_ACCESS_HASHTAG')
 
 base_url = 'http://gsaweb.ast.cam.ac.uk/alerts'
 
