@@ -61,12 +61,16 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
                                                     comment=comment, data_stored=True)
 
                 response = requests.post(read_secret('CCDPHOTD_URL'),
-                                         {'job_id': instance.file_id, 'instrument': observatory.obsName,
-                                          'webhook_id': read_secret('CCDPHOTD_WEBHOOK_ID'), 'priority': priority,
+                                         {'job_id': instance.file_id,
+                                          'instrument': observatory.obsName,
+                                          'webhook_id': read_secret('CCDPHOTD_WEBHOOK_ID'),
+                                          'priority': priority,
                                           'instrument_prefix': observatory.prefix,
                                           'target_name': target.name,
                                           'user': user.username,
-                                          'hashtag': hashtag}, files={'fits_file': file})
+                                          'hashtag': hashtag,
+                                          'dry_run': dry_run},
+                                         files={'fits_file': file})
                 if response.status_code == 201:
                     logger.info('successfull send to CCDPHOTD, fits id: ' + str(instance.file_id))
                     instance.status = 'S'
@@ -132,6 +136,7 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
             instance.delete()
             raise Exception(str(e))
 
+
 def send_to_cpcs(result, fits, eventID):
     url_cpcs = settings.CPCS_BASE_URL + 'upload'
     logger.info('Send file to cpcs: ' + str(fits.file_id))
@@ -186,6 +191,7 @@ def send_to_cpcs(result, fits, eventID):
         fits.status_message = 'Error: %s' % str(e)
         fits.save()
 
+
 @receiver(pre_save, sender=Instrument)
 def create_cpcs_user_profile(sender, instance, **kwargs):
     url_cpcs = settings.CPCS_BASE_URL + 'newuser'
@@ -199,17 +205,22 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
             response = requests.post(url_cpcs,
                                      {'obsName': obsName, 'lon': observatory.lon, 'lat': observatory.lat,
                                       'allow_upload': 1,
-                                      'prefix': read_secret('CPCS_PREFIX_HASTAG') + observatory.prefix + '_' + str(instance.user_id) + '_',
+                                      'prefix': read_secret('CPCS_PREFIX_HASTAG') + observatory.prefix + '_' + str(
+                                          instance.user_id) + '_',
                                       'hashtag': read_secret('CPCS_Admin_Hashtag')})
-#
+            #
             if response.status_code == 200:
                 instance.hashtag = response.content.decode('utf-8').split(': ')[1]
                 logger.info('Create_cpcs_user' + str(obsName))
-                send_mail('Wygenerowano hastag', read_secret('EMAILTEXT_CREATE_HASTAG') + str(observatory.obsName) + ', ' + str(instance.user_id),
+                send_mail('Wygenerowano hastag',
+                          read_secret('EMAILTEXT_CREATE_HASTAG') + str(observatory.obsName) + ', ' + str(
+                              instance.user_id),
                           settings.EMAIL_HOST_USER, read_secret('RECIPIENTEMAIL'), fail_silently=False)
             else:
                 logger.error('Error from hastag' + str(obsName))
-                send_mail('Blad przy generowaniu hastagu', read_secret('EMAILTEXT_ERROR_CREATE_HASTAG') + str(observatory.obsName)+ ', ' + str(instance.user_id),
+                send_mail('Blad przy generowaniu hastagu',
+                          read_secret('EMAILTEXT_ERROR_CREATE_HASTAG') + str(observatory.obsName) + ', ' + str(
+                              instance.user_id),
                           settings.EMAIL_HOST_USER, read_secret('RECIPIENTEMAIL'), fail_silently=False)
 
                 instance.isActive = False
@@ -222,10 +233,12 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
     else:
         logger.info('Hastag exist or cpcs Only')
 
+
 @receiver(pre_save, sender=Target)
 def target_pre_save(sender, instance, **kwargs):
     fill_galactic_coordinates(instance)
     logger.info('Target pre save hook: %s', str(instance))
+
 
 def delete_point_cpcs(instance):
     logger.info('Delete in cpcs: %s', str(instance.data))
@@ -245,6 +258,7 @@ def delete_point_cpcs(instance):
     except Exception as e:
         logger.error('delete_point_cpcs error: ' + str(e))
 
+
 @receiver(post_save, sender=BHTomFits)
 def BHTomFits_pre_save(sender, instance, **kwargs):
     time_threshold = timezone.now() - timedelta(days=read_secret('DAYS_DELETE_FILES'))
@@ -262,6 +276,7 @@ def BHTomFits_pre_save(sender, instance, **kwargs):
                 fit.save()
                 os.remove(url_result)
                 logger.info('remove fits: ' + str(data.data))
+
 
 @receiver(pre_save, sender=BHTomUser)
 def BHTomUser_pre_save(sender, instance, **kwargs):
@@ -283,6 +298,7 @@ def BHTomUser_pre_save(sender, instance, **kwargs):
                           settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)
                 logger.info('Ativate user, Send mail: ' + str(user_email.email))
 
+
 @receiver(pre_save, sender=Observatory)
 def Observatory_pre_save(sender, instance, **kwargs):
     try:
@@ -299,9 +315,11 @@ def Observatory_pre_save(sender, instance, **kwargs):
                 user_email = None
 
             if user_email is not None:
-                send_mail(read_secret('EMAILTEXT_ACTIVATEOBSERVATORY_TITLE'), read_secret('EMAILTEXT_ACTIVATEOBSERVATORY'),
+                send_mail(read_secret('EMAILTEXT_ACTIVATEOBSERVATORY_TITLE'),
+                          read_secret('EMAILTEXT_ACTIVATEOBSERVATORY'),
                           settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)
                 logger.info('Ativate observatory' + instance.obsName + ', Send mail: ' + user_email.email)
+
 
 def create_target_in_cpcs(user, instance):
     logger.info('Create target in cpcs: %s', str(instance.extra_fields['calib_server_name']))
@@ -314,16 +332,16 @@ def create_target_in_cpcs(user, instance):
 
         if hastag is not None and hastag != '' and instance.extra_fields['calib_server_name'] != '':
 
-           response = requests.post(url_cpcs, {'EventID': instance.extra_fields['calib_server_name'],
+            response = requests.post(url_cpcs, {'EventID': instance.extra_fields['calib_server_name'],
                                                 'ra': instance.ra, 'dec': instance.dec,
                                                 'hashtag': hastag, 'url': url,
                                                 'outputFormat': 'json'})
 
-           if response.status_code == 201 or response.status_code == 200:
-               logger.info('Successfully created target, user: %s' %str(user))
-           else:
-               error_message = 'Cpcs error: %s' %str(response.content.decode())
-               logger.info(error_message)
+            if response.status_code == 201 or response.status_code == 200:
+                logger.info('Successfully created target, user: %s' % str(user))
+            else:
+                error_message = 'Cpcs error: %s' % str(response.content.decode())
+                logger.info(error_message)
         else:
             logger.info('Hastag or calib_server_name is none')
     except Exception as e:
