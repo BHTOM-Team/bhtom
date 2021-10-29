@@ -1,8 +1,23 @@
 from django import template
 from django_comments.models import Comment
+from guardian.shortcuts import get_objects_for_user
 from tom_targets.models import Target
 
+from django.db.models import Q
+
 register = template.Library()
+
+
+@register.inclusion_tag('tom_targets/partials/recent_targets.html', takes_context=True)
+def recent_targets(context, limit=10):
+    """
+    Displays a list of the most recently created targets in the TOM up to the given limit, or 10 if not specified.
+    """
+    user = context['request'].user
+
+    return {'targets': get_objects_for_user(user, 'tom_targets.view_target')\
+                           .filter(['targetextra__key', 'jdlastobs'])\
+                           .order_by('-targetextra__value')[:limit]}
 
 
 @register.inclusion_tag('comments/list.html')

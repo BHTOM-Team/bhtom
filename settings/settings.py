@@ -389,7 +389,7 @@ EXTRA_FIELDS = [
     {'name': 'TNS_ID', 'type': 'string'},
     {'name': 'classification', 'type': 'string'},
     {'name': 'tweet', 'type': 'boolean'},
-    {'name': 'jdlastobs', 'type': 'number'},
+    {'name': 'jdlastobs', 'type': 'number', 'default': 0.0},
     {'name': 'maglast', 'type': 'number'},
     {'name': 'priority', 'type': 'number'},
     {'name': 'dicovery_date', 'type': 'datetime'},
