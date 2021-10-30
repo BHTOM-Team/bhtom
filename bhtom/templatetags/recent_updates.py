@@ -2,8 +2,8 @@ from django import template
 from django_comments.models import Comment
 from guardian.shortcuts import get_objects_for_user
 from tom_targets.models import Target
+from astropy.time import Time
 
-from django.db.models import Q
 
 register = template.Library()
 
@@ -15,9 +15,19 @@ def recent_targets(context, limit=10):
     """
     user = context['request'].user
 
-    return {'targets': get_objects_for_user(user, 'tom_targets.view_target')\
-                           .filter(['targetextra__key', 'jdlastobs'])\
-                           .order_by('-targetextra__value')[:limit]}
+    target_query = get_objects_for_user(user, 'tom_targets.view_target').filter(['targetextra__key', 'jdlastobs']).order_by('-targetextra__value')[:limit]
+
+    targets = []
+
+    for target in target_query:
+        jdlastobs = target.extra_fields.get('jdlastobs')
+        if jdlastobs:
+            lastobs = Time(jdlastobs, format='jd')
+            targets.append({'target': target, 'jdlastobs': lastobs.to_datetime()})
+        else:
+            targets.append({'target': target})
+
+    return {'targets': targets}
 
 
 @register.inclusion_tag('comments/list.html')
