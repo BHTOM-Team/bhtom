@@ -167,7 +167,12 @@ class ObservatoryCreationForm(forms.ModelForm):
 
     class Meta:
         model = Observatory
-        fields = ('obsName', 'lon', 'lat', 'matchDist', 'cpcsOnly', 'fits', 'obsInfo', 'comment')
+        fields = ('obsName', 'lon', 'lat', 'altitude',
+                  'matchDist', 'cpcsOnly', 'fits',
+                  'gain', 'binning', 'saturation_level',
+                  'pixel_scale', 'readout_speed', 'pixel_size',
+                  'approx_lim_mag', 'filters',
+                  'comment')
 
 
 class ObservatoryUpdateForm(forms.ModelForm):
