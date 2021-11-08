@@ -32,7 +32,8 @@ from bhtom.serializers import BHTomFitsCreateSerializer, BHTomFitsResultSerializ
 from bhtom.hooks import send_to_cpcs, delete_point_cpcs, create_target_in_cpcs
 from bhtom.forms import DataProductUploadForm, ObservatoryCreationForm, ObservatoryUpdateForm
 from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, InstrumentUpdateForm
-from bhtom.group import add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, remove_selected_from_grouping
+from bhtom.group import add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, \
+    remove_selected_from_grouping
 
 from django.http import HttpResponseServerError, Http404, FileResponse, HttpResponseForbidden
 from django.views.generic.edit import FormView
@@ -79,23 +80,25 @@ def read_secret(secret_key: str, default_value: str = '') -> str:
 
 logger = logging.getLogger(__name__)
 
+
 def make_magrecent(all_phot, jd_now):
     all_phot = json.loads(all_phot)
     recent_jd = max([all_phot[obs]['jd'] for obs in all_phot])
     recent_phot = [all_phot[obs] for obs in all_phot if
-        all_phot[obs]['jd'] == recent_jd][0]
+                   all_phot[obs]['jd'] == recent_jd][0]
     mag = float(recent_phot['flux'])
     filt = recent_phot['filters']['name']
     diff = jd_now - float(recent_jd)
     mag_recent = '{mag:.2f} ({filt}: {time:.2f})'.format(
-        mag = mag,
-        filt = filt,
-        time = diff)
+        mag=mag,
+        filt=filt,
+        time=diff)
     return mag_recent
 
-#computes priority based on dt and expected cadence
-#if observed within the cadence, then returns just the pure target priority
-#if not, then priority increases
+
+# computes priority based on dt and expected cadence
+# if observed within the cadence, then returns just the pure target priority
+# if not, then priority increases
 def computePriority(dt, priority, cadence):
     ret = 0
     # if (dt<cadence): ret = 1 #ok
@@ -103,13 +106,13 @@ def computePriority(dt, priority, cadence):
     #     if (cadence!=0 and dt/cadence>1 and dt/cadence<2): ret = 2
     #     if (cadence!=0 and dt/cadence>2): ret = 3
 
-    #alternative - linear scale
-    if (cadence!=0):
-        ret = dt/cadence
-    return ret*priority
+    # alternative - linear scale
+    if (cadence != 0):
+        ret = dt / cadence
+    return ret * priority
+
 
 class BlackHoleListView(PermissionRequiredMixin, FilterView):
-
     paginate_by = 20
     strict = False
     model = Target
@@ -126,9 +129,9 @@ class BlackHoleListView(PermissionRequiredMixin, FilterView):
         if not self.request.user.is_authenticated:
             messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
             return False
- #       elif not BHTomUser.objects.get(user=self.request.user).is_activate:
- #           messages.error(self.request, read_secret('NOT_ACTIVATE'))
-  #          return False
+        #       elif not BHTomUser.objects.get(user=self.request.user).is_activate:
+        #           messages.error(self.request, read_secret('NOT_ACTIVATE'))
+        #          return False
         elif not self.request.user.has_perm('tom_targets.view_target'):
             messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
@@ -143,7 +146,7 @@ class BlackHoleListView(PermissionRequiredMixin, FilterView):
 
         for target in qs:
             try:
-                #if empty
+                # if empty
                 last = float(target_extra_field(target=target, name='jdlastobs'))
                 target.dt = (jd_now - last)
                 dt = (jd_now - last)
@@ -168,11 +171,10 @@ class BlackHoleListView(PermissionRequiredMixin, FilterView):
 
         clauses = ' '.join(['WHEN tom_targets_target.id=%s THEN %s' % (pk, i) for i, pk in enumerate(sorted_pklist)])
         ordering = '(CASE %s END)' % clauses
-        qsnew= qs.extra(
+        qsnew = qs.extra(
             select={'ordering': ordering}, order_by=('-ordering',))
 
         return qsnew
-
 
     def get_context_data(self, *args, **kwargs):
 
@@ -188,7 +190,7 @@ class BlackHoleListView(PermissionRequiredMixin, FilterView):
 
         for target in context['object_list']:
             try:
-                #if empty
+                # if empty
                 last = float(target_extra_field(target=target, name='jdlastobs'))
                 target.dt = (jd_now - last)
                 dt = (jd_now - last)
@@ -207,6 +209,7 @@ class BlackHoleListView(PermissionRequiredMixin, FilterView):
             prioritylist.append(target.cadencepriority)
 
         return context
+
 
 class TargetCreateView(PermissionRequiredMixin, CreateView):
     """
@@ -335,6 +338,7 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
         form = super().get_form(*args, **kwargs)
         return form
 
+
 class TargetUpdateView(PermissionRequiredMixin, UpdateView):
     """
     View that handles updating a target. Requires authorization.
@@ -440,6 +444,8 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
         """
         form = super().get_form(*args, **kwargs)
         return form
+
+
 class TargetDeleteView(PermissionRequiredMixin, DeleteView):
     """
     View for deleting a target. Requires authorization.
@@ -473,8 +479,8 @@ class TargetDeleteView(PermissionRequiredMixin, DeleteView):
 
         return obj
 
-class TargetFileDetailView(PermissionRequiredMixin, ListView):
 
+class TargetFileDetailView(PermissionRequiredMixin, ListView):
     template_name = 'tom_dataproducts/dataproduct_fits_detail.html'
     model = BHTomFits
 
@@ -512,8 +518,8 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
 
         instrument = Instrument.objects.get(id=fits.instrument_id.id)
 
-       # if instrument.user_id.id != self.request.user.id:
-       #     raise Http404
+        # if instrument.user_id.id != self.request.user.id:
+        #     raise Http404
 
         observatory = Observatory.objects.get(id=instrument.observatory_id.id)
         data_product = DataProduct.objects.get(id=fits.dataproduct_id.id)
@@ -535,7 +541,7 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
                         context['cpcs_plot'] = str(encoded_string, "utf-8")
                 except IOError as e:
                     capture_exception(e)
-                    logger.info('Get plot from cpcs %s' %url_base)
+                    logger.info('Get plot from cpcs %s' % url_base)
                     url_cpcs = fits.cpcs_plot
                     response = requests.get(url_cpcs, {'hashtag': instrument.hashtag})
                     if response.status_code == 200:
@@ -580,14 +586,15 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
 
         return context
 
+
 class IsAuthenticatedOrReadOnlyOrCreation(IsAuthenticatedOrReadOnly):
     """Allows Read only operations and Creation of new data (no modify or delete)"""
 
     def has_permission(self, request, view):
         return request.method == 'POST' or super().has_permission(request, view)
 
-class fits_upload(viewsets.ModelViewSet):
 
+class fits_upload(viewsets.ModelViewSet):
     queryset = BHTomFits.objects.all()
     serializer_class = BHTomFitsCreateSerializer
 
@@ -597,7 +604,6 @@ class fits_upload(viewsets.ModelViewSet):
 
         self.check_permissions(request)
         observatory, MJD, ExpTime, dryRun, matchDist, comment = None, None, None, None, None, None
-        hashtag = None
         fits_quantity = None
 
         try:
@@ -642,7 +648,7 @@ class fits_upload(viewsets.ModelViewSet):
             if dp_type == 'fits_file':
                 time_threshold = timezone.now() - timedelta(days=1)
                 fits_quantity = BHTomFits.objects.filter(start_time__gte=time_threshold).count()
-                fits_quantity = fits_quantity*10
+                fits_quantity = fits_quantity * 10
         except Exception as e:
             capture_exception(e)
             logger.error('data upload error: ' + str(e))
@@ -660,9 +666,11 @@ class fits_upload(viewsets.ModelViewSet):
             dp.save()
 
             try:
-                run_hook('data_product_post_upload', dp, target, observatory, observation_filter, MJD, ExpTime,
-                         dryRun,
-                         matchDist, comment, user, fits_quantity,
+                run_hook('data_product_post_upload',
+                         dp, target, observatory,
+                         observation_filter, MJD, ExpTime,
+                         dryRun, matchDist, comment,
+                         user, fits_quantity,
                          hashtag=hashtag)
 
                 run_data_processor(dp)
@@ -684,15 +692,15 @@ class fits_upload(viewsets.ModelViewSet):
         ret = super().list(request, *args, **kwargs)
         return ret
 
-class result_fits(viewsets.ModelViewSet):
 
+class result_fits(viewsets.ModelViewSet):
     queryset = BHTomFits.objects.all()
     serializer_class = BHTomFitsResultSerializer
     permission_classes = [IsAuthenticatedOrReadOnlyOrCreation]
 
     def create(self, request, *args, **kwargs):
 
-        #file_id = request.data['fits_id']
+        # file_id = request.data['fits_id']
         file_id = request.query_params.get('job_id')
 
         try:
@@ -716,9 +724,9 @@ class result_fits(viewsets.ModelViewSet):
                 instance.status = 'E'
                 instance.cpcs_time = datetime.now()
                 instance.photometry_file = ccdphot_result
-               # if request.query_params.get('status_message'):
-                 #   instance.status_message = request.query_params.get('status_message')
-                #else:
+                # if request.query_params.get('status_message'):
+                #   instance.status_message = request.query_params.get('status_message')
+                # else:
                 instance.status_message = 'Photometry error'
                 instance.save()
         except Exception as e:
@@ -800,7 +808,7 @@ class DataProductUploadView(FormView):
         observer = form.cleaned_data['observer']
         user = self.request.user
 
-        if dp_type =='fits_file' and observatory.cpcsOnly == True:
+        if dp_type == 'fits_file' and observatory.cpcsOnly == True:
             messages.error(self.request, 'Used Observatory without ObsInfo')
             return redirect(form.cleaned_data.get('referrer', '/'))
 
@@ -816,8 +824,18 @@ class DataProductUploadView(FormView):
             dp.save()
 
             try:
-                run_hook('data_product_post_upload', dp, observatory, observation_filter, MJD, ExpTime, dryRun,
-                         matchDist, comment, user, -100, facility, observer)
+                run_hook('data_product_post_upload',
+                         dp=dp,
+                         target=target,
+                         observatory=observatory,
+                         observation_filter=observation_filter,
+                         MJD=MJD,
+                         expTime=ExpTime,
+                         dry_run=dryRun,
+                         matchDist=matchDist,
+                         comment=comment,
+                         user=user,
+                         priority=-100)
 
                 run_data_processor(dp)
 
@@ -854,8 +872,8 @@ class DataProductUploadView(FormView):
         messages.error(self.request, 'There was a problem uploading your file: {}'.format(form.errors.as_json()))
         return redirect(form.cleaned_data.get('referrer', '/'))
 
-class TargetDetailView(PermissionRequiredMixin, DetailView):
 
+class TargetDetailView(PermissionRequiredMixin, DetailView):
     model = Target
 
     def handle_no_permission(self):
@@ -882,11 +900,12 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
         context = super().get_context_data(*args, **kwargs)
 
         data_product_upload_form = DataProductUploadForm(user=self.request.user,
-            initial={
-                'target': self.get_object(),
-                'referrer': reverse('bhlist_detail', args=(self.get_object().id,))
-            },
-        )
+                                                         initial={
+                                                             'target': self.get_object(),
+                                                             'referrer': reverse('bhlist_detail',
+                                                                                 args=(self.get_object().id,))
+                                                         },
+                                                         )
 
         context['data_product_form_from_user'] = data_product_upload_form
         return context
@@ -901,9 +920,9 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
             call_command('updatestatus', target_id=target_id, stdout=out)
             messages.info(request, out.getvalue())
             add_hint(request, mark_safe(
-                              'Did you know updating observation statuses can be automated? Learn how in'
-                              '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
-                              ' the docs.</a>'))
+                'Did you know updating observation statuses can be automated? Learn how in'
+                '<a href=https://tom-toolkit.readthedocs.io/en/stable/customization/automation.html>'
+                ' the docs.</a>'))
             return redirect(reverse('bhlist_detail', args=(target_id,)))
         return super().get(request, *args, **kwargs)
 
@@ -957,7 +976,6 @@ class TargetDownloadSpectroscopyDataView(TargetDownloadDataView):
 
 
 class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
-
     template_name = 'tom_targets/target_interactive_photometry.html'
     model = Target
 
@@ -980,8 +998,8 @@ class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
             return False
         return True
 
-class TargetMicrolensingView(PermissionRequiredMixin, DetailView):
 
+class TargetMicrolensingView(PermissionRequiredMixin, DetailView):
     template_name = 'tom_targets/target_microlensing.html'
     model = Target
 
@@ -1016,6 +1034,8 @@ class TargetMicrolensingView(PermissionRequiredMixin, DetailView):
             messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
+
+
 class CreateInstrument(PermissionRequiredMixin, FormView):
     """
     View that handles manual upload of DataProducts. Requires authentication.
@@ -1057,15 +1077,16 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
 
         try:
             instrument = Instrument.objects.create(
-                    user_id=user,
-                    observatory_id=observatoryID,
-                    isActive=True,
-                    comment=comment
-                )
-            #instrument.save()
+                user_id=user,
+                observatory_id=observatoryID,
+                isActive=True,
+                comment=comment
+            )
+            # instrument.save()
 
             logger.info('Send mail, %s, %s' % (observatoryID.obsName, str(user)))
-            send_mail('Stworzono nowy instrument', read_secret('EMAILTEXT_CREATE_INSTRUMENT') + str(user) + ', ' + observatoryID.obsName,
+            send_mail('Stworzono nowy instrument',
+                      read_secret('EMAILTEXT_CREATE_INSTRUMENT') + str(user) + ', ' + observatoryID.obsName,
                       settings.EMAIL_HOST_USER, read_secret('RECIPIENTEMAIL'), fail_silently=False)
 
         except Exception as e:
@@ -1078,8 +1099,8 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
         messages.success(self.request, 'Successfully created')
         return redirect(self.get_success_url())
 
-class DeleteInstrument(PermissionRequiredMixin, DeleteView):
 
+class DeleteInstrument(PermissionRequiredMixin, DeleteView):
     success_url = reverse_lazy('observatory')
     model = Instrument
     template_name = 'tom_common/instrument_delete.html'
@@ -1113,8 +1134,8 @@ class DeleteInstrument(PermissionRequiredMixin, DeleteView):
         messages.success(self.request, 'Successfully delete')
         return redirect(self.get_success_url())
 
-class UpdateInstrument(PermissionRequiredMixin, UpdateView):
 
+class UpdateInstrument(PermissionRequiredMixin, UpdateView):
     template_name = 'tom_common/instrument_create.html'
     form_class = InstrumentUpdateForm
     success_url = reverse_lazy('observatory')
@@ -1145,8 +1166,8 @@ class UpdateInstrument(PermissionRequiredMixin, UpdateView):
         messages.success(self.request, 'Successfully updated')
         return redirect(self.get_success_url())
 
-class CreateObservatory(PermissionRequiredMixin, FormView):
 
+class CreateObservatory(PermissionRequiredMixin, FormView):
     template_name = 'tom_common/observatory_create.html'
     form_class = ObservatoryCreationForm
     success_url = reverse_lazy('observatory')
@@ -1173,7 +1194,7 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
     def form_valid(self, form):
 
         try:
-            #super().form_valid(form)
+            # super().form_valid(form)
 
             user = self.request.user
             obsName = form.cleaned_data['obsName']
@@ -1185,26 +1206,27 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
             fits = self.request.FILES.get('fits')
             obsInfo = self.request.FILES.get('obsInfo')
             if cpcsOnly is True:
-                prefix = obsName+"_CpcsOnly"
+                prefix = obsName + "_CpcsOnly"
             else:
                 prefix = obsName
 
             observatory = Observatory.objects.create(
-                    obsName=obsName,
-                    lon=lon,
-                    lat=lat,
-                    matchDist=matchDist,
-                    isVerified=False,
-                    prefix=prefix,
-                    cpcsOnly=cpcsOnly,
-                    fits=fits,
-                    obsInfo=obsInfo,
-                    user=user
+                obsName=obsName,
+                lon=lon,
+                lat=lat,
+                matchDist=matchDist,
+                isVerified=False,
+                prefix=prefix,
+                cpcsOnly=cpcsOnly,
+                fits=fits,
+                obsInfo=obsInfo,
+                user=user
             )
 
             observatory.save()
             logger.info('Send mail, create new obserwatory:  %s' % str(obsName))
-            send_mail('Stworzono nowe obserwatorium', read_secret('EMAILTEXT_CREATE_OBSERVATORY') + str(obsName), settings.EMAIL_HOST_USER,
+            send_mail('Stworzono nowe obserwatorium', read_secret('EMAILTEXT_CREATE_OBSERVATORY') + str(obsName),
+                      settings.EMAIL_HOST_USER,
                       read_secret('RECIPIENTEMAIL'), fail_silently=False)
         except Exception as e:
             logger.error('CreateObservatory error: ' + str(e))
@@ -1214,8 +1236,8 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
         messages.success(self.request, 'Successfully created %s' % obsName)
         return redirect(self.get_success_url())
 
-class ObservatoryList(PermissionRequiredMixin, ListView):
 
+class ObservatoryList(PermissionRequiredMixin, ListView):
     template_name = 'tom_common/observatory_list.html'
     model = Observatory
     strict = False
@@ -1246,15 +1268,16 @@ class ObservatoryList(PermissionRequiredMixin, ListView):
 
         observatory_user_list = []
         for ins in instrument:
-            observatory_user_list.append([ins.id, ins.hashtag, ins.isActive, ins.comment,  Observatory.objects.get(id=ins.observatory_id.id)])
+            observatory_user_list.append(
+                [ins.id, ins.hashtag, ins.isActive, ins.comment, Observatory.objects.get(id=ins.observatory_id.id)])
 
         context['observatory_list'] = Observatory.objects.filter(isVerified=True).order_by('obsName')
         context['observatory_user_list'] = observatory_user_list
 
         return context
 
-class UpdateObservatory(PermissionRequiredMixin, UpdateView):
 
+class UpdateObservatory(PermissionRequiredMixin, UpdateView):
     template_name = 'tom_common/observatory_create.html'
     form_class = ObservatoryUpdateForm
     success_url = reverse_lazy('observatory')
@@ -1285,8 +1308,8 @@ class UpdateObservatory(PermissionRequiredMixin, UpdateView):
         messages.success(self.request, 'Successfully updated %s' % form.cleaned_data['obsName'])
         return redirect(self.get_success_url())
 
-class DeleteObservatory(PermissionRequiredMixin, DeleteView):
 
+class DeleteObservatory(PermissionRequiredMixin, DeleteView):
     success_url = reverse_lazy('observatory')
     model = Observatory
     template_name = 'tom_common/observatory_delete.html'
@@ -1321,8 +1344,8 @@ class DeleteObservatory(PermissionRequiredMixin, DeleteView):
         messages.success(self.request, 'Successfully delete')
         return redirect(self.get_success_url())
 
-class RegisterUser(CreateView):
 
+class RegisterUser(CreateView):
     template_name = 'tom_common/register_user.html'
     success_url = reverse_lazy('home')
     form_class = CustomUserCreationForm
@@ -1337,7 +1360,8 @@ class RegisterUser(CreateView):
                                                            self.object.last_name, self.object.email)
 
         try:
-            send_mail(settings.EMAILTEXT_REGISTEADMIN_TITLE, settings.EMAILTEXT_REGISTEADMIN + email_params, settings.EMAIL_HOST_USER,
+            send_mail(settings.EMAILTEXT_REGISTEADMIN_TITLE, settings.EMAILTEXT_REGISTEADMIN + email_params,
+                      settings.EMAIL_HOST_USER,
                       settings.RECIPIENTEMAIL, fail_silently=False)
 
             send_mail(settings.EMAILTEXT_REGISTEUSER_TITLE, settings.EMAILTEXT_REGISTEUSER, settings.EMAIL_HOST_USER,
@@ -1348,8 +1372,8 @@ class RegisterUser(CreateView):
         messages.success(self.request, settings.SUCCESSFULLY_REGISTERED)
         return redirect(self.get_success_url())
 
-class UserUpdateView(LoginRequiredMixin, UpdateView):
 
+class UserUpdateView(LoginRequiredMixin, UpdateView):
     model = User
     success_url = reverse_lazy('home')
     template_name = 'tom_common/register_user.html'
@@ -1386,11 +1410,13 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         messages.success(self.request, 'Profile updated')
         return redirect(self.get_success_url())
 
+
 class DataProductFeatureView(View):
     """
     View that handles the featuring of ``DataProduct``s. A featured ``DataProduct`` is displayed on the
     ``TargetDetailView``.
     """
+
     def get(self, request, *args, **kwargs):
         """
         Method that handles the GET requests for this view. Sets all other ``DataProduct``s to unfeatured in the
@@ -1422,6 +1448,7 @@ class DataProductFeatureView(View):
             kwargs={'pk': request.GET.get('target_id')})
         )
 
+
 class TargetGroupingView(PermissionRequiredMixin, ListView):
 
     def handle_no_permission(self):
@@ -1447,8 +1474,8 @@ class TargetGroupingView(PermissionRequiredMixin, ListView):
     model = TargetList
     paginate_by = 25
 
-class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
 
+class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
     model = DataProduct
     template_name = 'tom_dataproducts/data_delete.html'
 
@@ -1500,6 +1527,7 @@ class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
 
         return super().delete(request, *args, **kwargs)
 
+
 class fits_download(PermissionRequiredMixin, View):
 
     def handle_no_permission(self):
@@ -1518,7 +1546,7 @@ class fits_download(PermissionRequiredMixin, View):
         elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
             messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
-        elif self.request.user != BHTomFits.objects.get(dataproduct_id=self.kwargs['file_id']).instrument_id.user_id\
+        elif self.request.user != BHTomFits.objects.get(dataproduct_id=self.kwargs['file_id']).instrument_id.user_id \
                 and not self.request.user.is_staff:
             messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
@@ -1541,6 +1569,7 @@ class fits_download(PermissionRequiredMixin, View):
                 return HttpResponseRedirect('/')
             else:
                 return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
 
 class photometry_download(PermissionRequiredMixin, View):
 
@@ -1560,7 +1589,7 @@ class photometry_download(PermissionRequiredMixin, View):
         elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
             messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
-        elif self.request.user != BHTomFits.objects.get(file_id=self.kwargs['file_id']).instrument_id.user_id\
+        elif self.request.user != BHTomFits.objects.get(file_id=self.kwargs['file_id']).instrument_id.user_id \
                 and not self.request.user.is_staff:
             messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
@@ -1576,18 +1605,21 @@ class photometry_download(PermissionRequiredMixin, View):
                 return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
         if file.photometry_file:
-            address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/data/' + format(file.photometry_file)
+            address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/data/' + format(
+                file.photometry_file)
             logger.info('Photometry download address: ' + address)
             try:
                 open(address, 'r')
             except IOError:
-                address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/' + format(file.photometry_file)
+                address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/' + format(
+                    file.photometry_file)
             return FileResponse(open(address, 'rb'), as_attachment=True)
         else:
             if self.request.META.get('HTTP_REFERER') is None:
                 return HttpResponseRedirect('/')
             else:
                 return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
 
 class data_download(PermissionRequiredMixin, View):
 
@@ -1607,7 +1639,7 @@ class data_download(PermissionRequiredMixin, View):
         elif not self.request.user.has_perm('tom_dataproducts.view_dataproduct'):
             messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
-        elif self.request.user != BHTomData.objects.get(dataproduct_id=self.kwargs['file_id']).user_id\
+        elif self.request.user != BHTomData.objects.get(dataproduct_id=self.kwargs['file_id']).user_id \
                 and not self.request.user.is_staff:
             messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
@@ -1630,6 +1662,7 @@ class data_download(PermissionRequiredMixin, View):
                 return HttpResponseRedirect('/')
             else:
                 return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
 
 class CommentDeleteView(LoginRequiredMixin, DeleteView):
     """
@@ -1691,5 +1724,3 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
                 targets_ids = request.POST.getlist('selected-target')
                 remove_selected_from_grouping(targets_ids, grouping_object, request)
         return redirect(reverse('bhlist'))
-
-

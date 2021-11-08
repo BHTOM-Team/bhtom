@@ -31,6 +31,7 @@ from bhtom.views import DeleteObservatory, UpdateObservatory, ObservatoryList, C
 from bhtom.views import RegisterUser, DataProductFeatureView, UserUpdateView, photometry_download, fits_download
 from bhtom.views import TargetCreateView, TargetUpdateView, TargetDeleteView, TargetGroupingView
 from bhtom.views import data_download, CommentDeleteView, TargetAddRemoveGroupingView
+from .data_rest_api.data_upload import PhotometryUpload
 from .views import BlackHoleListView
 
 router = routers.DefaultRouter()
@@ -65,6 +66,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('dataUpload/', DataProductUploadView.as_view(), name='data_upload'),
+    path('photometry-upload/', PhotometryUpload.as_view(), name='photometry_upload'),
     path('instrument/create/', CreateInstrument.as_view(), name='instrument_create'),
     path('instrument/<int:pk>/delete/', DeleteInstrument.as_view(), name='instrument_delete'),
     path('instrument/<int:pk>/update/', UpdateInstrument.as_view(), name='instrument_update'),
