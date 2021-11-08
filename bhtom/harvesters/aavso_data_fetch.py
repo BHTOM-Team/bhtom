@@ -1,5 +1,6 @@
 from io import StringIO
 from typing import List, Optional, Tuple
+import logging
 
 import pandas as pd
 import requests as req
@@ -11,6 +12,8 @@ from tom_targets.models import Target
 
 from bhtom.models import ReducedDatumExtraData, refresh_reduced_data_view
 from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointExtraData
+
+logger = logging.getLogger(__name__)
 
 accepted_valid_flags: List[str] = ['V', 'Z']
 filters: List[str] = ['V', 'I', 'R']
@@ -76,11 +79,13 @@ def save_row_to_db(target_id: int,
     obs_name: str = row["obsName"]
 
     if obs_affil or obs_name:
+
         rd_extra_data, _ = ReducedDatumExtraData.objects.update_or_create(
             reduced_datum=rd,
             defaults={'extra_data': ObservationDatapointExtraData(facility_name=obs_affil,
                                                                   owner=obs_name).to_json_str()}
         )
+        logger.info('ReducedDatumExtraData from AAVSO ' + obs_name)
     return rd
 
 

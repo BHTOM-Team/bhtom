@@ -233,6 +233,17 @@ class CustomUserCreationForm(UserCreationForm):
         self.fields['password1'].label = "Password*"
         self.fields['password2'].label = "Password confirmation*"
 
+        try:
+            user = kwargs.get('instance')
+            db = BHTomUser.objects.get(user=user)
+            self.fields['about_me'].initial = db.about_me
+            self.fields['latex_name'].initial = db.latex_name
+            self.fields['latex_affiliation'].initial = db.latex_affiliation
+            self.fields['address'].initial = db.address
+
+        except Exception as e:
+            db = None
+
     class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'latex_name', 'latex_affiliation',

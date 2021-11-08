@@ -101,6 +101,7 @@ def update_cpcs_lc(target):
                         'error': datum_err,
                         'jd': datum_jd.jd
                     }
+                    logger.info('ReducedDatumExtraData from CPCS ' + observer)
                     rd, created = ReducedDatum.objects.get_or_create(
                         timestamp=datum_jd.to_datetime(timezone=TimezoneInfo()),
                         value=json.dumps(value),
@@ -115,6 +116,7 @@ def update_cpcs_lc(target):
                                                                               owner=observer).to_json_str()
                                   }
                     )
+
                 except:
                     print("FAILED storing (CPCS)")
 

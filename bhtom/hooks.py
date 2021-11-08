@@ -40,14 +40,17 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
     logger.info('Running post upload hook for DataProduct: {}'.format(url))
 
     if observatory is not None:
+        try:
+            observatory = Observatory.objects.get(id=observatory.id)
+            instrument = Instrument.objects.get(observatory_id=observatory.id, user_id=user)
 
-        observatory = Observatory.objects.get(id=observatory.id)
-        instrument = Instrument.objects.get(observatory_id=observatory.id, user_id=user)
+            if matchDist != '0':
+                matching_radius = matchDist
+            else:
+                matching_radius = observatory.matchDist
+        except Exception as e:
+            logger.error('data_product_post_upload_fits_file error: ' + str(e))
 
-        if matchDist != '0':
-            matching_radius = matchDist
-        else:
-            matching_radius = observatory.matchDist
 
     if dp.data_product_type == 'fits_file' and observatory != None:
 
