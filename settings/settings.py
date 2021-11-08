@@ -443,7 +443,7 @@ HINT_LEVEL = 20
 # TOM Toolkit 1.4 requires
 TARGET_PERMISSIONS_ONLY = True
 
-CPCS_BASE_URL = "https://cpcs.astrolabs.pl/cgi"
+CPCS_BASE_URL = "https://cpcs.astrolabs.pl/cgi/"
 AAVSO_DATA_FETCH_URL = "https://www.aavso.org/vsx/index.php"
 GAIA_ALERT_URL = "http://gsaweb.ast.cam.ac.uk/alerts/alert"
 TNS_URL = "https://www.wis-tns.org/api/get"
