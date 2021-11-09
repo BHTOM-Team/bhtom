@@ -17,78 +17,66 @@ import tempfile
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
-#reads all secret settings and apis, which will not be stored in git repo
+from typing import Any
+
+# Reads all secret settings and apis, which will not be stored in git repo
 try:
     from . import local_settings as secret
 except ImportError:
-    pass
+    secret = None
 
-#this is required by Heroku, as they setup environment variables instead of using local_settings (not on github)
 
-try:
-    LCO_APIKEY = secret.LCO_APIKEY
-    SECRET_KEY = secret.SECRET_KEY
-    ANTARES_KEY = secret.ANTARES_KEY
-    ANTARES_SECRET = secret.ANTARES_SECRET
-    TWITTER_APIKEY = secret.TWITTER_APIKEY
-    TWITTER_SECRET = secret.TWITTER_SECRET
-    TWITTER_ACCESSTOKEN = secret.TWITTER_ACCESSTOKEN
-    TWITTER_ACCESSSECRET = secret.TWITTER_ACCESSSECRET
-    TOMEMAIL = secret.TOMEMAIL
-    TOMEMAILPASSWORD = secret.TOMEMAILPASSWORD
-    SNEXBOT_APIKEY =  secret.TNSBOT_APIKEY
-    black_tom_DB_NAME = secret.black_tom_DB_NAME
-    black_tom_DB_USER = secret.black_tom_DB_USER
-    black_tom_DB_PASSWORD = secret.black_tom_DB_PASSWORD
-    CPCS_DATA_ACCESS_HASHTAG = secret.CPCS_DATA_ACCESS_HASHTAG
-    GEMINI_S_API_KEY = secret.GEMINI_S_API_KEY
-    GEMINI_N_API_KEY = secret.GEMINI_N_API_KEY
-    LT_PROPOSAL_ID = secret.LT_PROPOSAL_ID
-    LT_PROPOSAL_NAME = secret.LT_PROPOSAL_NAME
-    LT_PROPOSAL_USER = secret.LT_PROPOSAL_USER
-    LT_PROPOSAL_PASS = secret.LT_PROPOSAL_PASS
-    LT_PROPOSAL_HOST = secret.LT_PROPOSAL_HOST
-    LT_PROPOSAL_PORT = secret.LT_PROPOSAL_PORT
-    RECAPTCHA_PUBLIC_KEY = secret.RECAPTCHA_PUBLIC_KEY
-    RECAPTCHA_PRIVATE_KEY = secret.RECAPTCHA_PRIVATE_KEY
-    TNS_API_KEY = secret.TNS_API_KEY
-    TNS_USER_AGENT = secret.TNS_USER_AGENT
+# This is required by Heroku, as they setup environment variables instead of using local_settings (not on github)
 
-except:
-    LCO_APIKEY = os.environ['LCO_APIKEY']
-    SECRET_KEY = os.environ['SECRET_KEY']
-    ANTARES_KEY = os.environ['ANTARES_KEY']
-    ANTARES_SECRET = os.environ['ANTARES_SECRET']
-    TWITTER_APIKEY = os.environ['TWITTER_APIKEY']
-    TWITTER_SECRET = os.environ['TWITTER_SECRET']
-    TWITTER_ACCESSTOKEN = os.environ['TWITTER_ACCESSTOKEN']
-    TWITTER_ACCESSSECRET = os.environ['TWITTER_ACCESSSECRET']
-    TOMEMAIL = os.environ['TOMEMAIL']
-    TOMEMAILPASSWORD = os.environ['TOMEMAILPASSWORD']
-    TNS_API_KEY = os.environ['TNS_API_KEY']
+# Helper function to read either from secrets file or os
 
-    GEMINI_S_API_KEY = os.environ['GEMINI_S_API_KEY']
-    
-    GEMINI_N_API_KEY = os.environ['GEMINI_N_API_KEY']
-    
-    LT_PROPOSAL_ID = os.environ['LT_PROPOSAL_ID']
-    
-    LT_PROPOSAL_NAME = os.environ['LT_PROPOSAL_NAME']
-    
-    LT_PROPOSAL_USER = os.environ['LT_PROPOSAL_USER']
-    
-    LT_PROPOSAL_PASS = os.environ['LT_PROPOSAL_PASS']
-    
-    LT_PROPOSAL_HOST = os.environ['LT_PROPOSAL_HOST']
-    
-    LT_PROPOSAL_PORT = os.environ['LT_PROPOSAL_PORT']
-    
-    #tns harvester reads it too, but SNEXBOT api key still needed - FIX?
-    SNEXBOT_APIKEY =  os.environ['TNSBOT_APIKEY']
-    black_tom_DB_NAME = os.environ['black_tom_DB_NAME']
-    black_tom_DB_USER = os.environ['black_tom_DB_USER']
-    black_tom_DB_PASSWORD = os.environ['black_tom_DB_PASSWORD']
-    CPCS_DATA_ACCESS_HASHTAG = os.environ['CPCS_DATA_ACCESS_HASHTAG']
+def read_secret(secret_key: str, default_value: Any = '') -> Any:
+    if secret:
+        return getattr(secret, secret_key, default_value)
+    else:
+        return os.environ.get(secret_key, default_value)
+
+
+LCO_APIKEY: str = read_secret('LCO_APIKEY')
+SECRET_KEY: str = read_secret('SECRET_KEY')
+ANTARES_KEY: str = read_secret('ANTARES_KEY')
+ANTARES_SECRET: str = read_secret('ANTARES_SECRET')
+TWITTER_APIKEY: str = read_secret('TWITTER_APIKEY')
+TWITTER_SECRET: str = read_secret('TWITTER_SECRET')
+TWITTER_ACCESSTOKEN: str = read_secret('TWITTER_ACCESSTOKEN')
+TWITTER_ACCESSSECRET: str = read_secret('TWITTER_ACCESSSECRET')
+TOMEMAIL: str = read_secret('TOMEMAIL')
+TOMEMAILPASSWORD: str = read_secret('TOMEMAILPASSWORD')
+SNEXBOT_APIKEY = read_secret('TNSBOT_APIKEY')
+black_tom_DB_NAME: str = read_secret('black_tom_DB_NAME')
+black_tom_DB_USER: str = read_secret('black_tom_DB_USER')
+black_tom_DB_PASSWORD: str = read_secret('black_tom_DB_PASSWORD')
+CPCS_DATA_ACCESS_HASHTAG: str = read_secret('CPCS_DATA_ACCESS_HASHTAG')
+GEMINI_S_API_KEY: str = read_secret('GEMINI_S_API_KEY')
+GEMINI_N_API_KEY: str = read_secret('GEMINI_N_API_KEY')
+LT_PROPOSAL_ID: str = read_secret('LT_PROPOSAL_ID')
+LT_PROPOSAL_NAME: str = read_secret('LT_PROPOSAL_NAME')
+LT_PROPOSAL_USER: str = read_secret('LT_PROPOSAL_USER')
+LT_PROPOSAL_PASS: str = read_secret('LT_PROPOSAL_PASS')
+LT_PROPOSAL_HOST: str = read_secret('LT_PROPOSAL_HOST')
+LT_PROPOSAL_PORT: str = read_secret('LT_PROPOSAL_PORT')
+RECAPTCHA_PUBLIC_KEY: str = read_secret('RECAPTCHA_PUBLIC_KEY')
+RECAPTCHA_PRIVATE_KEY: str = read_secret('RECAPTCHA_PRIVATE_KEY')
+TNS_API_KEY: str = read_secret('TNS_API_KEY')
+TNS_USER_AGENT: str = read_secret('TNS_USER_AGENT')
+
+# E-mail Messages
+
+EMAILTEXT_REGISTEADMIN_TITLE: str = read_secret('EMAILTEXT_REGISTEADMIN_TITLE')
+EMAILTEXT_REGISTEADMIN: str = read_secret('EMAILTEXT_REGISTEADMIN')
+RECIPIENTEMAIL: str = read_secret('RECIPIENTEMAIL')
+SUCCESSFULLY_REGISTERED: str = read_secret('SUCCESSFULLY_REGISTERED')
+EMAILTEXT_REGISTEUSER_TITLE: str = read_secret('EMAILTEXT_REGISTEUSER_TITLE')
+EMAILTEXT_REGISTEUSER: str = read_secret('EMAILTEXT_REGISTEUSER_TITLE')
+
+ALLOWED_HOST: str = read_secret('ALLOWED_HOST', 'localhost')
+ALLOWED_HOST_IP: str = read_secret('ALLOWED_HOST_IP', '127.0.0.1')
+SITE_ID: int = int(read_secret('SITE_ID', 1))
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -104,17 +92,7 @@ EMAIL_HOST_PASSWORD = TOMEMAILPASSWORD
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-#SESSION_COOKIE_SECURE = True
-#SECURE_SSL_REDIRECT = True
-#X_FRAME_OPTIONS = 'DENY'
-#CSRF_COOKIE_SECURE = True
-#SECURE_BROWSER_XSS_FILTER = True
-#SECURE_CONTENT_TYPE_NOSNIFF = True
-#SECURE_HSTS_PRELOAD  = True
-#SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-#SECURE_HSTS_SECONDS = 3600
-ALLOWED_HOSTS = ['bh-tom.astrolabs.pl', '164.132.150.21']
-#ALLOWED_HOSTS = ['bh-tom.astrolabs.pl']
+ALLOWED_HOSTS = [ALLOWED_HOST, ALLOWED_HOST_IP]
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 
 # Application definition
@@ -153,8 +131,6 @@ CRON_CLASSES = [
     'datatools.jobs.update_all_lightcurves.UpdateAllLightcurvesJob'
 ]
 
-SITE_ID = 2
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -190,7 +166,6 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 WSGI_APPLICATION = 'settings.wsgi.application'
 black_tom_DB_BACKEND = 'postgres'
 
-
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 if black_tom_DB_BACKEND == 'postgres':
@@ -212,7 +187,6 @@ else:
         }
     }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 
@@ -230,7 +204,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
@@ -256,13 +229,9 @@ USE_TZ = True
 DATETIME_FORMAT = 'Y-m-d H:m:s'
 DATE_FORMAT = 'Y-m-d'
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
-# #STATIC_URL = '/static/'
-# #LW: new from stackoverflow:
-#STATIC_URL = os.path.join(BASE_DIR, 'static').replace('\\','')+'/'
 STATIC_URL = '/bhtom/static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, '_static/')
@@ -316,17 +285,12 @@ CACHES = {
 # TOM Specific configuration
 TARGET_TYPE = 'SIDEREAL'
 
-#LW: email server setup
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-
 FACILITIES = {
     'LCO': {
         'portal_url': 'https://observe.lco.global',
-        'api_key':LCO_APIKEY,
+        'api_key': LCO_APIKEY,
     },
-     'GEM': {
+    'GEM': {
         'portal_url': {
             'GS': 'https://gsodb.gemini.edu:8443',
             'GN': 'https://gnodb.gemini.edu:8443',
@@ -338,8 +302,8 @@ FACILITIES = {
         'user_email': 'kruszynskakat@gmail.com',
         'programs': {
             'GS-2020A-DD-104': {
-                '8':  'GMOS Aquisiton 0.75arcsec',
-                '9':  'Std: R400 LongSlit 0.75arcsec for Blue Objects',
+                '8': 'GMOS Aquisiton 0.75arcsec',
+                '9': 'Std: R400 LongSlit 0.75arcsec for Blue Objects',
                 '12': 'Std: B600 LongSlit 0.75arcsec for Red Objects',
             },
             'GN-2020A-DD-104': {
@@ -352,13 +316,13 @@ FACILITIES = {
     },
     ### configuration of LT remote telescope access, requires local_settings variables:
     'LT': {
-        'proposalIDs': ((LT_PROPOSAL_ID, LT_PROPOSAL_NAME), ),
+        'proposalIDs': ((LT_PROPOSAL_ID, LT_PROPOSAL_NAME),),
         'username': LT_PROPOSAL_USER,
         'password': LT_PROPOSAL_PASS,
         'LT_HOST': LT_PROPOSAL_HOST,
         'LT_PORT': LT_PROPOSAL_PORT,
         'DEBUG': False,
-        },
+    },
 }
 
 # Define the valid data product types for your TOM. Be careful when removing items, as previously valid types will no
@@ -369,7 +333,6 @@ DATA_PRODUCT_TYPES = {
     'spectroscopy': ('spectroscopy', 'Spectrum as ASCII'),
     'photometry': ('photometry', 'Photometric time-series (CSV)'),
     'photometry_asassn': ('photometry_asassn', 'Photometric time-series (ASAS-SN format)')
-
 }
 
 DATA_PROCESSORS = {
@@ -426,13 +389,13 @@ EXTRA_FIELDS = [
     {'name': 'TNS_ID', 'type': 'string'},
     {'name': 'classification', 'type': 'string'},
     {'name': 'tweet', 'type': 'boolean'},
-    {'name': 'jdlastobs', 'type': 'number'},
+    {'name': 'jdlastobs', 'type': 'number', 'default': 0.0},
     {'name': 'maglast', 'type': 'number'},
     {'name': 'priority', 'type': 'number'},
     {'name': 'dicovery_date', 'type': 'datetime'},
     {'name': 'cadence', 'type': 'number'},
     {'name': 'Sun_separation', 'type': 'number'},
-    {'name': 'dont_update_me', 'type':'boolean'}
+    {'name': 'dont_update_me', 'type': 'boolean'}
 ]
 
 # Authentication strategy can either be LOCKED (required login for all views)
@@ -449,8 +412,8 @@ HOOKS = {
     'data_product_post_upload': 'bhtom.hooks.data_product_post_upload',
 }
 
-#Gaia Alerts added by LW
-#others are copied from default AbstractHarvester
+# Gaia Alerts added by LW
+# others are copied from default AbstractHarvester
 TOM_HARVESTER_CLASSES = [
     'bhtom.harvesters.gaia_alerts_harvester.GaiaAlertsHarvester',
     'tom_catalogs.harvesters.simbad.SimbadHarvester',
@@ -458,7 +421,7 @@ TOM_HARVESTER_CLASSES = [
     'tom_catalogs.harvesters.jplhorizons.JPLHorizonsHarvester',
     'tom_catalogs.harvesters.mpc.MPCHarvester',
     'bhtom.harvesters.tns.TNSHarvester',
-    ]
+]
 
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
@@ -477,10 +440,11 @@ THUMBNAIL_DEFAULT_SIZE = (200, 200)
 HINTS_ENABLED = True
 HINT_LEVEL = 20
 
-#TOM Toolkit 1.4 requires
+# TOM Toolkit 1.4 requires
 TARGET_PERMISSIONS_ONLY = True
 
-CPCS_BASE_URL = "https://cpcs.astrolabs.pl"
+CPCS_BASE_URL = "https://cpcs.astrolabs.pl/cgi/"
+CPCS_DATA_FETCH_URL = "https://cpcs.astrolabs.pl/"
 AAVSO_DATA_FETCH_URL = "https://www.aavso.org/vsx/index.php"
 GAIA_ALERT_URL = "http://gsaweb.ast.cam.ac.uk/alerts/alert"
 TNS_URL = "https://www.wis-tns.org/api/get"
@@ -488,7 +452,7 @@ TNS_URL = "https://www.wis-tns.org/api/get"
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
 
 sentry_sdk.init(
-    dsn=secret.SENTRY_SDK_DSN,
+    dsn=read_secret('SENTRY_SDK_DSN', ''),
     integrations=[DjangoIntegration()],
     traces_sample_rate=1.0,
     send_default_pii=True

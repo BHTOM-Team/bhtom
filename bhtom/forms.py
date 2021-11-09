@@ -20,20 +20,23 @@ from tom_targets.models import (
 from captcha.fields import ReCaptchaField
 
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class ObservatoryChoiceField(forms.ModelChoiceField):
 
     def label_from_instance(self, obj):
-        if obj.cpcsOnly == True:
-            return '{obsName} (Only Instrumental photometry file)'.format(obsName=obj.obsName)
+        if obj.cpcsOnly:
+            return '{obsName} ({prefix}) (Only Instrumental photometry file)'.format(obsName=obj.obsName,
+                                                                                     prefix=obj.prefix)
         else:
-            return '{obsName}'.format(obsName=obj.obsName)
+            return '{obsName} ({prefix})'.format(obsName=obj.obsName, prefix=obj.prefix)
+
 
 class FilterChoiceField(forms.ModelChoiceField):
 
     def label_from_instance(self, obj):
-
         name = obj.name
         filters = obj.filters
         hash = {}
@@ -42,8 +45,8 @@ class FilterChoiceField(forms.ModelChoiceField):
 
         return hash
 
-class DataProductUploadForm(forms.Form):
 
+class DataProductUploadForm(forms.Form):
     MATCHING_RADIUS = [
         ('0', 'Default for the Observatory'),
         ('1', '1 arcsec'),
@@ -67,12 +70,12 @@ class DataProductUploadForm(forms.Form):
         widget=forms.ClearableFileInput(
             attrs={'multiple': True}
         )
-     )
+    )
 
     data_product_type = forms.ChoiceField(
         choices=[v for k, v in settings.DATA_PRODUCT_TYPES.items()],
         initial='photometry_cpcs',
-        widget=forms.RadioSelect(attrs={'onclick' : "dataProductSelect();"}),
+        widget=forms.RadioSelect(attrs={'onclick': "dataProductSelect();"}),
         required=True
     )
 
@@ -135,8 +138,7 @@ class DataProductUploadForm(forms.Form):
             insTab.append(ins.observatory_id.id)
 
         self.fields['observatory'] = ObservatoryChoiceField(
-
-            queryset=Observatory.objects.filter(id__in=insTab, isVerified=True),
+            queryset=Observatory.objects.filter(id__in=insTab, isVerified=True).order_by('obsName'),
             widget=forms.Select(),
             required=False
         )
@@ -156,8 +158,8 @@ class DataProductUploadForm(forms.Form):
 
         self.fields['observer'].initial = f'{user.first_name} {user.last_name}'
 
-class ObservatoryCreationForm(forms.ModelForm):
 
+class ObservatoryCreationForm(forms.ModelForm):
     cpcsOnly = forms.BooleanField(
         label='Only instrumental photometry file',
         required=False
@@ -165,10 +167,15 @@ class ObservatoryCreationForm(forms.ModelForm):
 
     class Meta:
         model = Observatory
-        fields = ('obsName', 'lon', 'lat', 'matchDist', 'cpcsOnly', 'fits', 'obsInfo', 'comment')
+        fields = ('obsName', 'lon', 'lat', 'altitude',
+                  'matchDist', 'cpcsOnly', 'fits',
+                  'gain', 'binning', 'saturation_level',
+                  'pixel_scale', 'readout_speed', 'pixel_size',
+                  'approx_lim_mag', 'filters',
+                  'comment')
+
 
 class ObservatoryUpdateForm(forms.ModelForm):
-
     cpcsOnly = forms.BooleanField(
         label='Only instrumental photometry file',
         required=False
@@ -176,16 +183,21 @@ class ObservatoryUpdateForm(forms.ModelForm):
 
     class Meta:
         model = Observatory
-        fields = ('obsName', 'lon', 'lat', 'matchDist', 'prefix', 'cpcsOnly', 'fits', 'obsInfo', 'comment')
+        fields = ('obsName', 'lon', 'lat', 'altitude',
+                  'matchDist', 'cpcsOnly', 'fits',
+                  'gain', 'binning', 'saturation_level',
+                  'pixel_scale', 'readout_speed', 'pixel_size',
+                  'approx_lim_mag', 'filters',
+                  'comment')
+
 
 class InstrumentUpdateForm(forms.ModelForm):
-
     class Meta:
         model = Instrument
         fields = ('comment',)
 
-class InstrumentCreationForm(forms.Form):
 
+class InstrumentCreationForm(forms.Form):
     observatory = forms.ChoiceField()
 
     comment = forms.CharField(
@@ -195,7 +207,6 @@ class InstrumentCreationForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-
         user = kwargs.pop('user')
         super(InstrumentCreationForm, self).__init__(*args, **kwargs)
 
@@ -211,6 +222,7 @@ class InstrumentCreationForm(forms.Form):
             required=True
         )
 
+
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
     groups = forms.ModelMultipleChoiceField(Group.objects.all().exclude(name='Public'),
@@ -224,7 +236,7 @@ class CustomUserCreationForm(UserCreationForm):
         required=False
     )
 
-    #captcha = ReCaptchaField()
+    # captcha = ReCaptchaField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -232,6 +244,17 @@ class CustomUserCreationForm(UserCreationForm):
         self.fields['email'].label = "Email*"
         self.fields['password1'].label = "Password*"
         self.fields['password2'].label = "Password confirmation*"
+
+        try:
+            user = kwargs.get('instance')
+            db = BHTomUser.objects.get(user=user)
+            self.fields['about_me'].initial = db.about_me
+            self.fields['latex_name'].initial = db.latex_name
+            self.fields['latex_affiliation'].initial = db.latex_affiliation
+            self.fields['address'].initial = db.address
+
+        except Exception as e:
+            db = None
 
     class Meta:
         model = User
@@ -263,6 +286,7 @@ class CustomUserCreationForm(UserCreationForm):
 
         return user
 
+
 def extra_field_to_form_field(field_type):
     if field_type == 'number':
         return forms.FloatField(required=False)
@@ -276,6 +300,7 @@ def extra_field_to_form_field(field_type):
         raise ValueError(
             'Invalid field type {}. Field type must be one of: number, boolean, datetime string'.format(field_type)
         )
+
 
 class CoordinateField(forms.CharField):
     def __init__(self, *args, **kwargs):
@@ -321,9 +346,9 @@ class TargetForm(forms.ModelForm):
             for field in settings.EXTRA_FIELDS:
                 if self.cleaned_data.get(field['name']) is not None:
                     TargetExtra.objects.update_or_create(
-                            target=instance,
-                            key=field['name'],
-                            defaults={'value': self.cleaned_data[field['name']]}
+                        target=instance,
+                        key=field['name'],
+                        defaults={'value': self.cleaned_data[field['name']]}
                     )
 
         return instance
@@ -352,6 +377,7 @@ class SiderealTargetCreateForm(TargetForm):
 
     class Meta(TargetForm.Meta):
         fields = SIDEREAL_FIELDS
+
 
 class NonSiderealTargetCreateForm(TargetForm):
     def __init__(self, *args, **kwargs):
@@ -382,6 +408,7 @@ class NonSiderealTargetCreateForm(TargetForm):
 
     class Meta(TargetForm.Meta):
         fields = NON_SIDEREAL_FIELDS
+
 
 class TargetVisibilityForm(forms.Form):
     start_time = forms.DateTimeField(required=True, label='Start Time', widget=forms.TextInput(attrs={'type': 'date'}))

@@ -1,17 +1,17 @@
 {% load staticfiles %}
 <link rel="stylesheet" href="{% static 'bhtom/css/target-table.css' %}">
 <table class="table">
-  <thead><tr><th>ID</th><th>Created</th></tr></thead>
+  <thead><tr><th>ID</th><th>Last observation</th></tr></thead>
   <tbody>
     {% for target in targets %}
     <tr>
       <td>
-        <a href="{% url 'bhlist_detail' target.id %}" title="Detail for {{ target.name }}">
-            {{ target.name }}
+        <a href="{% url 'bhlist_detail' target.target.id %}" title="Detail for {{ target.target.name }}">
+            {{ target.target.name }}
         </a>
       </td>
       <td>
-        {{ target.created|date }}
+        {{ target.jdlastobs|date }}
       </td>
     </tr>
     {% empty %}

@@ -111,7 +111,10 @@ def photometry_for_target_static(context, target, include_aavso):
                                                      settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]]))
 
     for datum in datums:
-        values = json.loads(datum.value)
+        if type(datum.value) is dict:
+            values = datum.value
+        else:
+            values = json.loads(datum.value)
 
         if values.get('error', 0.0) < 99.0 and values.get('magnitude') < 99.0:
             photometry_data.setdefault(values['filter'], {})

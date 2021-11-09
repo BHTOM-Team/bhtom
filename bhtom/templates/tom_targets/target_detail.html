@@ -113,13 +113,14 @@
       {% if perms.tom_targets.view_target %}
       <div class="tab-pane active" id="photometry">
         <div class="row menu-row">
-          <div class="col-md-5">
+          <div class="col-md-3">
             <h4>Photometry</h4>
           </div>
-          <div class="col-md-7">
-            <button onclick="open_photometry()" class="btn btn-info" role="button" style="float:right; margin-right:-4px">Interactive photometry plot</button>
-            <a href="{% url 'datatools:update-reduced-data-gaia' %}?target_id={{ target.id }}" class="btn btn-primary"
-               title="Update Light Curve" style="float:right; margin-right:10px">Check for new data</a>
+          <div class="col-md-9">
+              <button onclick="open_photometry()" class="btn btn-info" role="button" style="float:right; margin: 4px;">Interactive photometry plot</button>
+              <!--<button onclick="open_microlensing_model()" class="btn btn-info" role="button" style="float:right;margin: 4px;">Microlensing model</button>-->
+              <a href="{% url 'datatools:update-reduced-data-gaia' %}?target_id={{ target.id }}" class="btn btn-primary"
+               title="Update Light Curve" style="float:right; margin: 4px;">Check for new data</a>
           </div>
         </div>
         <div class="row">
@@ -219,6 +220,9 @@
     }
     function download_spectroscopy() {
       window.open('{% url "bhlist_download_spectroscopy_data" target.id %}')
+    }
+    function open_microlensing_model() {
+    window.open('{% url "bhlist_i_microlensing" target.id %}', 'newwindow', 'width=700,height=900');
     }
 </script>
 {% endblock %}
