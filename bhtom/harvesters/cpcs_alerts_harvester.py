@@ -30,7 +30,7 @@ except:
     TWITTER_ACCESSSECRET = os.environ['TWITTER_ACCESSSECRET']
     CPCS_DATA_ACCESS_HASHTAG = os.environ['CPCS_DATA_ACCESS_HASHTAG']
 
-cpcs_base_url = settings.CPCS_BASE_URL
+cpcs_base_url = settings.CPCS_DATA_FETCH_URL
 
 logger = logging.getLogger(__name__)
 
