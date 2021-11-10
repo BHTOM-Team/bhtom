@@ -24,7 +24,10 @@ class PhotometryUpload(APIView):
 
     def post(self, request):
 
+        user = request.user
+
         username: str = request.headers.get('username')
+        hashtag: str = request.headers.get('hashtag')
 
         target_name: str = request.data.get('target')
         filter: str = request.data.get('filter')
@@ -36,7 +39,9 @@ class PhotometryUpload(APIView):
         mjd: str = request.data.get('mjd')
         exp_time: str = request.data.get('exp_time')
 
-        dry_run: str = request.data.get('dry_run', 'False')
+        dry_run_str: str = request.data.get('dry_run', 'False')
+        dry_run = True if dry_run_str == 'True' else False
+
         matching_radius: str = request.data.get('matching_radius', '2')
         comment: str = request.data.get('comment')
 
