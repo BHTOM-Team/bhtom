@@ -30,7 +30,7 @@ except:
     TWITTER_ACCESSSECRET = os.environ['TWITTER_ACCESSSECRET']
     CPCS_DATA_ACCESS_HASHTAG = os.environ['CPCS_DATA_ACCESS_HASHTAG']
 
-cpcs_base_url = settings.CPCS_BASE_URL
+cpcs_base_url = settings.CPCS_DATA_FETCH_URL
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +101,7 @@ def update_cpcs_lc(target):
                         'error': datum_err,
                         'jd': datum_jd.jd
                     }
+                    logger.info('ReducedDatumExtraData from CPCS ' + observer)
                     rd, created = ReducedDatum.objects.get_or_create(
                         timestamp=datum_jd.to_datetime(timezone=TimezoneInfo()),
                         value=json.dumps(value),
@@ -115,6 +116,7 @@ def update_cpcs_lc(target):
                                                                               owner=observer).to_json_str()
                                   }
                     )
+
                 except:
                     print("FAILED storing (CPCS)")
 
