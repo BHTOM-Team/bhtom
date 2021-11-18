@@ -1,0 +1,139 @@
+{% extends 'tom_common/base.html' %}
+{% load dataproduct_extras %}
+{% load comments bootstrap4 tom_common_extras comments_list targets_extras observation_extras dataproduct_extras target_data_with_permissions data_upload publication_extras static cache %}
+{% block title %}{{ observatory.obsName }}{% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
+<link rel="stylesheet" href="{% static 'bhtom/css/main.css' %}">
+<link rel="stylesheet" href="{% static 'bhtom/css/observatory_details.css' %}">
+{% endblock %}
+{% bootstrap_javascript jquery='True' %}
+{% block content %}
+<h1>Observatory: {{ observatory.obsName }}</h1>
+
+<div class="row obs-details-container">
+  <div class="col-md-6">
+     <h2>Observatory details</h2>
+     <table class="table">
+         <thead>
+            <tr>
+                <th></th>
+                <th></th>
+            </tr>
+         </thead>
+         <tbody>
+            <tr>
+                <td>
+                    Longitude
+                </td>
+                <td>
+                    {{ observatory.lon }} deg (West is positive)
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Latitude
+                </td>
+                <td>
+                    {{ observatory.lat }} deg (North is positive)
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Altitude
+                </td>
+                <td>
+                    {{ observatory.altitude }} m
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Approx. limit magnitude
+                </td>
+                <td>
+                    {{ observatory.approx_lim_mag }} mag
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Binning
+                </td>
+                <td>
+                    {{ observatory.binning }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Matching Distance
+                </td>
+                <td>
+                    {{ observatory.matchDist}} arcsec
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Filters
+                </td>
+                <td>
+                    {{ observatory.filters }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Gain
+                </td>
+                <td>
+                    {{ observatory.gain }} e/ADU
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Pixel scale
+                </td>
+                <td>
+                    {{ observatory.pixel_scale }} arcseconds/pixel
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Pixel size
+                </td>
+                <td>
+                    {{ observatory.pixel_size }} micrometers
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Readout speed
+                </td>
+                <td>
+                    {{ observatory.readout_speed }} microseconds/pixel
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Saturation level
+                </td>
+                <td>
+                    {{ observatory.saturation_level }} ADU
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Readout noise
+                </td>
+                <td>
+                    {{ observatory.readout_noise }} e
+                </td>
+            </tr>
+         </tbody>
+     </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_javascript %}
+  <script type="text/javascript">
+</script>
+{% endblock %}

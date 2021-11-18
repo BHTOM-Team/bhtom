@@ -927,6 +927,32 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
         return super().get(request, *args, **kwargs)
 
 
+class ObservatoryDetailView(PermissionRequiredMixin, DetailView):
+    model = Observatory
+
+    def handle_no_permission(self):
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def has_permission(self):
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
+            return False
+        elif not self.request.user.has_perm('tom_targets.view_target'):
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
+            return False
+        return True
+
+    # def get(self, request, *args, **kwargs):
+    #     observatory_id = kwargs.get('pk', None)
+    #     return redirect(reverse('observatory_detail', args=(observatory_id,)))
+
+
 class TargetDownloadDataView(ABC, PermissionRequiredMixin, View):
     permission_required = 'tom_dataproducts.add_dataproduct'
 
