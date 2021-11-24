@@ -25,7 +25,7 @@ from bhtom import views
 from bhtom.views import DataProductUploadView, TargetDetailView, TargetInteractivePhotometryView, \
     TargetDownloadPhotometryDataView, TargetDownloadPhotometryStatsView, \
     TargetDownloadSpectroscopyDataView, TargetFileDetailView, TargetDownloadPhotometryStatsLatexTableView, \
-    TargetMicrolensingView
+    TargetMicrolensingView, ObservatoryDetailView
 from bhtom.views import DeleteInstrument, UpdateInstrument, CreateInstrument, DataProductDeleteView
 from bhtom.views import DeleteObservatory, UpdateObservatory, ObservatoryList, CreateObservatory
 from bhtom.views import RegisterUser, DataProductFeatureView, UserUpdateView, photometry_download, fits_download
@@ -50,6 +50,7 @@ urlpatterns = [
     path('bhlist/<int:pk>/delete/', TargetDeleteView.as_view(), name='bhlist_delete'),
     path('bhlist/<int:pk>/file/<int:pk_fit>', TargetFileDetailView.as_view(), name='bhlist_file_detail'),
     path('bhlist/<int:pk>/', TargetDetailView.as_view(), name='bhlist_detail'),
+    path('observatory/<int:pk>/', ObservatoryDetailView.as_view(template_name='bhtom/observatory_detail.html'), name='observatory_detail'),
     path('bhlist/<int:pk>/iphotometry', TargetInteractivePhotometryView.as_view(), name='bhlist_i_photometry'),
     path('bhlist/<int:pk>/microlensing', TargetMicrolensingView.as_view(), name="bhlist_i_microlensing"),
     path('bhlist/<int:pk>/download-photometry', TargetDownloadPhotometryDataView.as_view(), name='bhlist_download_photometry_data'),

@@ -1,5 +1,7 @@
 import logging
+from datetime import timedelta
 
+from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -10,8 +12,7 @@ from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_targets.models import Target
 
 from bhtom.middleware.hashtag_authentication_middleware import HashtagAuthentication
-from bhtom.models import refresh_reduced_data_view
-
+from bhtom.models import refresh_reduced_data_view, Instrument, Observatory, BHTomFits
 
 logger = logging.getLogger(__name__)
 
@@ -24,23 +25,32 @@ class PhotometryUpload(APIView):
 
     def post(self, request):
 
-        username: str = request.headers.get('username')
+        user = request.user
+
+        hashtag: str = request.headers.get('hashtag')
+        instrument = Instrument.objects.get(hashtag=hashtag)
 
         target_name: str = request.data.get('target')
         filter: str = request.data.get('filter')
         data_product_type: str = request.data.get('data_product_type')
 
-        observatory: str = request.data.get('observatory')
+        observatory = Observatory.objects.get(id=instrument.observatory_id.id)
         observer: str = request.data.get('observer')
 
         mjd: str = request.data.get('mjd')
         exp_time: str = request.data.get('exp_time')
 
-        dry_run: str = request.data.get('dry_run', 'False')
+        dry_run_str: str = request.data.get('dry_run', 'False')
+        dry_run = True if dry_run_str == 'True' else False
+
         matching_radius: str = request.data.get('matching_radius', '2')
         comment: str = request.data.get('comment')
 
         file = request.FILES.get('files')
+
+        time_threshold = timezone.now() - timedelta(days=1)
+        fits_quantity = BHTomFits.objects.filter(start_time__gte=time_threshold).count()
+        fits_quantity = fits_quantity * 10
 
         try:
             target: Target = Target.objects.get(name=target_name)
@@ -57,17 +67,11 @@ class PhotometryUpload(APIView):
 
         try:
             run_hook('data_product_post_upload',
-                     dp=dp,
-                     target=target,
-                     observatory=observatory,
-                     observation_filter=filter,
-                     dry_run=dry_run,
-                     matchDist=int(matching_radius),
-                     user=username,
-                     comment=comment,
-                     priority=0,
-                     MJD=float(mjd) if mjd else None,
-                     expTime=float(exp_time) if exp_time else None)
+                     dp, target, observatory,
+                     filter, mjd, exp_time,
+                     dry_run, matching_radius, comment,
+                     user, fits_quantity,
+                     hashtag=hashtag)
 
             run_data_processor(dp)
 

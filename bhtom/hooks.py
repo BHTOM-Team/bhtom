@@ -2,6 +2,7 @@ import logging
 import json
 import logging
 import os
+import traceback
 import unicodedata
 from datetime import datetime, timedelta
 from typing import Optional
@@ -38,6 +39,7 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
                              hashtag=None):
     url = 'data/' + format(dp)
     logger.info('Running post upload hook for DataProduct: {}'.format(url))
+    instance = None
 
     if observatory is not None:
         try:
@@ -58,7 +60,6 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
             # fits_id = uuid.uuid4().hex
             try:
                 instance = BHTomFits.objects.create(instrument_id=instrument, dataproduct_id=dp,
-                                                    start_time=datetime.now(),
                                                     filter=observation_filter, allow_upload=dry_run,
                                                     matchDist=matching_radius, priority=priority,
                                                     comment=comment, data_stored=True)
@@ -88,7 +89,9 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
 
             except Exception as e:
                 logger.error('data_product_post_upload_fits_file error: ' + str(e))
-                instance.delete()
+                traceback.print_exc()
+                if instance:
+                    instance.delete()
                 raise Exception(str(e))
     elif dp.data_product_type == 'photometry_cpcs' and observatory != None and MJD != None and expTime != None:
 
@@ -264,7 +267,7 @@ def delete_point_cpcs(instance):
 
 @receiver(post_save, sender=BHTomFits)
 def BHTomFits_pre_save(sender, instance, **kwargs):
-    time_threshold = timezone.now() - timedelta(days=read_secret('DAYS_DELETE_FILES'))
+    time_threshold = timezone.now() - timedelta(days=float(read_secret('DAYS_DELETE_FILES', '1')))
     fits = BHTomFits.objects.filter(start_time__lte=time_threshold).exclude(data_stored=False)
 
     BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
