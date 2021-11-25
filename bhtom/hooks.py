@@ -71,6 +71,8 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
                                           'priority': priority,
                                           'instrument_prefix': observatory.prefix,
                                           'target_name': target.name,
+                                          'target_ra': target.ra,
+                                          'target_dec': target.dec,
                                           'user': user.username,
                                           'hashtag': hashtag,
                                           'dry_run': dry_run},
@@ -213,7 +215,7 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
                                       'allow_upload': 1,
                                       'prefix': read_secret('CPCS_PREFIX_HASTAG') + observatory.prefix + '_' + str(
                                           instance.user_id) + '_',
-                                      'hashtag': read_secret('CPCS_Admin_Hashtag')})
+                                      'hashtag': 'ac643e2c196e144ef7758d5d225735f2'})
             #
             if response.status_code == 200:
                 instance.hashtag = response.content.decode('utf-8').split(': ')[1]
