@@ -73,7 +73,7 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
                                           'target_name': target.name,
                                           'target_ra': target.ra,
                                           'target_dec': target.dec,
-                                          'user': user.username,
+                                          'username': user.username,
                                           'hashtag': hashtag,
                                           'dry_run': dry_run},
                                          files={'fits_file': file})
