@@ -835,6 +835,8 @@ class DataProductUploadView(FormView):
                          matchDist=matchDist,
                          comment=comment,
                          user=user,
+                         facility_name=facility,
+                         observer_name=observer,
                          priority=-100)
 
                 run_data_processor(dp)

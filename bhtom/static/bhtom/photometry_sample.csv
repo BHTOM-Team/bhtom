@@ -1,5 +1,3 @@
-# FACILITY: LCO
-# OBS-NAME: Observer's Name
 time,filter,magnitude,error
 55959.06999999983,r,15.582,0.005
 55959.06999999983,g,15.676,0.007
