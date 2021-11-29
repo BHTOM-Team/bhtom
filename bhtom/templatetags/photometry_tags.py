@@ -14,6 +14,20 @@ logger = logging.getLogger(__name__)
 register = template.Library()
 
 
+OWNER_KEY = "owner"
+FACILITY_KEY = "facility"
+
+
+def load_datum_json(json_values):
+    if json_values:
+        if type(json_values) is dict:
+            return json_values
+        else:
+            return json.loads(json_values.replace("\'", "\""))
+    else:
+        return {}
+
+
 @register.inclusion_tag('tom_dataproducts/partials/photometry_for_target.html', takes_context=True)
 def photometry_for_target(context, target):
     """
@@ -42,27 +56,26 @@ def photometry_for_target(context, target):
                                                          settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]]))
 
     for datum in datums:
-        if type(datum.value) is dict:
-            values = datum.value
-        else:
-            values = json.loads(datum.value)
 
-        extra_data = json.loads(datum.rd_extra_data) if datum.rd_extra_data is not None else {}
+        values = load_datum_json(datum.value)
+        rd_extra_data = load_datum_json(datum.rd_extra_data)
+        dp_extra_data = load_datum_json(datum.dp_extra_data)
+
         if values.get('error', 0.0) < 99.0 and values.get('magnitude') < 99.0:
             photometry_data.setdefault(values['filter'], {})
             photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
             photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
             photometry_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
-            photometry_data[values['filter']].setdefault('owner', []).append(extra_data.get('owner', ''))
-            photometry_data[values['filter']].setdefault('facility', []).append(extra_data.get('facility', ''))
+            photometry_data[values['filter']].setdefault('owner', []).append(rd_extra_data.get(OWNER_KEY, dp_extra_data.get(OWNER_KEY, '')))
+            photometry_data[values['filter']].setdefault('facility', []).append(rd_extra_data.get(FACILITY_KEY, dp_extra_data.get(FACILITY_KEY, '')))
         # Non-detection
         elif values.get('magnitude') < 99.0:
             non_detection_data.setdefault(values['filter'], {})
             non_detection_data[values['filter']].setdefault('time', []).append(datum.timestamp)
             non_detection_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
             non_detection_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
-            non_detection_data[values['filter']].setdefault('owner', []).append(extra_data.get('owner', ''))
-            non_detection_data[values['filter']].setdefault('facility', []).append(extra_data.get('facility', ''))
+            non_detection_data[values['filter']].setdefault('owner', []).append(rd_extra_data.get(OWNER_KEY, dp_extra_data.get(OWNER_KEY, '')))
+            non_detection_data[values['filter']].setdefault('facility', []).append(rd_extra_data.get(FACILITY_KEY, dp_extra_data.get(FACILITY_KEY, '')))
 
         # TODO: hovering arror down in case of 99.99 mag?
 
