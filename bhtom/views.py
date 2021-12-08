@@ -774,6 +774,8 @@ class DataProductUploadView(FormView):
     """
     form_class = DataProductUploadForm
 
+    MAX_FILES: int = 10
+
     def get_form_kwargs(self):
         kwargs = super(DataProductUploadView, self).get_form_kwargs()
         kwargs['user'] = self.request.user
@@ -807,6 +809,10 @@ class DataProductUploadView(FormView):
         facility = form.cleaned_data['facility']
         observer = form.cleaned_data['observer']
         user = self.request.user
+
+        if len(data_product_files) > self.MAX_FILES:
+            messages.error(self.request, f'You can upload max. {self.MAX_FILES} files at once')
+            return redirect(form.cleaned_data.get('referrer', '/'))
 
         if dp_type == 'fits_file' and observatory.cpcsOnly == True:
             messages.error(self.request, 'Used Observatory without ObsInfo')
