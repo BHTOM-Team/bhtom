@@ -319,6 +319,8 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
             extra.save()
             names.instance = self.object
             names.save()
+            
+            logger.info("Create Target: " + format(self.object) + ", user: " + format(self.request.user))
         else:
             form.add_error(None, extra.errors)
             form.add_error(None, extra.non_form_errors())
