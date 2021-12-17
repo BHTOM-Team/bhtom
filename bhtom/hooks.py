@@ -62,6 +62,8 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
             try:
                 instance = BHTomFits.objects.create(instrument_id=instrument, dataproduct_id=dp,
                                                     filter=observation_filter, allow_upload=dry_run,
+                                                    start_time=datetime.now(),
+                                                    cpcs_time=datetime.now(),
                                                     matchDist=matching_radius, priority=priority,
                                                     comment=comment, data_stored=True)
 
