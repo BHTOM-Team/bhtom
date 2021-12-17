@@ -78,7 +78,8 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
                                           'target_dec': target.dec,
                                           'username': user.username,
                                           'hashtag': hashtag,
-                                          'dry_run': dry_run},
+                                          'dry_run': dry_run,
+                                          'fits_id': instance.file_id},
                                          files={'fits_file': file})
                 if response.status_code == 201:
                     logger.info('successfull send to CCDPHOTD, fits id: ' + str(instance.file_id))
@@ -165,6 +166,7 @@ def send_to_cpcs(result, fits, eventID):
                 response = requests.post(url_cpcs, {'MJD': fits.mjd, 'EventID': eventID, 'expTime': fits.expTime,
                                                     'matchDist': fits.matchDist, 'dryRun': int(fits.allow_upload),
                                                     'forceFilter': fits.filter,
+                                                    'fits_id': fits.file_id,
                                                     'hashtag': Instrument.objects.get(id=fits.instrument_id.id).hashtag,
                                                     'outputFormat': 'json'}, files={'sexCat': file})
 
