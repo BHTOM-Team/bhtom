@@ -57,25 +57,29 @@ def photometry_for_target(context, target):
 
     for datum in datums:
 
-        values = load_datum_json(datum.value)
-        rd_extra_data = load_datum_json(datum.rd_extra_data)
-        dp_extra_data = load_datum_json(datum.dp_extra_data)
+        try:
+            values = load_datum_json(datum.value)
+            rd_extra_data = load_datum_json(datum.rd_extra_data)
+            dp_extra_data = load_datum_json(datum.dp_extra_data)
 
-        if values.get('error', 0.0) < 99.0 and values.get('magnitude') < 99.0:
-            photometry_data.setdefault(values['filter'], {})
-            photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
-            photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
-            photometry_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
-            photometry_data[values['filter']].setdefault('owner', []).append(rd_extra_data.get(OWNER_KEY, dp_extra_data.get(OWNER_KEY, '')))
-            photometry_data[values['filter']].setdefault('facility', []).append(rd_extra_data.get(FACILITY_KEY, dp_extra_data.get(FACILITY_KEY, '')))
-        # Non-detection
-        elif values.get('magnitude') < 99.0:
-            non_detection_data.setdefault(values['filter'], {})
-            non_detection_data[values['filter']].setdefault('time', []).append(datum.timestamp)
-            non_detection_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
-            non_detection_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
-            non_detection_data[values['filter']].setdefault('owner', []).append(rd_extra_data.get(OWNER_KEY, dp_extra_data.get(OWNER_KEY, '')))
-            non_detection_data[values['filter']].setdefault('facility', []).append(rd_extra_data.get(FACILITY_KEY, dp_extra_data.get(FACILITY_KEY, '')))
+            if values.get('error', 0.0) < 99.0 and values.get('magnitude') < 99.0:
+                photometry_data.setdefault(values['filter'], {})
+                photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
+                photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
+                photometry_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
+                photometry_data[values['filter']].setdefault('owner', []).append(rd_extra_data.get(OWNER_KEY, dp_extra_data.get(OWNER_KEY, '')))
+                photometry_data[values['filter']].setdefault('facility', []).append(rd_extra_data.get(FACILITY_KEY, dp_extra_data.get(FACILITY_KEY, '')))
+            # Non-detection
+            elif values.get('magnitude') < 99.0:
+                non_detection_data.setdefault(values['filter'], {})
+                non_detection_data[values['filter']].setdefault('time', []).append(datum.timestamp)
+                non_detection_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
+                non_detection_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
+                non_detection_data[values['filter']].setdefault('owner', []).append(rd_extra_data.get(OWNER_KEY, dp_extra_data.get(OWNER_KEY, '')))
+                non_detection_data[values['filter']].setdefault('facility', []).append(rd_extra_data.get(FACILITY_KEY, dp_extra_data.get(FACILITY_KEY, '')))
+        except Exception as e:
+            logger.error(f'Exception when loading reduced data for target {target.name}: {e}')
+            continue
 
         # TODO: hovering arror down in case of 99.99 mag?
 
