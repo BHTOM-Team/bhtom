@@ -23,7 +23,7 @@ def load_datum_json(json_values):
         if type(json_values) is dict:
             return json_values
         else:
-            return json.loads(json_values.replace("\'", "\""))
+            return json.loads(json_values.replace("\'", '"'))
     else:
         return {}
 
