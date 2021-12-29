@@ -290,7 +290,10 @@ def BHTomFits_pre_save(sender, instance, **kwargs):
                 fit.save()
                 os.remove(url_result)
                 logger.info('remove fits: ' + str(data.data))
-
+            elif data.data is not None and fit.data_stored:
+                fit.data_stored = False
+                fit.save()
+                logger.info('file not exist, change sta_stored=false, fits: ' + str(data.data))
 
 @receiver(pre_save, sender=BHTomUser)
 def BHTomUser_pre_save(sender, instance, **kwargs):

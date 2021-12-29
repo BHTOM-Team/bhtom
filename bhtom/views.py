@@ -111,6 +111,15 @@ def computePriority(dt, priority, cadence):
         ret = dt / cadence
     return ret * priority
 
+def deleteFits(dp):
+    try:
+        logger.info('try remove fits' + str(dp.date))
+        BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        url_base = BASE + '/data/'
+        url_result = os.path.join(url_base, str(dp.data))
+        os.remove(url_result)
+    except Exception as e:
+        logger.info(e)
 
 class BlackHoleListView(PermissionRequiredMixin, FilterView):
     paginate_by = 20
@@ -679,11 +688,13 @@ class fits_upload(viewsets.ModelViewSet):
                 successful_uploads.append(str(dp))
 
             except InvalidFileFormatException as iffe:
+                deleteFits(dp)
                 capture_exception(iffe)
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
 
             except Exception as e:
+                deleteFits(dp)
                 capture_exception(e)
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
@@ -852,6 +863,7 @@ class DataProductUploadView(FormView):
                 successful_uploads.append(str(dp).split('/')[-1])
                 refresh_reduced_data_view()
             except InvalidFileFormatException as iffe:
+                deleteFits(dp)
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
                 messages.error(
@@ -859,6 +871,7 @@ class DataProductUploadView(FormView):
                     'File format invalid for file {0} -- error was {1}'.format(str(dp), iffe)
                 )
             except Exception as e:
+                deleteFits(dp)
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
                 logger.error(e)
@@ -1559,6 +1572,7 @@ class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
             if fit.status == 'F':
                 delete_point_cpcs(self.get_object())
         ReducedDatum.objects.filter(data_product=self.get_object()).delete()
+        deleteFits(self.get_object())
         self.get_object().data.delete()
 
         return super().delete(request, *args, **kwargs)
