@@ -276,7 +276,7 @@ def delete_point_cpcs(instance):
 @receiver(post_save, sender=BHTomFits)
 def BHTomFits_pre_save(sender, instance, **kwargs):
     time_threshold = timezone.now() - timedelta(days=float(read_secret('DAYS_DELETE_FILES', '1')))
-    fits = BHTomFits.objects.filter(start_time__lte=time_threshold).exclude(data_stored=False)
+    fits = BHTomFits.objects.filter(start_time__lte=time_threshold).exclude(data_stored=False)[:10]
 
     BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     url_base = BASE + '/data/'
@@ -293,7 +293,7 @@ def BHTomFits_pre_save(sender, instance, **kwargs):
             elif data.data is not None and fit.data_stored:
                 fit.data_stored = False
                 fit.save()
-                logger.info('file not exist, change sta_stored=false, fits: ' + str(data.data))
+                logger.info('file not exist, change data_stored=false, fits: ' + str(data.data))
 
 @receiver(pre_save, sender=BHTomUser)
 def BHTomUser_pre_save(sender, instance, **kwargs):
