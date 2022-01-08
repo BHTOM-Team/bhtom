@@ -9,6 +9,9 @@ import logging
 import requests
 import base64
 
+import time
+import hashlib
+
 from abc import ABC, abstractmethod
 
 from tom_targets.views import TargetCreateView
@@ -111,6 +114,15 @@ def computePriority(dt, priority, cadence):
         ret = dt / cadence
     return ret * priority
 
+def deleteFits(dp):
+    try:
+        logger.info('try remove fits' + str(dp.date))
+        BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        url_base = BASE + '/data/'
+        url_result = os.path.join(url_base, str(dp.data))
+        os.remove(url_result)
+    except Exception as e:
+        logger.info(e)
 
 class BlackHoleListView(PermissionRequiredMixin, FilterView):
     paginate_by = 20
@@ -657,8 +669,16 @@ class fits_upload(viewsets.ModelViewSet):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         successful_uploads = []
+        BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
         for f in data_product_files:
+
+            f.name = "{}_{}".format(user.id, f.name)
+
+            if os.path.exists('{0}/data/{1}/none/{2}'.format(BASE, target, f.name)):
+                #messages.error(self.request, read_secret('FILE_EXIST'))
+                return Response(status=status.HTTP_201_CREATED)
+
             dp = DataProduct(
                 target=target_id,
                 data=f,
@@ -679,11 +699,13 @@ class fits_upload(viewsets.ModelViewSet):
                 successful_uploads.append(str(dp))
 
             except InvalidFileFormatException as iffe:
+                deleteFits(dp)
                 capture_exception(iffe)
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
 
             except Exception as e:
+                deleteFits(dp)
                 capture_exception(e)
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
@@ -821,7 +843,15 @@ class DataProductUploadView(FormView):
             return redirect(form.cleaned_data.get('referrer', '/'))
 
         successful_uploads = []
+        BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         for f in data_product_files:
+
+            f.name = "{}_{}".format(user.id, f.name)
+
+            if os.path.exists('{0}/data/{1}/none/{2}'.format(BASE, target, f.name)):
+                messages.error(self.request, read_secret('FILE_EXIST'))
+                return redirect(form.cleaned_data.get('referrer', '/'))
+
             dp = DataProduct(
                 target=target,
                 observation_record=observation_record,
@@ -852,6 +882,7 @@ class DataProductUploadView(FormView):
                 successful_uploads.append(str(dp).split('/')[-1])
                 refresh_reduced_data_view()
             except InvalidFileFormatException as iffe:
+                deleteFits(dp)
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
                 messages.error(
@@ -859,6 +890,7 @@ class DataProductUploadView(FormView):
                     'File format invalid for file {0} -- error was {1}'.format(str(dp), iffe)
                 )
             except Exception as e:
+                deleteFits(dp)
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
                 logger.error(e)
@@ -1559,6 +1591,7 @@ class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
             if fit.status == 'F':
                 delete_point_cpcs(self.get_object())
         ReducedDatum.objects.filter(data_product=self.get_object()).delete()
+        deleteFits(self.get_object())
         self.get_object().data.delete()
 
         return super().delete(request, *args, **kwargs)
