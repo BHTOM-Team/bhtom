@@ -17,10 +17,11 @@ from django.utils import timezone
 from tom_dataproducts.models import DataProduct
 from tom_targets.models import Target
 
-from .models import BHTomFits, Instrument, Observatory, BHTomData, BHTomUser
+from .models import BHTomFits, Instrument, Observatory, BHTomData, BHTomUser, refresh_reduced_data_view
 from .utils.coordinate_utils import fill_galactic_coordinates
 from .utils.observation_data_extra_data_utils import ObservationDatapointExtraData, \
-    get_comments_extra_info_for_spectroscopy_file, get_comments_extra_info_for_photometry_file
+    get_comments_extra_info_for_spectroscopy_file, get_comments_extra_info_for_photometry_file, FACILITY_NAME_KEY, \
+    OWNER_KEY
 
 try:
     from settings import local_settings as secret
@@ -61,6 +62,8 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
             try:
                 instance = BHTomFits.objects.create(instrument_id=instrument, dataproduct_id=dp,
                                                     filter=observation_filter, allow_upload=dry_run,
+                                                    start_time=datetime.now(),
+                                                    cpcs_time=datetime.now(),
                                                     matchDist=matching_radius, priority=priority,
                                                     comment=comment, data_stored=True)
 
@@ -71,9 +74,12 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
                                           'priority': priority,
                                           'instrument_prefix': observatory.prefix,
                                           'target_name': target.name,
-                                          'user': user.username,
+                                          'target_ra': target.ra,
+                                          'target_dec': target.dec,
+                                          'username': user.username,
                                           'hashtag': hashtag,
-                                          'dry_run': dry_run},
+                                          'dry_run': dry_run,
+                                          'fits_id': instance.file_id},
                                          files={'fits_file': file})
                 if response.status_code == 201:
                     logger.info('successfull send to CCDPHOTD, fits id: ' + str(instance.file_id))
@@ -115,26 +121,27 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
             or dp.data_product_type == 'photometry_asassn':
         try:
             if dp.data_product_type == 'spectroscopy':
-                # Check if spectroscopy ASCII file contains facility and observation date in the comments
-                extra_data: Optional[ObservationDatapointExtraData] = \
-                    get_comments_extra_info_for_spectroscopy_file(dp, facility_name, observer_name)
-                if extra_data:
+                if facility_name or observer_name:
                     # If there are information in the comments, then update the DataProduct
-                    dp.extra_data = extra_data.to_json_str()
+                    dp.extra_data = {
+                        FACILITY_NAME_KEY: facility_name,
+                        OWNER_KEY: observer_name
+                    }
                     dp.save(update_fields=["extra_data"])
+                    refresh_reduced_data_view()
             elif dp.data_product_type == 'photometry':
-                # Check if spectroscopy ASCII file contains facility and observation date in the comments
-                extra_data: Optional[ObservationDatapointExtraData] = \
-                    get_comments_extra_info_for_photometry_file(dp, facility_name, observer_name)
-                if extra_data:
-                    # If there are information in the comments, then update the DataProduct
-                    dp.extra_data = extra_data.to_json_str()
+                if facility_name or observer_name:
+                    dp.extra_data = {
+                        FACILITY_NAME_KEY: facility_name,
+                        OWNER_KEY: observer_name
+                    }
                     dp.save(update_fields=["extra_data"])
+                    refresh_reduced_data_view()
             elif dp.data_product_type == 'photometry_asassn':
                 # ASAS-SN photometry should have ASAS-SN added as the facility
                 dp.extra_data = ObservationDatapointExtraData(facility_name="ASAS-SN", owner="ASAS-SN").to_json_str()
                 dp.save(update_fields=["extra_data"])
-
+                refresh_reduced_data_view()
             instance = BHTomData.objects.create(user_id=user, dataproduct_id=dp, comment=comment, data_stored=True)
             logger.info('successful create: ' + str(dp.data_product_type))
         except Exception as e:
@@ -159,6 +166,7 @@ def send_to_cpcs(result, fits, eventID):
                 response = requests.post(url_cpcs, {'MJD': fits.mjd, 'EventID': eventID, 'expTime': fits.expTime,
                                                     'matchDist': fits.matchDist, 'dryRun': int(fits.allow_upload),
                                                     'forceFilter': fits.filter,
+                                                    'fits_id': fits.file_id,
                                                     'hashtag': Instrument.objects.get(id=fits.instrument_id.id).hashtag,
                                                     'outputFormat': 'json'}, files={'sexCat': file})
 
@@ -213,7 +221,7 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
                                       'allow_upload': 1,
                                       'prefix': read_secret('CPCS_PREFIX_HASTAG') + observatory.prefix + '_' + str(
                                           instance.user_id) + '_',
-                                      'hashtag': read_secret('CPCS_Admin_Hashtag')})
+                                      'hashtag': 'ac643e2c196e144ef7758d5d225735f2'})
             #
             if response.status_code == 200:
                 instance.hashtag = response.content.decode('utf-8').split(': ')[1]
@@ -268,7 +276,7 @@ def delete_point_cpcs(instance):
 @receiver(post_save, sender=BHTomFits)
 def BHTomFits_pre_save(sender, instance, **kwargs):
     time_threshold = timezone.now() - timedelta(days=float(read_secret('DAYS_DELETE_FILES', '1')))
-    fits = BHTomFits.objects.filter(start_time__lte=time_threshold).exclude(data_stored=False)
+    fits = BHTomFits.objects.filter(start_time__lte=time_threshold).exclude(data_stored=False)[:10]
 
     BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     url_base = BASE + '/data/'
@@ -282,7 +290,10 @@ def BHTomFits_pre_save(sender, instance, **kwargs):
                 fit.save()
                 os.remove(url_result)
                 logger.info('remove fits: ' + str(data.data))
-
+            elif data.data is not None and fit.data_stored:
+                fit.data_stored = False
+                fit.save()
+                logger.info('file not exist, change data_stored=false, fits: ' + str(data.data))
 
 @receiver(pre_save, sender=BHTomUser)
 def BHTomUser_pre_save(sender, instance, **kwargs):

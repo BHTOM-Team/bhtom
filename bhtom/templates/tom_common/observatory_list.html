@@ -38,6 +38,7 @@ However, you can also upload your data to the CPCS directly from BHTOM instead.
           <thead>
             <tr>
               <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>Prefix</th><th>Matching radius</th><th>Comment</th><th>Only Instrumental photometry file</th>
+              <th>Details</th>
               {% if request.user.is_superuser %}
               <th>Update</th><th>Delete</th>
               {% endif %}
@@ -53,6 +54,9 @@ However, you can also upload your data to the CPCS directly from BHTOM instead.
               <td>{{ observatory.matchDist }} arcsec</td>
               <td>{{ observatory.comment }}</td>
               <td>{{ observatory.cpcsOnly }}</td>
+              <td>
+                <a href="{% url 'observatory_detail' pk=observatory.id %}" title="Observatory details" class="btn  btn-primary">Details</a>
+              </td>
               {% if request.user.is_superuser %}
               <td>
                 <a href="{% url 'observatory_update' pk=observatory.id %}" title="Update observatory" class="btn  btn-primary">Edit</a>
@@ -71,7 +75,7 @@ However, you can also upload your data to the CPCS directly from BHTOM instead.
         <table class="table table-striped sortable">
           <thead>
             <tr>
-              <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>CPCS Hashtag</th><th>Activation</th><th>Comment</th>
+              <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>CPCS Hashtag</th><th>Activation</th><th>Comment</th><th>Details</th>
               <th style="pointer-events:none">Update</th><th style="pointer-events:none">Delete</th>
             </tr>
           </thead>
@@ -84,6 +88,9 @@ However, you can also upload your data to the CPCS directly from BHTOM instead.
               <td>{{ hashtag }}</td>
               <td>{% if isActive %} True {%else%} False{% endif %}</td>
               <td><div title="{{comment}}">{{ comment|truncatechars:15 }}</div></td>
+              <td>
+                <a href="{% url 'observatory_detail' pk=observatory.id %}" title="Observatory details" class="btn  btn-primary">Details</a>
+              </td>
               <td>
                 <a href="{% url 'instrument_update' pk=instrument_id %}" title="Update User observatory" class="btn  btn-primary">Edit</a>
               </td>

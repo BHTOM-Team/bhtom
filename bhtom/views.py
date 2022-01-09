@@ -9,6 +9,9 @@ import logging
 import requests
 import base64
 
+import time
+import hashlib
+
 from abc import ABC, abstractmethod
 
 from tom_targets.views import TargetCreateView
@@ -111,6 +114,15 @@ def computePriority(dt, priority, cadence):
         ret = dt / cadence
     return ret * priority
 
+def deleteFits(dp):
+    try:
+        logger.info('try remove fits' + str(dp.date))
+        BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        url_base = BASE + '/data/'
+        url_result = os.path.join(url_base, str(dp.data))
+        os.remove(url_result)
+    except Exception as e:
+        logger.info(e)
 
 class BlackHoleListView(PermissionRequiredMixin, FilterView):
     paginate_by = 20
@@ -319,6 +331,8 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
             extra.save()
             names.instance = self.object
             names.save()
+            
+            logger.info("Create Target: " + format(self.object) + ", user: " + format(self.request.user))
         else:
             form.add_error(None, extra.errors)
             form.add_error(None, extra.non_form_errors())
@@ -655,8 +669,16 @@ class fits_upload(viewsets.ModelViewSet):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         successful_uploads = []
+        BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
         for f in data_product_files:
+
+            f.name = "{}_{}".format(user.id, f.name)
+
+            if os.path.exists('{0}/data/{1}/none/{2}'.format(BASE, target, f.name)):
+                #messages.error(self.request, read_secret('FILE_EXIST'))
+                return Response(status=status.HTTP_201_CREATED)
+
             dp = DataProduct(
                 target=target_id,
                 data=f,
@@ -677,11 +699,13 @@ class fits_upload(viewsets.ModelViewSet):
                 successful_uploads.append(str(dp))
 
             except InvalidFileFormatException as iffe:
+                deleteFits(dp)
                 capture_exception(iffe)
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
 
             except Exception as e:
+                deleteFits(dp)
                 capture_exception(e)
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
@@ -774,6 +798,8 @@ class DataProductUploadView(FormView):
     """
     form_class = DataProductUploadForm
 
+    MAX_FILES: int = 10
+
     def get_form_kwargs(self):
         kwargs = super(DataProductUploadView, self).get_form_kwargs()
         kwargs['user'] = self.request.user
@@ -808,12 +834,24 @@ class DataProductUploadView(FormView):
         observer = form.cleaned_data['observer']
         user = self.request.user
 
+        if len(data_product_files) > self.MAX_FILES:
+            messages.error(self.request, f'You can upload max. {self.MAX_FILES} files at once')
+            return redirect(form.cleaned_data.get('referrer', '/'))
+
         if dp_type == 'fits_file' and observatory.cpcsOnly == True:
             messages.error(self.request, 'Used Observatory without ObsInfo')
             return redirect(form.cleaned_data.get('referrer', '/'))
 
         successful_uploads = []
+        BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         for f in data_product_files:
+
+            f.name = "{}_{}".format(user.id, f.name)
+
+            if os.path.exists('{0}/data/{1}/none/{2}'.format(BASE, target, f.name)):
+                messages.error(self.request, read_secret('FILE_EXIST'))
+                return redirect(form.cleaned_data.get('referrer', '/'))
+
             dp = DataProduct(
                 target=target,
                 observation_record=observation_record,
@@ -835,6 +873,8 @@ class DataProductUploadView(FormView):
                          matchDist=matchDist,
                          comment=comment,
                          user=user,
+                         facility_name=facility,
+                         observer_name=observer,
                          priority=-100)
 
                 run_data_processor(dp)
@@ -842,6 +882,7 @@ class DataProductUploadView(FormView):
                 successful_uploads.append(str(dp).split('/')[-1])
                 refresh_reduced_data_view()
             except InvalidFileFormatException as iffe:
+                deleteFits(dp)
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
                 messages.error(
@@ -849,6 +890,7 @@ class DataProductUploadView(FormView):
                     'File format invalid for file {0} -- error was {1}'.format(str(dp), iffe)
                 )
             except Exception as e:
+                deleteFits(dp)
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
                 logger.error(e)
@@ -925,6 +967,32 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
                 ' the docs.</a>'))
             return redirect(reverse('bhlist_detail', args=(target_id,)))
         return super().get(request, *args, **kwargs)
+
+
+class ObservatoryDetailView(PermissionRequiredMixin, DetailView):
+    model = Observatory
+
+    def handle_no_permission(self):
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def has_permission(self):
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
+            return False
+        elif not self.request.user.has_perm('tom_targets.view_target'):
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
+            return False
+        return True
+
+    # def get(self, request, *args, **kwargs):
+    #     observatory_id = kwargs.get('pk', None)
+    #     return redirect(reverse('observatory_detail', args=(observatory_id,)))
 
 
 class TargetDownloadDataView(ABC, PermissionRequiredMixin, View):
@@ -1523,6 +1591,7 @@ class DataProductDeleteView(PermissionRequiredMixin, DeleteView):
             if fit.status == 'F':
                 delete_point_cpcs(self.get_object())
         ReducedDatum.objects.filter(data_product=self.get_object()).delete()
+        deleteFits(self.get_object())
         self.get_object().data.delete()
 
         return super().delete(request, *args, **kwargs)

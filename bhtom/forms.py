@@ -49,6 +49,7 @@ class FilterChoiceField(forms.ModelChoiceField):
 class DataProductUploadForm(forms.Form):
     MATCHING_RADIUS = [
         ('0', 'Default for the Observatory'),
+        ('0.5', '0.5 arcsec'),
         ('1', '1 arcsec'),
         ('2', '2 arcsec'),
         ('4', '4 arcsec'),
@@ -69,7 +70,7 @@ class DataProductUploadForm(forms.Form):
     files = forms.FileField(
         widget=forms.ClearableFileInput(
             attrs={'multiple': True}
-        )
+        ),
     )
 
     data_product_type = forms.ChoiceField(
@@ -157,6 +158,7 @@ class DataProductUploadForm(forms.Form):
         )
 
         self.fields['observer'].initial = f'{user.first_name} {user.last_name}'
+
 
 
 class ObservatoryCreationForm(forms.ModelForm):

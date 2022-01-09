@@ -111,21 +111,24 @@ def photometry_for_target_static(context, target, include_aavso):
                                                      settings.DATA_PRODUCT_TYPES['photometry_asassn'][0]]))
 
     for datum in datums:
-        if type(datum.value) is dict:
-            values = datum.value
-        else:
-            values = json.loads(datum.value)
+        try:
+            if type(datum.value) is dict:
+                values = datum.value
+            else:
+                values = json.loads(datum.value.replace('\'', '"'))
 
-        if values.get('error', 0.0) < 99.0 and values.get('magnitude') < 99.0:
-            photometry_data.setdefault(values['filter'], {})
-            photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
-            photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
-            photometry_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
-        elif values.get('magnitude') < 99.0:
-            non_detection_data.setdefault(values['filter'], {})
-            non_detection_data[values['filter']].setdefault('time', []).append(datum.timestamp)
-            non_detection_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
-            non_detection_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
+            if values.get('error', 0.0) < 99.0 and values.get('magnitude') < 99.0:
+                photometry_data.setdefault(values['filter'], {})
+                photometry_data[values['filter']].setdefault('time', []).append(datum.timestamp)
+                photometry_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
+                photometry_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
+            elif values.get('magnitude') < 99.0:
+                non_detection_data.setdefault(values['filter'], {})
+                non_detection_data[values['filter']].setdefault('time', []).append(datum.timestamp)
+                non_detection_data[values['filter']].setdefault('magnitude', []).append(values.get('magnitude'))
+                non_detection_data[values['filter']].setdefault('error', []).append(values.get('error', 0.0))
+        except Exception as e:
+            logger.error(f'Exception when loading reduced data for {target.name}: {e}')
 
     figure: plt.Figure = plt.figure(figsize=(9, 6))
     ax = figure.add_axes((0.1, 0.15, 0.7, 0.8))

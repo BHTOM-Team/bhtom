@@ -118,7 +118,7 @@
           </div>
           <div class="col-md-9">
               <button onclick="open_photometry()" class="btn btn-info" role="button" style="float:right; margin: 4px;">Interactive photometry plot</button>
-              <!--<button onclick="open_microlensing_model()" class="btn btn-info" role="button" style="float:right;margin: 4px;">Microlensing model</button>-->
+              <button onclick="open_microlensing_model()" class="btn btn-info" role="button" style="float:right;margin: 4px;">Microlensing model</button>
               <a href="{% url 'datatools:update-reduced-data-gaia' %}?target_id={{ target.id }}" class="btn btn-primary"
                title="Update Light Curve" style="float:right; margin: 4px;">Check for new data</a>
           </div>

@@ -12,9 +12,20 @@ from tom_dataproducts.processors.data_serializers import SpectrumSerializer
 from tom_targets.models import Target
 
 from bhtom.models import ViewReducedDatum
-from .observation_data_extra_data_utils import decode_datapoint_extra_data, ObservationDatapointExtraData
+from .observation_data_extra_data_utils import decode_datapoint_extra_data, ObservationDatapointExtraData, OWNER_KEY
+from ..templatetags.photometry_tags import FACILITY_KEY
 
 SPECTROSCOPY: str = "spectroscopy"
+
+
+def load_datum_json(json_values):
+    if json_values:
+        if type(json_values) is dict:
+            return json_values
+        else:
+            return json.loads(json_values.replace("\'", "\""))
+    else:
+        return {}
 
 
 def get_observation_facility(datum: ViewReducedDatum) -> Optional[str]:
@@ -30,22 +41,10 @@ def get_observation_facility(datum: ViewReducedDatum) -> Optional[str]:
         # the facility name, in the reduced datum extra data
         # There should be just one extra data object, as
         # the reduced datum extra data has reduced datum as the primary key.
-        if datum.rd_extra_data:
-            facility: Optional[str] = decode_facility_name(datum.rd_extra_data)
-            if facility:
-                return facility
-
-        if datum.dp_extra_data:
-            facility: Optional[str] = decode_facility_name(datum.dp_extra_data)
-            if facility:
-                return facility
+        return load_datum_json(datum.rd_extra_data).get(FACILITY_KEY,
+                                                        load_datum_json(datum.dp_extra_data).get(FACILITY_KEY, ""))
     except:
         return None
-
-
-def decode_facility_name(extra_data_json_str: str) -> Optional[str]:
-    extra_data: Optional[ObservationDatapointExtraData] = decode_datapoint_extra_data(json.loads(extra_data_json_str))
-    return getattr(extra_data, 'facility_name', None)
 
 
 def get_observer_name(datum: ViewReducedDatum) -> Optional[str]:
@@ -55,15 +54,8 @@ def get_observer_name(datum: ViewReducedDatum) -> Optional[str]:
         # the facility name, in the reduced datum extra data
         # There should be just one extra data object, as
         # the reduced datum extra data has reduced datum as the primary key.
-        if datum.rd_extra_data:
-            facility: Optional[str] = decode_owner(datum.rd_extra_data)
-            if facility:
-                return facility
-
-        if datum.dp_extra_data:
-            facility: Optional[str] = decode_owner(datum.dp_extra_data)
-            if facility:
-                return facility
+        return load_datum_json(datum.rd_extra_data).get(OWNER_KEY,
+                                                        load_datum_json(datum.dp_extra_data).get(OWNER_KEY, ""))
     except:
         return None
 
@@ -80,7 +72,8 @@ def get_spectroscopy_observation_time_jd(reduced_datum: ViewReducedDatum) -> Opt
     # Observation time might be included in the file, if spectrum is from an ASCII file.
 
     if reduced_datum.dp_extra_data:
-        extra_data: Optional[ObservationDatapointExtraData] = decode_datapoint_extra_data(json.loads(reduced_datum.dp_extra_data))
+        extra_data: Optional[ObservationDatapointExtraData] = decode_datapoint_extra_data(
+            json.loads(reduced_datum.dp_extra_data))
         if getattr(extra_data, 'observation_time', None):
             try:
                 observation_time: datetime = parser.parse(extra_data.observation_time)
@@ -162,7 +155,8 @@ def save_data_to_temporary_file(data: List[List[Any]],
 
     with open(tmp.name, 'w') as f:
         df.to_csv(f.name,
-                  index=False)
+                  index=False,
+                  sep=';')
 
     return tmp, filename
 
@@ -206,7 +200,6 @@ def get_photometry_data_stats(target_id: int) -> Tuple[NamedTemporaryFile, str]:
 
 
 def save_photometry_data_for_target_to_csv_file(target_id: int) -> Tuple[NamedTemporaryFile, str]:
-
     target: Target = Target.objects.get(pk=target_id)
 
     data, columns = get_photometry_data_table(target_id)
