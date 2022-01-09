@@ -50,12 +50,15 @@ def microlensing_for_target(context, target, slevel, clevel):
 
         extra_data = json.loads(datum.rd_extra_data) if datum.rd_extra_data is not None else {}
         if str(extra_data.get('facility')) == "Gaia":
-            X.append(float(values.get('jd')))
-            tmp = jd_to_date(float(values.get('jd')))
-            dt = str(tmp[0]) + "-" + str(tmp[1]) + "-" + str(tmp[2])
-            X_timestamp.append(pd.to_datetime(dt))
-            Y.append(float(values.get('magnitude')))
-            err.append(calculate_error(float(values.get('magnitude'))))
+            try:
+                X.append(float(values.get('jd')))
+                tmp = jd_to_date(float(values.get('jd')))
+                dt = str(tmp[0]) + "-" + str(tmp[1]) + "-" + str(tmp[2])
+                X_timestamp.append(pd.to_datetime(dt))
+                Y.append(float(values.get('magnitude')))
+                err.append(calculate_error(float(values.get('magnitude'))))
+            except Exception:
+                continue
     if slevel == '':
         slevel = '0.05'
     if clevel == '':
