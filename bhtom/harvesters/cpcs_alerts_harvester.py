@@ -21,7 +21,10 @@ except ImportError:
 
 
 def read_secret(secret_key: str, default_value: Any = '') -> str:
-    return getattr(secret, secret_key, default_value) if secret else default_value
+    try:
+        return getattr(secret, secret_key, default_value) if secret else default_value
+    except:
+        return default_value
 
 
 def mag_error_with_calib_error(magerr: float, caliberr: float) -> float:
