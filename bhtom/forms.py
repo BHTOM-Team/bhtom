@@ -228,13 +228,15 @@ class InstrumentCreationForm(forms.Form):
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
     groups = forms.ModelMultipleChoiceField(Group.objects.all().exclude(name='Public'),
-                                            required=False, widget=forms.CheckboxSelectMultiple)
-    latex_name = forms.CharField(required=False)
-    latex_affiliation = forms.CharField(required=False)
-    address = forms.CharField(required=False)
+                                            required=False, widget=forms.CheckboxSelectMultiple
+                                            ,help_text="Select all groups!")
+    latex_name = forms.CharField(required=True, help_text="Your name as you want it to appear correctly in potential publications")
+    latex_affiliation = forms.CharField(required=True, help_text="Your affiliation as you want it to appear correctly in potential publications")
+    address = forms.CharField(required=True, help_text="Your address to be displayed in potential publications")
     about_me = forms.CharField(
-        widget=forms.Textarea,
-        label="About me - who are you and why do want to join BHTOM",
+        widget=forms.Textarea(attrs={'rows':3}),
+        label="About me",
+        help_text="Tell us who you are and why do you want to join BHTOM?",
         required=True
     )
 
