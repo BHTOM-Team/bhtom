@@ -234,8 +234,8 @@ class CustomUserCreationForm(UserCreationForm):
     address = forms.CharField(required=False)
     about_me = forms.CharField(
         widget=forms.Textarea,
-        label="About_me",
-        required=False
+        label="About me - who are you and why do want to join BHTOM",
+        required=True
     )
 
     # captcha = ReCaptchaField()
