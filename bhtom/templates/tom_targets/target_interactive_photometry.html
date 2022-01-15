@@ -1,8 +1,10 @@
-{% load bootstrap4 tom_common_extras dataproduct_extras static cache photometry_tags %}
+{% load bootstrap4 tom_common_extras dataproduct_extras static cache photometry_tags plotly_dash %}
 <head>
     <title>Photometry for {{target}}</title>
 </head>
 {% bootstrap_javascript jquery='True' %}
 {% block body %}
-    {% photometry_for_target target %}
+    {% plotly_app name="SimpleExample" initial_arguments=dash_context ratio=1.0 %}
+
+{#    {% photometry_for_target target %}#}
 {% endblock %}

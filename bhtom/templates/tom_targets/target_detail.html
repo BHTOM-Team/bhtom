@@ -1,6 +1,6 @@
 {% extends 'tom_common/base.html' %}
 {% load dataproduct_extras %}
-{% load comments bootstrap4 tom_common_extras comments_list targets_extras observation_extras dataproduct_extras target_data_with_permissions data_upload publication_extras static cache %}
+{% load comments bootstrap4 tom_common_extras comments_list targets_extras observation_extras dataproduct_extras target_data_with_permissions data_upload publication_extras static cache plotly_dash %}
 {% block title %}Target {{ object.name }}{% endblock %}
 {% block additional_css %}
 <link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
@@ -126,7 +126,8 @@
         <div class="row">
           <div class="col-md-12">
             <div class="plot-container">
-              {% photometry_for_target_static target form.aavso_data.value %}
+{#              {% photometry_for_target_static target form.aavso_data.value %}#}
+                {% plotly_app name="PhotometryPlot" initial_arguments=dash_context ratio=1.0 %}
             </div>
           </div>
         </div>

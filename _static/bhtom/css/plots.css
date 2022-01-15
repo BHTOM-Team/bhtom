@@ -1,5 +1,6 @@
 .plot-container {
     padding: 15px;
+    max-height: 800px;
 }
 
 .plot-side-menu {

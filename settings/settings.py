@@ -125,6 +125,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'tom_publications',
     'captcha',
+    'django_plotly_dash.apps.DjangoPlotlyDashConfig',
 ]
 
 CRON_CLASSES = [
@@ -163,6 +164,8 @@ TEMPLATES = [
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
 WSGI_APPLICATION = 'settings.wsgi.application'
 black_tom_DB_BACKEND = 'postgres'
 
@@ -186,6 +189,15 @@ else:
             'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         }
     }
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379),],
+        },
+    },
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators

@@ -15,6 +15,9 @@ chardet==3.0.4
 Click==7.0
 
 cycler==0.10.0
+
+dash_extensions==0.0.67
+
 decorator==4.4.1
 defusedxml==0.6.0
 Django==2.2.8
