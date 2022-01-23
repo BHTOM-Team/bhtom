@@ -1,6 +1,8 @@
 import json
 from collections import namedtuple
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List, Any
+
+import requests
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
@@ -8,13 +10,27 @@ import dash_html_components as html
 import plotly.graph_objs as go
 from dash.dependencies import State
 from dash_extensions.enrich import Output, Input
+from django_common.auth_backends import User
 from django_plotly_dash import DjangoDash
 from tom_dataproducts.models import ReducedDatum
 from datetime import datetime, timedelta
 from django.utils import timezone
 
-from bhtom.models import refresh_reduced_data_view
+from bhtom.models import refresh_reduced_data_view, Instrument
 from bhtom.templatetags.photometry_tags import photometry_plot_data
+
+try:
+    from settings import local_settings as secret
+except ImportError:
+    secret = None
+
+
+def read_secret(secret_key: str, default_value: Any = '') -> str:
+    try:
+        return getattr(secret, secret_key, default_value) if secret else default_value
+    except:
+        return default_value
+
 
 PlotPointData = namedtuple('PlotPointData', ['reduced_datum', 'trace_index', 'point_index'])
 
@@ -28,12 +44,11 @@ previous_yes_n_clicks = 0
 previous_no_n_clicks = 0
 
 fig = go.Figure(data=[], layout=go.Layout(
-        yaxis=dict(autorange='reversed'),
-        xaxis=dict(title='UTC time'),
-        height=600,
-        width=750
-    ))
-
+    yaxis=dict(autorange='reversed'),
+    xaxis=dict(title='UTC time'),
+    height=600,
+    width=750
+))
 
 app.layout = html.Div([
     dbc.Modal(
@@ -46,12 +61,12 @@ app.layout = html.Div([
                     className='ms-auto',
                     n_clicks=0
                 ),
-                dbc.Button(
-                    "No",
-                    id='no-delete-point',
-                    className='ms-auto',
-                    n_clicks=0
-                ),],
+                    dbc.Button(
+                        "No",
+                        id='no-delete-point',
+                        className='ms-auto',
+                        n_clicks=0
+                    ), ],
             )
         ],
         id='delete-point-modal',
@@ -64,16 +79,19 @@ app.layout = html.Div([
         id='photometry-plot',
         figure=fig
     ),
+    dbc.Alert("Point successfully deleted!", id='success_deleted', color="success", is_open=False),
+    dbc.Alert("No permission to delete the point :(", id='no_permission', color="danger", is_open=False),
 ], style={'height': '800px'})
 
 
 @app.callback(
-    [Output("delete-point-modal", "is_open"), Output("photometry-plot", "figure")],
+    [Output("delete-point-modal", "is_open"), Output("success_deleted", "is_open"), Output("no_permission", "is_open"),
+     Output("photometry-plot", "figure")],
     [Input("photometry-plot", "clickData"), Input('target_id', 'value'), Input('user_id', 'value'),
      Input("yes-delete-point", "n_clicks"), Input("no-delete-point", "n_clicks")],
-    [State("delete-point-modal", "is_open")],
+    [State("delete-point-modal", "is_open"), State("success_deleted", "is_open"), State("no_permission", "is_open")],
 )
-def toggle_modal(clickData, target_id, user_id, yes_n_clicks, no_n_clicks, is_open):
+def toggle_modal(clickData, target_id, user_id, yes_n_clicks, no_n_clicks, is_open, success_open, no_permission_open):
     global selected_point, previous_target_name, previous_yes_n_clicks, previous_no_n_clicks
 
     if target_id != previous_target_name:
@@ -87,24 +105,36 @@ def toggle_modal(clickData, target_id, user_id, yes_n_clicks, no_n_clicks, is_op
     if yes_n_clicks != previous_yes_n_clicks:
         previous_yes_n_clicks = yes_n_clicks
 
-        if selected_point and try_to_delete_point(selected_point):
-            new_x = list(fig.data[selected_point.trace_index]['x'])
-            new_x.pop(selected_point.point_index)
+        if selected_point:
+            cpcs_id: int = int(selected_point.reduced_datum.source_location.split('&')[-1])
+            hashtags: List[str] = fetch_hashtags_for_user(user_id)
 
-            new_y = list(fig.data[selected_point.trace_index]['y'])
-            new_y.pop(selected_point.point_index)
+            if try_to_delete_point_from_cpcs(hashtags, cpcs_id):
+                if try_to_delete_point_from_bhtom(selected_point):
 
-            fig.data[selected_point.trace_index]['x'] = tuple(new_x)
-            fig.data[selected_point.trace_index]['y'] = tuple(new_y)
-            fig.update_layout(transition_duration=500)
+                    new_x = list(fig.data[selected_point.trace_index]['x'])
+                    new_x.pop(selected_point.point_index)
+
+                    new_y = list(fig.data[selected_point.trace_index]['y'])
+                    new_y.pop(selected_point.point_index)
+
+                    fig.data[selected_point.trace_index]['x'] = tuple(new_x)
+                    fig.data[selected_point.trace_index]['y'] = tuple(new_y)
+                    fig.update_layout(transition_duration=500)
+
+                    selected_point = None
+                    return not is_open, True, False, fig
+            else:
+                selected_point = None
+                return not is_open, False, True, fig
 
         selected_point = None
 
-        return not is_open, fig
+        return not is_open, False, False, fig
 
     if no_n_clicks != previous_no_n_clicks:
         previous_no_n_clicks = no_n_clicks
-        return not is_open, fig
+        return not is_open, False, False, fig
 
     if clickData:
         points_info_list = clickData.get('points', [])
@@ -124,11 +154,31 @@ def toggle_modal(clickData, target_id, user_id, yes_n_clicks, no_n_clicks, is_op
                 selected_point = PlotPointData(reduced_datum=maybe_reduced_point,
                                                trace_index=trace_index,
                                                point_index=point_index)
-                return not is_open, fig
+                return not is_open, False, False, fig
 
-        return is_open, fig
+        return is_open, False, False, fig
 
-    return is_open, fig
+    return is_open, False, False, fig
+
+
+def fetch_hashtags_for_user(user_id) -> List[str]:
+    if User.objects.get(id=user_id).is_superuser:
+        hashtag = read_secret('CPCS_ADMIN_HASHTAG', '')
+        return [hashtag]
+
+    instruments = Instrument.objects.filter(user_id=user_id)
+    return [instrument.hashtag for instrument in instruments]
+
+
+def try_to_delete_point_from_cpcs(hashtags, cpcs_id):
+    for hashtag in hashtags:
+        try:
+            response = requests.post(read_secret("CPCS_DELETE_POINT_URL"), {'hashtag': hashtag, 'followupid': cpcs_id})
+            response.raise_for_status()
+            return True
+        except:
+            return False
+    return False
 
 
 def try_to_fetch_point(target_id, point_timestamp, point_mag, point_band) -> Optional[ReducedDatum]:
@@ -146,21 +196,19 @@ def try_to_fetch_point(target_id, point_timestamp, point_mag, point_band) -> Opt
     timestamp = make_aware(datetime.strptime(point_timestamp, '%Y-%m-%d %H:%M:%S.%f'), timezone=timezone.utc)
 
     points_with_timestamp = ReducedDatum.objects.filter(target_id=target_id, source_name='CPCS',
-                                                        timestamp__gte=timestamp-timedelta(milliseconds=10),
-                                                        timestamp__lte=timestamp+timedelta(milliseconds=10))
+                                                        timestamp__gte=timestamp - timedelta(milliseconds=10),
+                                                        timestamp__lte=timestamp + timedelta(milliseconds=10))
     for point in points_with_timestamp:
         try:
             value = load_datum_json(point.value)
-            if value["magnitude"]==point_mag and value["filter"]==point_band:
+            if value["magnitude"] == point_mag and value["filter"] == point_band:
                 return point
         except Exception:
             return None
 
 
-def try_to_delete_point(plot_point_data: PlotPointData) -> bool:
+def try_to_delete_point_from_bhtom(plot_point_data: PlotPointData) -> bool:
     try:
-        cpcs_id: int = int(plot_point_data.reduced_datum.source_location.split('&')[-1])
-        print(f'Trying to delete a point with cpcs_id {cpcs_id}')
         plot_point_data.reduced_datum.delete()
         refresh_reduced_data_view()
         return True
