@@ -78,6 +78,7 @@ class BHTomUser_displayField(admin.ModelAdmin):
 
 class ReducedDatum_display(admin.ModelAdmin):
     list_display = ('target', 'data_product', 'data_type', 'source_name', 'source_location', 'timestamp', 'value')
+    list_filter = ('target', 'data_type', 'source_name')
 
 admin.site.register(BHTomFits, BHTomFits_displayField)
 admin.site.register(Instrument, Instrument_displayField)
