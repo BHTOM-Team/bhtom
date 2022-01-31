@@ -2,6 +2,8 @@
 import logging
 from os import path
 
+import astropy
+from astropy.time import Time
 from django import template
 import csv
 import math
@@ -182,10 +184,9 @@ def microlensing_for_target(context, target, slevel, clevel):
         time_plot = np.linspace(x[0], microlensing_end_time + 366, 1000)
         # showing date on x axis
         for i in range(len(time_plot) - 1):
-            tmp_2 = jd_to_date(time_plot[i])
-            dt = str(tmp_2[0]) + "-" + str(tmp_2[1]) + "-" + str(tmp_2[2])
-            X_timestamp.append(pd.to_datetime(dt))
-            X_fit_timestamp.append(pd.to_datetime(dt))
+            current_datetime = Time(float(time_plot[i]), format='jd', scale='utc').to_datetime()
+            X_timestamp.append(current_datetime)
+            X_fit_timestamp.append(current_datetime)
             if ulens(time_plot[i], *popt_best) <= max_mag and beg == True and fin == True:
                     max_mag = ulens(time_plot[i], *popt_best)
                     max_mag_time = time_plot[i]
