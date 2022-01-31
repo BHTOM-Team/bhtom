@@ -181,6 +181,8 @@ def microlensing_for_target(context, target, slevel, clevel):
             t += 0.5
 
         # fit with prediction
+        if microlensing_end_time == 0:
+            microlensing_end_time = x[0]
         time_plot = np.linspace(x[0], microlensing_end_time + 366, 1000)
         # showing date on x axis
         for i in range(len(time_plot) - 1):
