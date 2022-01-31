@@ -50,7 +50,7 @@ fig = go.Figure(data=[], layout=go.Layout(
     width=750
 ))
 
-app.layout = html.Div([
+app.layout = dbc.Spinner(dbc.Card([
     dbc.Modal(
         [
             dbc.ModalBody("Do you want to delete this point?"),
@@ -81,7 +81,7 @@ app.layout = html.Div([
     ),
     dbc.Alert("Point successfully deleted!", id='success_deleted', color="success", is_open=False),
     dbc.Alert("No permission to delete the point :(", id='no_permission', color="danger", is_open=False),
-], style={'height': '800px'})
+], body=True))
 
 
 @app.callback(
