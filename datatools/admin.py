@@ -1,4 +1,6 @@
 from django.contrib import admin
+from tom_dataproducts.models import ReducedDatum
+
 from bhtom.models import BHTomFits, Instrument, Observatory, BHTomUser
 from django.http import FileResponse
 from django.utils.html import format_html
@@ -73,7 +75,12 @@ class BHTomUser_displayField(admin.ModelAdmin):
     get_isLogin.boolean = True
     get_isLogin.short_description = 'Can login'
 
+
+class ReducedDatum_display(admin.ModelAdmin):
+    list_display = ('target', 'data_product', 'data_type', 'source_name', 'source_location', 'timestamp', 'value')
+
 admin.site.register(BHTomFits, BHTomFits_displayField)
 admin.site.register(Instrument, Instrument_displayField)
 admin.site.register(Observatory, Observatory_displayField)
 admin.site.register(BHTomUser, BHTomUser_displayField)
+admin.site.register(ReducedDatum, ReducedDatum_display)
