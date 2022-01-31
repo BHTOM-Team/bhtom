@@ -62,6 +62,8 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
             try:
                 instance = BHTomFits.objects.create(instrument_id=instrument, dataproduct_id=dp,
                                                     filter=observation_filter, allow_upload=dry_run,
+                                                    start_time=datetime.now(),
+                                                    cpcs_time=datetime.now(),
                                                     matchDist=matching_radius, priority=priority,
                                                     comment=comment, data_stored=True)
 
@@ -76,7 +78,8 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
                                           'target_dec': target.dec,
                                           'username': user.username,
                                           'hashtag': hashtag,
-                                          'dry_run': dry_run},
+                                          'dry_run': dry_run,
+                                          'fits_id': instance.file_id},
                                          files={'fits_file': file})
                 if response.status_code == 201:
                     logger.info('successfull send to CCDPHOTD, fits id: ' + str(instance.file_id))
@@ -163,6 +166,7 @@ def send_to_cpcs(result, fits, eventID):
                 response = requests.post(url_cpcs, {'MJD': fits.mjd, 'EventID': eventID, 'expTime': fits.expTime,
                                                     'matchDist': fits.matchDist, 'dryRun': int(fits.allow_upload),
                                                     'forceFilter': fits.filter,
+                                                    'fits_id': fits.file_id,
                                                     'hashtag': Instrument.objects.get(id=fits.instrument_id.id).hashtag,
                                                     'outputFormat': 'json'}, files={'sexCat': file})
 
@@ -272,7 +276,7 @@ def delete_point_cpcs(instance):
 @receiver(post_save, sender=BHTomFits)
 def BHTomFits_pre_save(sender, instance, **kwargs):
     time_threshold = timezone.now() - timedelta(days=float(read_secret('DAYS_DELETE_FILES', '1')))
-    fits = BHTomFits.objects.filter(start_time__lte=time_threshold).exclude(data_stored=False)
+    fits = BHTomFits.objects.filter(start_time__lte=time_threshold).exclude(data_stored=False)[:10]
 
     BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     url_base = BASE + '/data/'
@@ -286,7 +290,10 @@ def BHTomFits_pre_save(sender, instance, **kwargs):
                 fit.save()
                 os.remove(url_result)
                 logger.info('remove fits: ' + str(data.data))
-
+            elif data.data is not None and fit.data_stored:
+                fit.data_stored = False
+                fit.save()
+                logger.info('file not exist, change data_stored=false, fits: ' + str(data.data))
 
 @receiver(pre_save, sender=BHTomUser)
 def BHTomUser_pre_save(sender, instance, **kwargs):

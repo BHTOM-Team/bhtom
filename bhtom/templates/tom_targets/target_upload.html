@@ -17,6 +17,7 @@
         For photometric FITS processing choose the observatory from the list.
         You can add a new instrument <a href="{% url 'observatory_create' %}">here.</a>
         <br>
+        <b>You can upload up to 10 files at once.</b>
     </p>
 
     <form method="POST" action="{% url 'data_upload' %}" enctype="multipart/form-data">

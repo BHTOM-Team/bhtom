@@ -72,7 +72,8 @@ def get_spectroscopy_observation_time_jd(reduced_datum: ViewReducedDatum) -> Opt
     # Observation time might be included in the file, if spectrum is from an ASCII file.
 
     if reduced_datum.dp_extra_data:
-        extra_data: Optional[ObservationDatapointExtraData] = decode_datapoint_extra_data(json.loads(reduced_datum.dp_extra_data))
+        extra_data: Optional[ObservationDatapointExtraData] = decode_datapoint_extra_data(
+            json.loads(reduced_datum.dp_extra_data))
         if getattr(extra_data, 'observation_time', None):
             try:
                 observation_time: datetime = parser.parse(extra_data.observation_time)
@@ -154,7 +155,8 @@ def save_data_to_temporary_file(data: List[List[Any]],
 
     with open(tmp.name, 'w') as f:
         df.to_csv(f.name,
-                  index=False)
+                  index=False,
+                  sep=';')
 
     return tmp, filename
 
@@ -198,7 +200,6 @@ def get_photometry_data_stats(target_id: int) -> Tuple[NamedTemporaryFile, str]:
 
 
 def save_photometry_data_for_target_to_csv_file(target_id: int) -> Tuple[NamedTemporaryFile, str]:
-
     target: Target = Target.objects.get(pk=target_id)
 
     data, columns = get_photometry_data_table(target_id)

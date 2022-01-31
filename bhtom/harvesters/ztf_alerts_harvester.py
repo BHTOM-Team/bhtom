@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 import numpy as np
 import requests
@@ -12,24 +12,23 @@ from tom_dataproducts.models import ReducedDatum
 from bhtom.models import ReducedDatumExtraData, refresh_reduced_data_view
 from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointExtraData
 
-# from tom_targets.templatetags.targets_extras import target_extra_field
+
+def read_secret(secret_key: str, default_value: Any = '') -> str:
+    try:
+        return getattr(secret, secret_key, default_value) if secret else default_value
+    except:
+        return default_value
+
 
 try:
     from settings import local_settings as secret
 except ImportError:
     pass
-try:
-    TWITTER_APIKEY = secret.TWITTER_APIKEY
-    TWITTER_SECRET = secret.TWITTER_SECRET
-    TWITTER_ACCESSTOKEN = secret.TWITTER_ACCESSTOKEN
-    TWITTER_ACCESSSECRET = secret.TWITTER_ACCESSSECRET
-    CPCS_DATA_ACCESS_HASHTAG = secret.CPCS_DATA_ACCESS_HASHTAG
-except:
-    TWITTER_APIKEY = os.environ['TWITTER_APIKEY']
-    TWITTER_SECRET = os.environ['TWITTER_SECRET']
-    TWITTER_ACCESSTOKEN = os.environ['TWITTER_ACCESSTOKEN']
-    TWITTER_ACCESSSECRET = os.environ['TWITTER_ACCESSSECRET']
-    CPCS_DATA_ACCESS_HASHTAG = os.environ['CPCS_DATA_ACCESS_HASHTAG']
+
+TWITTER_APIKEY = read_secret('TWITTER_APIKEY')
+TWITTER_SECRET = read_secret('TWITTER_SECRET')
+TWITTER_ACCESSTOKEN = read_secret('TWITTER_ACCESSTOKEN')
+TWITTER_ACCESSSECRET = read_secret('TWITTER_ACCESSSECRET')
 
 
 MARS_URL: str = 'https://mars.lco.global/'
