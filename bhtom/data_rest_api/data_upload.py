@@ -3,11 +3,10 @@ from datetime import timedelta
 
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from tom_common.hooks import run_hook
 from tom_dataproducts.data_processor import run_data_processor
-from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_dataproducts.models import DataProduct, ReducedDatum
 from tom_targets.models import Target
 
@@ -35,7 +34,6 @@ class PhotometryUpload(APIView):
         data_product_type: str = request.data.get('data_product_type')
 
         observatory = Observatory.objects.get(id=instrument.observatory_id.id)
-        observer: str = request.data.get('observer')
 
         mjd: str = request.data.get('mjd')
         exp_time: str = request.data.get('exp_time')

@@ -52,9 +52,7 @@ def microlensing_for_target(context, target, slevel, clevel):
         if str(extra_data.get('facility')) == "Gaia":
             try:
                 X.append(float(values.get('jd')))
-                tmp = jd_to_date(float(values.get('jd')))
-                dt = str(tmp[0]) + "-" + str(tmp[1]) + "-" + str(tmp[2])
-                X_timestamp.append(pd.to_datetime(dt))
+                X_timestamp.append(datum.timestamp)
                 Y.append(float(values.get('magnitude')))
                 err.append(calculate_error(float(values.get('magnitude'))))
             except Exception:
@@ -83,7 +81,6 @@ def microlensing_for_target(context, target, slevel, clevel):
         }
     else:
         # title
-        title = target
         # get time of modeling
         start_time = time.time()
         # ulensing modelling
@@ -180,24 +177,6 @@ def microlensing_for_target(context, target, slevel, clevel):
                 info_end_time_value = str(jd_to_date(microlensing_end_time)) + " |" + str(microlensing_end_time)
                 fin = True
             t += 0.5
-        info_duration = ''
-        info_remainingTime = ''
-        info_maximumMagnitude = ''
-        info_maximumMagnitudeTime = ''
-        info_duration_value = ''
-        info_remainingTime_value = ''
-        info_maximumMagnitude_value = ''
-        info_maximumMagnitudeTime_value = ''
-        info_t0 = ''
-        info_te = ''
-        info_u0 = ''
-        info_I0 = ''
-        info_t0_check = ''
-        info_te_check = ''
-        info_u0_check = ''
-        info_I0_check = ''
-        info_fs = ''
-        info_executionTime = ''
 
         # fit with prediction
         time_plot = np.linspace(x[0], microlensing_end_time + 366, 1000)
