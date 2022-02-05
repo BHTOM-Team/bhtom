@@ -133,12 +133,12 @@ class GaiaAlertsHarvester(AbstractHarvester):
 
 def update_gaia_lc(target, requesting_user_id):
     from .utils.last_jd import update_last_jd
-    # updating SUN separation
-    sun_pos = get_sun(Time(datetime.utcnow()))
-    obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg)
-    Sun_sep = sun_pos.separation(obj_pos).deg
-    target.save(extras={'Sun_separation': Sun_sep})
-    print("DEBUG: new Sun separation: ", Sun_sep)
+    # # updating SUN separation - moved to update_all_lightcurves.py
+    # sun_pos = get_sun(Time(datetime.utcnow()))
+    # obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg)
+    # Sun_sep = sun_pos.separation(obj_pos).deg
+    # target.save(extras={'Sun_separation': Sun_sep})
+    # print("DEBUG: new Sun separation: ", Sun_sep)
 
     # deciding whether to update the light curves or not
     try:
