@@ -4,7 +4,6 @@ from typing import Optional, List, Any
 
 import requests
 
-from dash import html
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import plotly.graph_objs as go
@@ -51,7 +50,6 @@ fig = go.Figure(data=[], layout=go.Layout(
 ))
 
 app.layout = dbc.Spinner(dbc.Card([
-    html.P("Click on the point to try to delete it."),
     dbc.Modal(
         [
             dbc.ModalBody("Do you want to delete this point?"),

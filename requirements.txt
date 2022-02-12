@@ -35,6 +35,7 @@ django-extensions==2.2.9
 django-filter==2.2.0
 django-gravatar2==1.4.3
 django-guardian==2.2.0
+django-plotly-dash==1.6.6
 django-pgviews==0.5.7
 djangorestframework==3.11.0
 entrypoints==0.3
