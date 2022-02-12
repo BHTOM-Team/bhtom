@@ -1,12 +1,11 @@
 import json
 from collections import namedtuple
-from typing import Optional, Tuple, List, Any
+from typing import Optional, List, Any
 
 import requests
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
-import dash_html_components as html
 import plotly.graph_objs as go
 from dash.dependencies import State
 from dash_extensions.enrich import Output, Input
@@ -85,15 +84,24 @@ app.layout = dbc.Spinner(dbc.Card([
 
 
 @app.callback(
-    [Output("delete-point-modal", "is_open"), Output("success_deleted", "is_open"), Output("no_permission", "is_open"),
+    [Output("delete-point-modal", "is_open"),
+     Output("success_deleted", "is_open"),
+     Output("no_permission", "is_open"),
      Output("photometry-plot", "figure")],
-    [Input("photometry-plot", "clickData"), Input('target_id', 'value'), Input('user_id', 'value'),
-     Input("yes-delete-point", "n_clicks"), Input("no-delete-point", "n_clicks")],
-    [State("delete-point-modal", "is_open"), State("success_deleted", "is_open"), State("no_permission", "is_open")],
+    [Input("photometry-plot", "clickData"),
+     Input("target_id", "value"),
+     Input("user_id", "value"),
+     Input("yes-delete-point", "n_clicks"),
+     Input("no-delete-point", "n_clicks")],
+    [State("delete-point-modal", "is_open"),
+     State("success_deleted", "is_open"),
+     State("no_permission", "is_open")],
 )
-def toggle_modal(clickData, target_id, user_id, yes_n_clicks, no_n_clicks, is_open, success_open, no_permission_open):
+def toggle_modal(clickData, target_id, user_id, yes_n_clicks, no_n_clicks,
+                 delete_point_modal, success_deleted, no_permission):
     global selected_point, previous_target_name, previous_yes_n_clicks, previous_no_n_clicks
 
+    # Update the data for new target
     if target_id != previous_target_name:
         previous_target_name = target_id
         selected_point = None
@@ -102,6 +110,9 @@ def toggle_modal(clickData, target_id, user_id, yes_n_clicks, no_n_clicks, is_op
         fig.add_traces(plot_data)
         fig.update_layout(transition_duration=500)
 
+        return False, False, False, fig
+
+    # "Yes" has been clicked on the delete point modal
     if yes_n_clicks != previous_yes_n_clicks:
         previous_yes_n_clicks = yes_n_clicks
 
@@ -123,19 +134,28 @@ def toggle_modal(clickData, target_id, user_id, yes_n_clicks, no_n_clicks, is_op
                     fig.update_layout(transition_duration=500)
 
                     selected_point = None
-                    return not is_open, True, False, fig
+
+                    # Point has been deleted successfully
+                    return False, True, False, fig
             else:
                 selected_point = None
-                return not is_open, False, True, fig
+
+                # No permission to delete the point
+                return False, False, True, fig
 
         selected_point = None
 
-        return not is_open, False, False, fig
+        # No point has been selected earlier
+        return False, False, False, fig
 
+    # "No" has been clicked on the delete point modal
     if no_n_clicks != previous_no_n_clicks:
         previous_no_n_clicks = no_n_clicks
-        return not is_open, False, False, fig
 
+        # Don't delete the point
+        return False, False, False, fig
+
+    # Mark the clicked point as the selected one
     if clickData:
         points_info_list = clickData.get('points', [])
         if len(points_info_list) > 0:
@@ -154,11 +174,11 @@ def toggle_modal(clickData, target_id, user_id, yes_n_clicks, no_n_clicks, is_op
                 selected_point = PlotPointData(reduced_datum=maybe_reduced_point,
                                                trace_index=trace_index,
                                                point_index=point_index)
-                return not is_open, False, False, fig
+                return True, False, False, fig
 
-        return is_open, False, False, fig
+        return False, False, False, fig
 
-    return is_open, False, False, fig
+    return False, False, False, fig
 
 
 def fetch_hashtags_for_user(user_id) -> List[str]:

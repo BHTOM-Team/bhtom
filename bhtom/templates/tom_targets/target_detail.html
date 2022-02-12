@@ -125,9 +125,7 @@
         </div>
         <div class="row">
           <div class="col-md-12" style="height: auto;">
-{#            <div class="plot-container">#}
-                {% plotly_app name="PhotometryPlot" initial_arguments=dash_context ratio=1.0 %}
-{#            </div>#}
+              {% photometry_for_target_static target form.aavso_data.value %}
           </div>
         </div>
 

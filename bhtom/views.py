@@ -950,8 +950,6 @@ class TargetDetailView(PermissionRequiredMixin, DetailView):
                                                          )
 
         context['data_product_form_from_user'] = data_product_upload_form
-        context['dash_context'] = {'target_id': {'value': self.get_object().id},
-                                   'user_id': {'value': self.request.user.id}}
         return context
 
     def get(self, request, *args, **kwargs):
@@ -1069,7 +1067,8 @@ class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
         return True
 
     def get(self, request, *args, **kwargs):
-        context = {'dash_context': {'target_id': {'value': kwargs.get('pk', -1)}}}
+        context = {'dash_context': {'target_id': {'value': kwargs.get('pk', -1)},
+                                    'user_id': {'value': self.request.user.id}}}
         return self.render_to_response(context)
 
 
