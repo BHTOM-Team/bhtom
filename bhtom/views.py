@@ -1066,6 +1066,11 @@ class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
             return False
         return True
 
+    def get(self, request, *args, **kwargs):
+        context = {'dash_context': {'target_id': {'value': kwargs.get('pk', -1)},
+                                    'user_id': {'value': self.request.user.id}}}
+        return self.render_to_response(context)
+
 
 class TargetMicrolensingView(PermissionRequiredMixin, DetailView):
     template_name = 'tom_targets/target_microlensing.html'

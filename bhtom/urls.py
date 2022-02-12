@@ -45,6 +45,7 @@ urlpatterns = [
     path('about/', TemplateView.as_view(template_name='tom_common/about.html'), name='about'),
     path('bhlist/', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='bhlist'),
     path('bhlist/', BlackHoleListView.as_view(template_name='tom_common/bhlist.html'), name='targets'),
+    path('django_plotly_dash/', include('django_plotly_dash.urls')),
     path('bhlist/create/', TargetCreateView.as_view(), name='bhlist_create'),
     path('bhlist/<int:pk>/update/', TargetUpdateView.as_view(), name='bhlist_update'),
     path('bhlist/<int:pk>/delete/', TargetDeleteView.as_view(), name='bhlist_delete'),
