@@ -10,7 +10,7 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objs as go
 from dash.dependencies import State
 from dash.exceptions import PreventUpdate
-from dash_extensions.enrich import Output, Input, DashProxy, MultiplexerTransform
+from dash_extensions.enrich import Output, Input
 from django_common.auth_backends import User
 from django_plotly_dash import DjangoDash
 from tom_dataproducts.models import ReducedDatum
@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import Q
 
-from bhtom.models import refresh_reduced_data_view, Instrument
+from bhtom.models import refresh_reduced_data_view, Instrument, BHTomData
 from bhtom.templatetags.photometry_tags import photometry_plot_data
 
 try:
@@ -140,58 +140,92 @@ def toggle_modal(clickData, target_id, user_id, yes_n_clicks, no_n_clicks,
                 selected_point = PlotPointData(reduced_datum=maybe_reduced_point,
                                                trace_index=trace_index,
                                                point_index=point_index)
-                return True, False, False, fig
 
-    print("Dont update")
+                # Is the user superuser? Then she/he can delete everything
+                if is_user_superuser(user_id):
+                    return True, False, False, fig
+
+                # Is the selected point from CPCS? Then attempt deletion
+                if is_point_from_cpcs(selected_point):
+                    return True, False, False, fig
+
+                # Is the selected point from file? Then check if the user is the owner
+                if is_point_from_file(selected_point):
+                    if check_if_file_owner_is_user(selected_point.reduced_datum, user_id):
+                        return True, False, False, fig
+                    else:
+                        selected_point = None
+                        return False, False, True, fig
+
+                # If none of these is true, then clear the selected point
+                selected_point = None
+                raise PreventUpdate
+
+
+    # Yes has been clicked on the delete point modal
+    if triggered.get('prop_id') == 'yes-delete-point.n_clicks':
+        # Check if there is a selected point
+        if selected_point:
+            # If the selected point is from CPCS, then try to delete it
+            if is_point_from_cpcs(selected_point):
+                cpcs_id: int = int(selected_point.reduced_datum.source_location.split('&')[-1])
+                hashtags: List[str] = fetch_hashtags_for_user(user_id)
+                if try_to_delete_point_from_cpcs(hashtags, cpcs_id):
+                    if try_to_delete_point_from_bhtom(selected_point):
+                        delete_from_plot(fig, selected_point)
+                        selected_point = None
+                        return False, True, False, fig
+
+                selected_point = None
+                return False, False, True, fig
+
+            elif is_point_from_file(selected_point):
+                if is_user_superuser(user_id) or check_if_file_owner_is_user(selected_point.reduced_datum, user_id):
+                    if try_to_delete_point_from_bhtom(selected_point):
+                        delete_from_plot(fig, selected_point)
+                        selected_point = None
+                        return False, True, False, fig
+                else:
+                    selected_point = None
+                    return False, False, True, fig
+
+            selected_point = None
+            return False, False, False, fig
+
+    # No has been clicked on the delete point modal
+    if triggered.get('prop_id') == 'no-delete-point.n_clicks':
+        selected_point = None
+        return False, False, False, fig
+
     raise PreventUpdate
 
 
-    # "Yes" has been clicked on the delete point modal
-    if yes_n_clicks != previous_yes_n_clicks:
-        previous_yes_n_clicks = yes_n_clicks
+def delete_from_plot(fig, selected_point: PlotPointData):
+    new_x = list(fig.data[selected_point.trace_index]['x'])
+    new_x.pop(selected_point.point_index)
 
-        if selected_point:
-            cpcs_id: int = int(selected_point.reduced_datum.source_location.split('&')[-1])
-            hashtags: List[str] = fetch_hashtags_for_user(user_id)
+    new_y = list(fig.data[selected_point.trace_index]['y'])
+    new_y.pop(selected_point.point_index)
 
-            if try_to_delete_point_from_cpcs(hashtags, cpcs_id):
-                if try_to_delete_point_from_bhtom(selected_point):
+    fig.data[selected_point.trace_index]['x'] = tuple(new_x)
+    fig.data[selected_point.trace_index]['y'] = tuple(new_y)
+    fig.update_layout(transition_duration=500)
 
-                    new_x = list(fig.data[selected_point.trace_index]['x'])
-                    new_x.pop(selected_point.point_index)
 
-                    new_y = list(fig.data[selected_point.trace_index]['y'])
-                    new_y.pop(selected_point.point_index)
+def is_user_superuser(user_id: int) -> bool:
+    return User.objects.get(id=user_id).is_superuser
 
-                    fig.data[selected_point.trace_index]['x'] = tuple(new_x)
-                    fig.data[selected_point.trace_index]['y'] = tuple(new_y)
-                    fig.update_layout(transition_duration=500)
 
-                    selected_point = None
+def is_point_from_cpcs(selected_point: PlotPointData) -> bool:
+    return selected_point.reduced_datum.source_name == 'CPCS'
 
-                    # Point has been deleted successfully
-                    return False, True, False, fig
-            else:
-                selected_point = None
 
-                # No permission to delete the point
-                return False, False, True, fig
-
-        selected_point = None
-
-        # No point has been selected earlier
-        return False, False, False, fig
-
-    # "No" has been clicked on the delete point modal
-    if no_n_clicks != previous_no_n_clicks:
-        previous_no_n_clicks = no_n_clicks
-
-        # Don't delete the point
-        return False, False, False, fig
+def is_point_from_file(selected_point: PlotPointData) -> bool:
+    return selected_point.reduced_datum.source_name == '' and selected_point.reduced_datum.data_product_id is not None
 
 
 def fetch_hashtags_for_user(user_id) -> List[str]:
-    if User.objects.get(id=user_id).is_superuser:
+    if is_user_superuser(user_id):
         hashtag = read_secret('CPCS_ADMIN_HASHTAG', '')
         return [hashtag]
 
@@ -236,6 +270,16 @@ def try_to_fetch_point(target_id, point_timestamp, point_mag, point_band) -> Opt
                 return point
         except Exception:
             return None
+
+
+def check_if_file_owner_is_user(reduced_datum: ReducedDatum, user_id: int) -> bool:
+
+    bhtom_data: BHTomData = BHTomData.objects.get(dataproduct_id_id=reduced_datum.data_product_id)
+
+    if bhtom_data:
+        return bhtom_data.user_id == user_id
+
+    return False
 
 
 def try_to_delete_point_from_bhtom(plot_point_data: PlotPointData) -> bool:

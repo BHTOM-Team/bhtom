@@ -1066,6 +1066,30 @@ class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
             return False
         return True
 
+
+class TargetInteractiveDeletingPhotometryView(PermissionRequiredMixin, DetailView):
+    template_name = 'tom_targets/target_interactive_deleting_photometry.html'
+    model = Target
+
+    def handle_no_permission(self):
+
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def has_permission(self):
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
+            return False
+        elif not self.request.user.has_perm('tom_targets.view_target'):
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
+            return False
+        return True
+
     def get(self, request, *args, **kwargs):
         context = {'dash_context': {'target_id': {'value': kwargs.get('pk', -1)},
                                     'user_id': {'value': self.request.user.id}}}

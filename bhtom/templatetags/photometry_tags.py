@@ -189,29 +189,7 @@ def photometry_for_target(context, target):
         height=600,
         width=700
     )
-
-    fig = go.FigureWidget(go.Figure(data=plot_data, layout=layout))
-
-    scatter = fig.data[0]
-    colors = ['#a3a7e4'] * 100
-    scatter.marker.color = colors
-    scatter.marker.size = [10] * 100
-    fig.layout.hovermode = 'closest'
-
-    # create our callback function
-    def update_point(trace, points, selector):
-        c = list(scatter.marker.color)
-        s = list(scatter.marker.size)
-        for i in points.point_inds:
-            c[i] = '#bae2be'
-            s[i] = 20
-            with fig.batch_update():
-                scatter.marker.color = c
-                scatter.marker.size = s
-
-    scatter.on_click(update_point)
-
     return {
         'target': target,
-        'plot': offline.plot(fig, output_type='div', show_link=False)
+        'plot': offline.plot(go.Figure(data=plot_data, layout=layout), output_type='div', show_link=False)
     }
