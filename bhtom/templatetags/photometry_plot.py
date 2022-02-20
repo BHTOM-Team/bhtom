@@ -2,18 +2,21 @@ import json
 from collections import namedtuple
 from typing import Optional, List, Any
 
+import dash
 import requests
 
 from dash import dcc, html
 import dash_bootstrap_components as dbc
 import plotly.graph_objs as go
 from dash.dependencies import State
-from dash_extensions.enrich import Output, Input
+from dash.exceptions import PreventUpdate
+from dash_extensions.enrich import Output, Input, DashProxy, MultiplexerTransform
 from django_common.auth_backends import User
 from django_plotly_dash import DjangoDash
 from tom_dataproducts.models import ReducedDatum
 from datetime import datetime, timedelta
 from django.utils import timezone
+from django.db.models import Q
 
 from bhtom.models import refresh_reduced_data_view, Instrument
 from bhtom.templatetags.photometry_tags import photometry_plot_data
@@ -33,10 +36,8 @@ def read_secret(secret_key: str, default_value: Any = '') -> str:
 
 PlotPointData = namedtuple('PlotPointData', ['reduced_datum', 'trace_index', 'point_index'])
 
-app = DjangoDash(name='PhotometryPlot',
-                 external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = DjangoDash(name='PhotometryPlot', external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-previous_target_name = -1
 selected_point: Optional[PlotPointData] = None
 
 previous_yes_n_clicks = 0
@@ -102,9 +103,11 @@ def toggle_modal(clickData, target_id, user_id, yes_n_clicks, no_n_clicks,
                  delete_point_modal, success_deleted, no_permission):
     global selected_point, previous_target_name, previous_yes_n_clicks, previous_no_n_clicks
 
+    ctx = dash.callback_context
+    print(ctx.triggered)
+
     # Update the data for new target
-    if target_id != previous_target_name:
-        previous_target_name = target_id
+    if len(ctx.triggered) == 0:
         selected_point = None
         plot_data = photometry_plot_data(target_id=target_id, user_id=user_id)
         fig.data = []
@@ -112,6 +115,36 @@ def toggle_modal(clickData, target_id, user_id, yes_n_clicks, no_n_clicks,
         fig.update_layout(transition_duration=500)
 
         return False, False, False, fig
+
+    triggered = ctx.triggered[0]
+
+    # A point has been clicked: check if the data is from either CPCS
+    # or a file
+    if triggered.get('prop_id') == 'photometry-plot.clickData':
+        # Mark the clicked point as the selected one
+        points_info_list = clickData.get('points', [])
+        if len(points_info_list) > 0:
+            points_info = points_info_list[0]
+            trace_index = points_info.get('curveNumber')
+            point_index = points_info.get('pointIndex')
+            timestamp = points_info.get('x')
+            mag = points_info.get('y')
+            filter = fig.data[trace_index].name
+
+            maybe_reduced_point: Optional[ReducedDatum] = try_to_fetch_point(target_id=target_id,
+                                                                             point_timestamp=timestamp,
+                                                                             point_mag=mag,
+                                                                             point_band=filter)
+            if maybe_reduced_point:
+
+                selected_point = PlotPointData(reduced_datum=maybe_reduced_point,
+                                               trace_index=trace_index,
+                                               point_index=point_index)
+                return True, False, False, fig
+
+    print("Dont update")
+    raise PreventUpdate
+
 
     # "Yes" has been clicked on the delete point modal
     if yes_n_clicks != previous_yes_n_clicks:
@@ -156,31 +189,6 @@ def toggle_modal(clickData, target_id, user_id, yes_n_clicks, no_n_clicks,
         # Don't delete the point
         return False, False, False, fig
 
-    # Mark the clicked point as the selected one
-    if clickData:
-        points_info_list = clickData.get('points', [])
-        if len(points_info_list) > 0:
-            points_info = points_info_list[0]
-            trace_index = points_info.get('curveNumber')
-            point_index = points_info.get('pointIndex')
-            timestamp = points_info.get('x')
-            mag = points_info.get('y')
-            filter = fig.data[trace_index].name
-
-            maybe_reduced_point: Optional[ReducedDatum] = try_to_fetch_point(target_id=target_id,
-                                                                             point_timestamp=timestamp,
-                                                                             point_mag=mag,
-                                                                             point_band=filter)
-            if maybe_reduced_point:
-                selected_point = PlotPointData(reduced_datum=maybe_reduced_point,
-                                               trace_index=trace_index,
-                                               point_index=point_index)
-                return True, False, False, fig
-
-        return False, False, False, fig
-
-    return False, False, False, fig
-
 
 def fetch_hashtags_for_user(user_id) -> List[str]:
     if User.objects.get(id=user_id).is_superuser:
@@ -216,9 +224,11 @@ def try_to_fetch_point(target_id, point_timestamp, point_mag, point_band) -> Opt
 
     timestamp = make_aware(datetime.strptime(point_timestamp, '%Y-%m-%d %H:%M:%S.%f'), timezone=timezone.utc)
 
-    points_with_timestamp = ReducedDatum.objects.filter(target_id=target_id, source_name='CPCS',
+    points_with_timestamp = ReducedDatum.objects.filter(Q(target_id=target_id,
                                                         timestamp__gte=timestamp - timedelta(milliseconds=10),
-                                                        timestamp__lte=timestamp + timedelta(milliseconds=10))
+                                                        timestamp__lte=timestamp + timedelta(milliseconds=10)) &
+                                                        (Q(source_name='CPCS') | Q(data_product__isnull=False)))
+
     for point in points_with_timestamp:
         try:
             value = load_datum_json(point.value)
