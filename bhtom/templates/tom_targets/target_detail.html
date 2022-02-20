@@ -130,9 +130,12 @@
         </div>
 
         {% if perms.tom_dataproducts.add_dataproduct %}
-          <div class="row">
-            <div class="col-md-12">
+          <div class="row menu-row justify-content-between">
+            <div class="col-md-4">
               <button onclick="download_photometry()" class="btn btn-info" role="button">Download photometry data</button>
+            </div>
+            <div class="col-md-4">
+              <button onclick="open_interactive_deleting_photometry()" class="btn btn-danger" role="button">Delete observation points</button>
             </div>
           </div>
         {% endif %}
@@ -206,6 +209,9 @@
   <script type="text/javascript">
     function open_photometry() {
       window.open('{% url "bhlist_i_photometry" target.id %}', 'newwindow', 'width=800,height=700');
+    }
+    function open_interactive_deleting_photometry() {
+      window.open('{% url "bhlist_i_d_photometry" target.id %}', 'newwindow', 'width=900,height=800');
     }
     function download_photometry() {
       window.open('{% url "bhlist_download_photometry_data" target.id %}')
