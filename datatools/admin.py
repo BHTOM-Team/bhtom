@@ -38,7 +38,7 @@ class Observatory_displayField(admin.ModelAdmin):
 
     def get_obsInfo(self, obj):
         if obj.obsInfo:
-            return format_html("<a href='/datatools/download/obsInfo/%s'>" % obj.id + str(obj.prefix) + "</a>")
+            return format_html("<a href='/datatools/download/obsInfo/%s'>" % obj.id + str(obj.id) + "</a>")
 
     get_obsInfo.short_description = 'ObsInfo'
     get_obsInfo.allow_tags = True
