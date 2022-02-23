@@ -14,6 +14,7 @@ from bhtom.models import BHTomUser, Observatory
 from typing import List, Dict, Optional
 
 from sentry_sdk import capture_exception
+import logging
 
 try:
     from settings import local_settings as secret
@@ -21,7 +22,7 @@ except ImportError:
     pass
 
 alert_name_keys: Dict[str, str] = settings.ALERT_NAME_KEYS
-
+logger = logging.getLogger(__name__)
 
 class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
     """
@@ -214,7 +215,7 @@ class obsInfo_download(RedirectView):
 
     def get(self, request, *args, **kwargs):
         try:
-            obs = Observatory.objects.get(id=self.kwargs['id'])
+            obs = Observatory.objects.get(pk=self.kwargs['id'])
         except Observatory.DoesNotExist:
             if self.request.META.get('HTTP_REFERER') is None:
                 return HttpResponseRedirect('/')
@@ -246,7 +247,7 @@ class observatory_fits_download(RedirectView):
 
     def get(self, request, *args, **kwargs):
         try:
-            obs = Observatory.objects.get(obsName=self.kwargs['id'])
+            obs = Observatory.objects.get(pk=self.kwargs['id'])
         except Observatory.DoesNotExist:
             if self.request.META.get('HTTP_REFERER') is None:
                 return HttpResponseRedirect('/')
