@@ -214,7 +214,7 @@ class obsInfo_download(RedirectView):
 
     def get(self, request, *args, **kwargs):
         try:
-            obs = Observatory.objects.get(id=self.kwargs['id'])
+            obs = Observatory.objects.get(pk=self.kwargs['id'])
         except Observatory.DoesNotExist:
             if self.request.META.get('HTTP_REFERER') is None:
                 return HttpResponseRedirect('/')
@@ -246,7 +246,7 @@ class observatory_fits_download(RedirectView):
 
     def get(self, request, *args, **kwargs):
         try:
-            obs = Observatory.objects.get(obsName=self.kwargs['id'])
+            obs = Observatory.objects.get(pk=self.kwargs['id'])
         except Observatory.DoesNotExist:
             if self.request.META.get('HTTP_REFERER') is None:
                 return HttpResponseRedirect('/')
