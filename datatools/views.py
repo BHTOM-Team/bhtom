@@ -254,7 +254,7 @@ class observatory_fits_download(RedirectView):
             else:
                 return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
-        if obs.obsInfo:
+        if obs.fits:
             address = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/data/' + format(obs.fits)
             return FileResponse(open(address, 'rb'), as_attachment=True)
         else:
