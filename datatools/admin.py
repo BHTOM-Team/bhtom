@@ -45,7 +45,8 @@ class Observatory_displayField(admin.ModelAdmin):
 
     def get_fits(self, obj):
         if obj.fits:
-            return format_html("<a href='/datatools/download/user_fits/%s'>" % str(obj.fits).split('/')[-1] + "</a>")
+            fits_filename: str = str(obj.fits).split('/')[-1]
+            return format_html("<a href='/datatools/download/user_fits/%s'>" % fits_filename + fits_filename + "</a>")
     get_fits.short_description = 'Sample fits'
     get_fits.allow_tags = True
 
