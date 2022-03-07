@@ -128,7 +128,6 @@ def toggle_modal(clickData, target_id, user_id, yes_n_clicks, no_n_clicks,
         # Mark the clicked point as the selected one
         points_info_list = clickData.get('points', [])
         logger.info(f'[INTERACTIVE PLOT] A point has been clicked: {points_info_list}')
-        logger.info(f'[INTERACTIVE PLOT] Figure data is about to be updated. Current figure: {fig.data}')
         if len(points_info_list) > 0:
             points_info = points_info_list[0]
             trace_index = points_info.get('curveNumber')
