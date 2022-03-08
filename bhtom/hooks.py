@@ -281,19 +281,23 @@ def BHTomFits_pre_save(sender, instance, **kwargs):
     BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     url_base = BASE + '/data/'
 
-    for fit in fits:
-        data = DataProduct.objects.get(id=fit.dataproduct_id.id)
-        if data:
-            url_result = os.path.join(url_base, str(data.data))
-            if os.path.exists(url_result) and data.data is not None:
-                fit.data_stored = False
-                fit.save()
-                os.remove(url_result)
-                logger.info('remove fits: ' + str(data.data))
-            elif data.data is not None and fit.data_stored:
-                fit.data_stored = False
-                fit.save()
-                logger.info('file not exist, change data_stored=false, fits: ' + str(data.data))
+    try:
+        for fit in fits:
+            data = DataProduct.objects.get(id=fit.dataproduct_id.id)
+            if data:
+                url_result = os.path.join(url_base, str(data.data))
+                if os.path.exists(url_result) and data.data is not None:
+                    os.remove(url_result)
+                    fit.data_stored = False
+                    fit.save()
+                    logger.info('remove fits: ' + str(data.data))
+                elif data.data is not None and fit.data_stored:
+                    fit.data_stored = False
+                    fit.save()
+                    logger.info('file not exist, change data_stored=false, fits: ' + str(data.data))
+    except Exception as e:
+        logger.info("Error with remove fits, dataproduct_id: " + format(fits.dataproduct_id))
+        logger.info(e)
 
 @receiver(pre_save, sender=BHTomUser)
 def BHTomUser_pre_save(sender, instance, **kwargs):
