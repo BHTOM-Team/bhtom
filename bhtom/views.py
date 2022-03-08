@@ -116,7 +116,7 @@ def computePriority(dt, priority, cadence):
 
 def deleteFits(dp):
     try:
-        logger.info('try remove fits' + str(dp.date))
+        logger.info('try remove fits' + str(dp.data))
         BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         url_base = BASE + '/data/'
         url_result = os.path.join(url_base, str(dp.data))
