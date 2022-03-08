@@ -676,7 +676,8 @@ class fits_upload(viewsets.ModelViewSet):
             f.name = "{}_{}".format(user.id, f.name)
 
             if os.path.exists('{0}/data/{1}/none/{2}'.format(BASE, target, f.name)):
-                #messages.error(self.request, read_secret('FILE_EXIST'))
+                messages.error(self.request, read_secret('FILE_EXIST'))
+                logger.error('File exits: %s %s' % (str(f.name), str(target)))
                 return Response(status=status.HTTP_201_CREATED)
 
             dp = DataProduct(
@@ -850,6 +851,7 @@ class DataProductUploadView(FormView):
 
             if os.path.exists('{0}/data/{1}/none/{2}'.format(BASE, target, f.name)):
                 messages.error(self.request, read_secret('FILE_EXIST'))
+                logger.error('File exits: %s %s' % (str(f.name), str(target)))
                 return redirect(form.cleaned_data.get('referrer', '/'))
 
             dp = DataProduct(
