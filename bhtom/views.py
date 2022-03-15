@@ -690,7 +690,7 @@ class fits_upload(viewsets.ModelViewSet):
 
             try:
                 run_hook('data_product_post_upload',
-                         dp, target, observatory,
+                         dp, target_id, observatory,
                          observation_filter, MJD, ExpTime,
                          dryRun, matchDist, comment,
                          user, fits_quantity,
@@ -913,7 +913,7 @@ class DataProductUploadView(FormView):
             )
         t1 = time.time()
         total = t1 - t0
-        logger.info('time: ' + total)
+        logger.info('time: ' + str(total))
         return redirect(form.cleaned_data.get('referrer', '/'))
 
     def form_invalid(self, form):
