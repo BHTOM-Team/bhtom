@@ -615,7 +615,7 @@ class fits_upload(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnlyOrCreation]
 
     def create(self, request, *args, **kwargs):
-
+        t0 = time.time()
         self.check_permissions(request)
         observatory, MJD, ExpTime, dryRun, matchDist, comment = None, None, None, None, None, None
         fits_quantity = None
@@ -670,11 +670,13 @@ class fits_upload(viewsets.ModelViewSet):
 
         successful_uploads = []
        # BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        logger.info('number of files : %s' % (len(data_product_files)))
 
         for f in data_product_files:
 
             f.name = "{}_{}".format(user.id, f.name)
-
+            logger.info(f.name)
+            logger.info('len file presave: %s' % len(f))
           #  if os.path.exists('{0}/data/{1}/none/{2}'.format(BASE, target, f.name)):
            #     messages.error(self.request, read_secret('FILE_EXIST'))
            #     logger.error('File exits: %s %s' % (str(f.name), str(target)))
@@ -687,7 +689,7 @@ class fits_upload(viewsets.ModelViewSet):
                 data_product_type=dp_type
             )
             dp.save()
-
+            logger.info('len file after save: %s' % len(dp.data))
             try:
                 run_hook('data_product_post_upload',
                          dp, target, observatory,
@@ -711,6 +713,9 @@ class fits_upload(viewsets.ModelViewSet):
                 ReducedDatum.objects.filter(data_product=dp).delete()
                 dp.delete()
 
+        t1 = time.time()
+        total = t1 - t0
+        logger.info('time: ' + total)
         return Response(status=status.HTTP_201_CREATED)
 
     def list(self, request, *args, **kwargs):
@@ -811,8 +816,9 @@ class DataProductUploadView(FormView):
         Runs after ``DataProductUploadForm`` is validated. Saves each ``DataProduct`` and calls ``run_data_processor``
         on each saved file. Redirects to the previous page.
         """
-
+        t0 = time.time()
         if not self.request.user.has_perm('bhtom.add_bhtomfits'):
+            logger.error('no permission to upload file: %s' % (str(target)))
             messages.error(self.request, 'You have no permission to upload file.')
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
@@ -836,19 +842,23 @@ class DataProductUploadView(FormView):
         user = self.request.user
 
         if len(data_product_files) > self.MAX_FILES:
+            logger.error('upload max: %s %s' % (str(f[0].name), str(target)))
             messages.error(self.request, f'You can upload max. {self.MAX_FILES} files at once')
             return redirect(form.cleaned_data.get('referrer', '/'))
 
         if dp_type == 'fits_file' and observatory.cpcsOnly == True:
+            logger.error('observatory without ObsInfo: %s %s' % (str(f[0].name), str(target)))
             messages.error(self.request, 'Used Observatory without ObsInfo')
             return redirect(form.cleaned_data.get('referrer', '/'))
 
         successful_uploads = []
+        logger.info(self.request.META)
+        logger.info('number of files : %s' % (len(data_product_files)))
         #BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         for f in data_product_files:
-
             f.name = "{}_{}".format(user.id, f.name)
-
+            logger.info(f.name)
+            logger.info('len file presave: %s' % len(f))
           #  if os.path.exists('{0}/data/{1}/none/{2}'.format(BASE, target, f.name)):
           #      messages.error(self.request, read_secret('FILE_EXIST'))
            #     logger.error('File exits: %s %s' % (str(f.name), str(target)))
@@ -862,6 +872,7 @@ class DataProductUploadView(FormView):
                 data_product_type=dp_type
             )
             dp.save()
+            logger.info('len file after save: %s' % len(dp.data))
 
             try:
                 run_hook('data_product_post_upload',
@@ -905,7 +916,9 @@ class DataProductUploadView(FormView):
                 self.request,
                 message
             )
-
+        t1 = time.time()
+        total = t1 - t0
+        logger.info('time: ' + total)
         return redirect(form.cleaned_data.get('referrer', '/'))
 
     def form_invalid(self, form):
