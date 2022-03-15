@@ -1,0 +1,185 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 static targets_extras cache %}
+{% block title %} Data Product List {% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_observations/css/main.css' %}">
+<style>
+.dhtmlwindow{
+    top:100px!important;
+}
+</style>
+{% endblock %}
+{% block content %}
+{% include 'tom_dataproducts/partials/js9_scripts.html' %}
+
+<h1>Target: {{target.name}}</h1>
+<div class="row">
+  <div class="col-md-6">
+     <table class="table">
+          <thead>
+            <tr>
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td>Fits</td>
+              {% if data_stored == True %}
+                  {% if tabData.fits_id is not None %}
+                    <td><a href="{% url 'fits_download' file_id=tabData.fits_id %} ">{{ tabData.fits }}</a></td>
+                  {% else %}
+                    <td></td>
+                  {% endif %}
+              {% else %}
+                 <td><div title="{{tabData.fits}}">{{ tabData.fits }}</div></td>
+              {% endif %}
+          </tr>
+          <tr>
+            <td>Photometry</a></td>
+              {% if tabData.photometry_id is not None %}
+                <td><a href="{% url 'photometry_download' file_id=tabData.photometry_id %}"> {{ tabData.photometry }}</a></td>
+              {% else %}
+                <td></td>
+              {% endif %}
+          </tr>
+           <tr>
+            <td>Observatory</a></td>
+            <td>{{ Observatory.obsName }}</td>
+          </tr>
+           <tr>
+            <td>Time Uploaded</a></td>
+               {% if fits.start_time != None %}
+                <td>{{ fits.start_time }}</td>
+               {% else %}
+                <td></td>
+               {% endif %}
+          </tr>
+           <tr>
+            <td>Time Photometry</a></td>
+               {% if fits.cpcs_time != None %}
+                 <td>{{ fits.cpcs_time }}</td>
+               {% else %}
+                <td></td>
+               {% endif %}
+          </tr>
+           <tr>
+            <td>Status</a></td>
+            <td>{{ fits.status_message }}</td>
+          </tr>
+           <tr>
+            <td>MJD</a></td>
+             {% if fits.mjd != None %}
+                 <td>{{ fits.mjd }}</td>
+               {% else %}
+                <td></td>
+               {% endif %}
+
+          </tr>
+           <tr>
+            <td>Exposure time</a></td>
+              {% if fits.expTime != None %}
+                 <td>{{ fits.expTime }}</td>
+               {% else %}
+                <td></td>
+               {% endif %}
+
+          </tr>
+          <tr>
+            <td>Calib Filter</a></td>
+           <td>{{ filter }}</td>
+          </tr>
+          <tr>
+            <td>FITS Filter</a></td>
+              {% if fits.ccdphot_filter != None %}
+            <td>{{ fits.ccdphot_filter }}</td>
+              {% else %}
+                <td></td>
+               {% endif %}
+          </tr>
+
+          <tr>
+            <td>Magnitude</a></td>
+              {% if fits.mag != None %}
+                 <td>{{ fits.mag|floatformat:2 }} +/- {{ fits.mag_err|floatformat:2}} mag</td>
+               {% else %}
+                <td></td>
+               {% endif %}
+
+          </tr>
+          <tr>
+            <td>ZP</a></td>
+              {% if fits.zeropoint != None %}
+                 <td>{{ fits.zeropoint|floatformat:2 }} mag</td>
+               {% else %}
+                <td></td>
+               {% endif %}
+
+          </tr>
+          <tr>
+            <td>Scatter</a></td>
+              {% if fits.scatter != None %}
+                 <td>{{ fits.scatter|floatformat:3 }} mag</td>
+               {% else %}
+                <td></td>
+               {% endif %}
+
+          </tr>
+          <tr>
+            <td>Number of datapoints used for calibration</a></td>
+              {% if fits.npoints != None %}
+                 <td>{{ fits.npoints }}</td>
+               {% else %}
+                <td></td>
+               {% endif %}
+
+          </tr>
+          <tr>
+            <td>Outlier fraction</a></td>
+              {% if fits.outlier_fraction != None %}
+                 <td>{{ fits.outlier_fraction|floatformat}}</td>
+               {% else %}
+                <td></td>
+               {% endif %}
+
+          </tr>
+          <tr>
+            <td>Matching radius[arcsec]</a></td>
+              <td>{{ fits.matchDist }}</td>
+          </tr>
+          <tr>
+            <td>Dry Run (no data will be stored in the database)</a></td>
+              <td>{{ fits.allow_upload }}</td>
+          </tr>
+           <tr>
+            <td>Comment</a></td>
+               {% if fits.comment != None %}
+                    <td>{{ fits.comment }}</td>
+               {% else %}
+                    <td></td>
+               {% endif %}
+          </tr>
+<!--
+          {% if tabData.fits_url is not None %}
+           <tr>
+            <td>Thumbnail</a></td>
+             <td>
+                {% include 'tom_dataproducts/partials/js9_button.html' with url=tabData.fits_url only %}
+              </td>
+            </tr>
+            {% endif%}
+-->
+          </tbody>
+     </table>
+  </div>
+
+{% if fits.cpcs_plot != None %}
+     <div class="col-md-2">
+         <img src="data:image/png;base64,{{ cpcs_plot }}"/>
+     </div>
+{% endif %}
+</div>
+
+
+
+{% endblock %}

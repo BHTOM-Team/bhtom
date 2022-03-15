@@ -1,0 +1,107 @@
+### 'CCDPhot-TEMPLATE_obs.info', ver. of Feb 2, 2020. Contact: mikolajczyk@astro.uni.wroc.pl, pzielinski@astrouw.edu.pl
+###
+### (remove this comment): This is the template file for FITS headers standardization tool within CCDPhot pipeline. Fill in the form
+###                        and remove all the comments (marked with ###). Column no. 3 (standard KEYWORD) is not to be changed. Comment
+###                        column is just to inform you precisely what should be put in the value section. You may change it, if you have to.
+###                        After you finish filling in this form, please name this file as OBSERVAT_INSTRUMENT_obs.info, where OBSERVAT and
+###                        INSTRUME are equal to the values you provide below (so in case of this template: OAN-SPM_Marconi_3_obs.info).
+###
+#        DESCRIPTION            KEYWORD    KEYWORD      FORMAT             VALUE(s)                    COMMENT       CONF FLAG
+#                              (in FITS)  (standard)                                                             ([T]rue/[F]alse)
+#--------------------------------------------------------------------------------------------------------------------------------
+###
+### (remove this comment): Positive longitude is W, positive latitude is N. Please provide these values (along with altitude) with good precision.
+###
+# OBSERVATORY
+  Observatory                 : OBSERVAT : OBSERVAT : str        :  OAN-SPM                    : observatory ID      : F
+  Observer                    : OBSERVER : OBSERVER : str        :  -                          : observer ID         : F
+  Observatory longitude [deg] : LONGITUD : LONGITUD : float      :  115.46666667               : deg                 : F
+  Observatory latitude [deg]  : LATITUDE : LATITUDE : float      :   31.04527778               : deg                 : F
+  Observatory altitude [m]    : ALTITUDE : ALTITUDE : float      :  2790                       : meters              : F
+  Telescope                   : TELESCOP : TELESCOP : str        :  Richey_Chretien_1.5m       : telescope ID        : F
+  Organization                : -        : ORIGIN   : str        :  UNAM                       : institution ID      : F
+###
+### (remove this comment): Remember that if the Value column is empty, it has to be read from FITS header, so FITS keyword column cannot be empty.
+###                        In case of this section, all the information (apart from time system) has to be provided inside FITS header!!!
+###                        TIME-OBS may be empty only if DATE-OBS is in format specified below.
+###
+# TIME (start of exposition)
+  Time system                 : -        : TIMESYS  : str                 :  UTC : used time standard                : F
+  Date                        : DATE-OBS : DATE-OBS : yyyy-mm-ddThh:mm:ss :  -   : date & time (start of exposition) : F
+  Time                        : UT       : TIME-OBS : hh:mm:ss            :  -   : time (beginning of exposition)    : F
+  Julian date                 : JD       : JD       : float               :  -   : middle of exposition              : F
+  Exposition time             : EXPTIME  : EXPTIME  : float               :  -   : seconds                           : F
+###
+### (remove this comment): Fields marked with * are dependent on each other. As you can see you may specify more than one camera mode for
+###                        your instrument, devided by "|". Also, you can rewrite values of "Image type" and "Filters". In case of "Image type"
+###                        you need to specify which keywords are responsible for flat-fields (standard ky FLAT), biases (BIAS), dark current
+###                        images (DARK), light frames (OBJECT). In case of "Filters" you can change position of the filter, f.e. "2" to its
+###                        corresponding band, f.e. "B" and so on...
+###                        The position angle tells the pipeline how to rotate the image in order to get East to the Left side of the FITS image
+###                        and North to be located up. Ideally, valus of the position angles should be equal to 90, 180, 270, 360 degrees, but if
+###                        your detector is rotated somehow differently from these even angles, please do specify exact value.
+###                        In case of pixel scales, please specify these values as precise as you can. If your image has to be flipped to have
+###                        North Up and East to the Left, please provide proper negative value.
+###                        Telescope magnitude limit ...
+###
+# INSTRUMENT
+  Instrument name             : INSTRUME : INSTRUME : str        :  Marconi_3                                           : camera ID           : F
+  Detector X size [pix]       : NAXIS1   : NAXIS1   : int        :  -                                                   : pixels              : F
+  Detector Y size [pix]       : NAXIS2   : NAXIS2   : int        :  -                                                   : pixels              : F
+  Binning*                    : BIN      : BIN      : int        :  1         | 1                                       : bin=1 or 2 or 3...  : F
+  Instr. mode, readout speed* : GAIN     : READTIME : int        :  2000      | 16000                                   : ns/pix              : F
+  Gain*                       : -        : GAIN     : float      :  9.00      | 6.70                                    : e/ADU               : F
+  Read-out noise*             : -        : RDNOISE  : float      :  1.80      | 1.00                                    : ADU                 : F
+  Saturation limit*           : -        : SATURATE : int        :  32000     | 45000                                   : ADU                 : F
+  Pixel scale along x-axis*   : -        : CDELT1   : float      :  0.0001702 | 0.0001702                               : deg/pix             : F
+  Pixel scale along y-axis*   : -        : CDELT2   : float      :  0.0001702 | 0.0001702                               : deg/pix             : F
+  X reference pixel (center)* : -        : CRPIX1   : int        :  625       | 625                                     : X reference pixel   : F
+  Y reference pixel (center)* : -        : CRPIX2   : int        :  575       | 575                                     : Y reference pixel   : F
+  Position angle              : -        : ORIENTAT : float      :  0.0                                                 : deg                 : F
+  Image type                  : IMAGETYP : OBSTYPE  : str        :  zero, dark, flat, object | BIAS, DARK, FLAT, OBJECT : type of data        : F
+  Filters                     : FILTERS  : FILTER   : str        :  B2, V2 | B, V                                       : passband ID         : F
+  Pixel size along x-axis     : -        : PIXSIZE1 : float      :  13.5                                                : microm              : F
+  Pixel size along y-axis     : -        : PIXSIZE2 : float      :  13.5                                                : microm              : F
+  Tel. limiting magnitude (V) : -        : MAGLIMIT : float      :  19.0                                                : mag (in V passband) : F
+###
+### (remove this comment): This section is self-explanatory.
+###
+# OBJECT & WCS
+  Object name                 : OBJECT   : OBJECT   : str        :   -                         : object name         : F
+  Epoch of coord. system      : EQUINOX  : EQUINOX  : float      :   2000.0                    : year                : F
+  Coord. system               : -        : RADESYS  : str        :   FK5                       : coord. ref. system  : F
+  Coord. type projection RA   : -        : CTYPE1   : str        :   RA---TAN                  : RA projection type  : F
+  Coord. type projection DEC  : -        : CTYPE2   : str        :   DEC--TAN                  : DEC projection type : F
+  Coord. unit RA              : -        : CUNIT1   : str        :   deg                       : RA unit             : F
+  Coord. unit DEC             : -        : CUNIT2   : str        :   deg                       : DEC unit            : F
+  Right Ascension             : RA       : RA       : float      :   -                         : deg                 : F
+  Declination                 : DEC      : DEC      : float      :   -                         : deg                 : F
+  Right Ascension WCS         : -        : CRVAL1   : float      :   -                         : deg                 : F
+  Declination WCS             : -        : CRVAL2   : float      :   -                         : deg                 : F
+###
+### (remove this comment): This section is self-explanatory.
+###
+# OTHER
+  Original filename           : -        : FILENAME : str        :   -                         : original filename   : F
+###
+### (remove this comment): In this section you can provide some physical information about your images. Do they still have the overscan section
+###                        even after the calibration process? (more common than you may think...) Or maybe usefull detector area is much smaller
+###                        due to some optical effect? The please specify trim section. You may also specify some information about flat-field
+###                        images that you usually use for the purpose of calibration.
+###
+# CALIBRATION
+  Overscan                    : -        : OVERSCAN : str        :  No                         : does overscan exist            : F
+  Trim section                : TRIMSEC  : TRIMSEC  : str        :  [54:2101,1:2048]           : specifies initial trim section (useful data area) : F
+  Low good flat level         : -        : FLATLOW  : float      :  15000                      : ADU low threshold              : F 
+  High good flat level        : -        : FLATHIGH : float      :  55000                      : ADU highthreshold              : F 
+###
+### (remove this comment): Here you can provide some additional info about your camera, telescope, observatory or other. Please, note that every
+###                        line is a comment (has to be preceeded by '#' sign).
+###
+# CCD MARCONI (2048x2048): 
+# GAIN = 1.65 e-
+# Read Noise = 4.8 e-
+# Dark Current = 1.0 e-/pix/h - literally non-existent
+# Plate scale = 0.14 arcsecond/pixels
+# FOV = 4.5 x 4.5 arcmin
+# * - these fields are dependent on one another

@@ -1,0 +1,128 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 targets_extras staticfiles bhtom_tags %}
+{% block title %}Black Hole list{% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_common/css/main.css' %}">
+{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="row">
+      <div class="col-md-12">
+        <span class="float-right">
+        {{ target_count }} Targets &nbsp;
+        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Create Targets
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+          <a class="dropdown-item" href="{% url 'bhlist_create' %}" title="Create a Target">Create a Target</a>
+          <a class="dropdown-item" href="{% url 'targets:import' %}" title="Import Targets">Import Targets</a>
+          <a class="dropdown-item" href="{% url 'tom_catalogs:query' %}" title="Catalog Search">Catalog Search</a>
+        </div>
+<!--        <a href="{% url 'datatools:update-reduced-data-gaia' %}" class="btn btn-primary" title="Update All Targets">Update All Targets</a>
+-->
+        <button onclick="document.getElementById('invisible-export-button').click()" class="btn btn-primary">Export Filtered Targets</button>
+         <!-- use an invisible button, because the key "Enter" event will triggered the first submit button and we want the default action to be applying filter -->
+      </span>
+      </div>
+    </div>
+    <!-- display map of targets -->
+    <div class="container text-center">
+    {% select_target_js %}
+    {% bh_target_distribution filter.qs %}
+    </div>
+<!-- display events-->
+    <label id="displaySelected"></label>
+    <button id="optionSelectAll" type="button" class="btn btn-link" onClick="select_all({{ target_count }})"></button>
+    <form id="grouping-form" action="{% url 'add_remove_grouping' %}" method="POST">
+        {% csrf_token %}
+
+  <div class="form-group d-flex justify-content-end align-items-baseline">
+      <label>Add/Remove from grouping</label>
+      <select name="grouping" class="form-control w-25 ml-1">
+        {% for grouping in groupings %}
+        <option value="{{ grouping.id }}">{{ grouping.name }}</option>
+        {% endfor %}
+      </select>
+      <input type="hidden" value="{{ query_string }}" name="query_string">
+      <input type="hidden" value="False" id="isSelectAll" name="isSelectAll">
+      <button type="submit" class="btn btn-outline-primary ml-1" name="add">Add</button>
+      <button type="submit" class="btn btn-outline-danger ml-1" name="remove">Remove</button>
+    </div>
+
+      <script type="text/javascript" src="{% static 'bhtom/sorttable.js' %}"></script>
+      <table class="table table-hover sortable">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectPage" onClick="select_page(this, {{ target_count }})" /></th>
+            <th>Event Name/Aliases</th>
+            <th>RA</th>
+            <th>Dec</th>
+            <th>Number of Observations</th>
+            <th>Last Gaia [mag]</th>
+            <th>Target Importance</th>
+            <th>Time from last obs [days]</th>
+            <th>Required Cadence [days]</th>
+            <th>Observing Priority</th>
+            <th>Sun distance [deg]</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for target in object_list %}
+          <tr>
+            <td><input type="checkbox" name="selected-target" value="{{ target.id }}" onClick="single_select()"/></td>
+            <td>
+                <a href="{% url 'bhlist_detail' target.id %}" title="{{ target.name }}">{{ target.names|join:", " }}</a>
+            </td>
+            <td>{{ target.ra }}</td>
+            <td>{{ target.dec }}</td>
+            <td>{{ target.reduceddatum_set.count }}</td>
+            <td>{{ target|target_extra_field:"maglast" }}</td>
+            <td>{{ target|target_extra_field:"priority" }}</td>
+            <td>{{ target.dt|floatformat:1 }}</td>
+            <td>{{ target|target_extra_field:"cadence"|floatformat:1}}</td>
+            {# <td>{{ target.cadencepriority|floatformat:1}}</td> #}
+    {% if target.cadencepriority >= 10 %}<td class="red">
+    {% else %}<td>{% endif %}
+            {{ target.cadencepriority|floatformat:1 }}
+</td>
+            <td>{{ target|target_extra_field:"Sun_separation"|floatformat:0}}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5">
+              {% if target_count == 0 %}
+              No targets yet. You might want to <a href="{% url 'bhlist_create' %}">create a target manually</a>
+              or <a href="{% url 'tom_alerts:list' %}">import one from an alert broker</a>.
+              {% else %}
+              No targets match those filters.
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </form>
+    {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+  </div>
+
+    <div class="col-md-12">
+        <hr style="height:1px;background-color:red;border:none;" noshade />
+    </div>
+
+    <div class="col-md-6">
+   <h3>Filter targets</h3>
+  {{ filter.fields }}
+    <form action="" method="get" class="form">
+      {% bootstrap_form filter.form exclude='tweet,epoch,pm_ra,pm_dec,galactic_lng,galactic_lat,distance,distance_err' %}
+      {% buttons %}
+        <button type="submit" class="btn btn-primary">
+          Filter
+        </button>
+        <a href="{% url 'targets' %}" class="btn btn-secondary" title="Reset">Reset</a>
+        <button type="submit" formaction="{% url 'targets:export' %}" id="invisible-export-button" style="display:none"></button>
+      {% endbuttons %}
+    </form>
+  </div>
+
+{% endblock %}

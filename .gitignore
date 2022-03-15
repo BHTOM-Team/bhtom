@@ -1,7 +1,19 @@
+# Migrations
+bhtom/migrations/
+
+# Static files
+_static/
+
+# logs
+*.log
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# PyCharm
+.idea/
 
 # C extensions
 *.so
@@ -106,8 +118,8 @@ venv.bak/
 
 #MY STUFF:
 secret_stuff.txt
-bhtom/local_settings.py
-
+settings/local_settings.py
+run.sh
 runtime.txt
 
 gunicorn-access.log

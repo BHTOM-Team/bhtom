@@ -1,0 +1,64 @@
+<div class="text" style="font-family: 'Montserrat', sans-serif">
+  <h1>Microlensing model for <b style="color:#1b6d85">{{ target|safe }}</b></h1>
+    <p style="font-size: small; text-align: justify">This module aims to detect gravitational microlensing - more precisely it fits the Paczyński curve to given data and evaluates the credibility of this operation.</p>
+    <hr>
+</div>
+<div class="light-curve" style="font-family: 'Montserrat', sans-serif">
+    <p style="color: #ba2121">{{ errors|safe }}</p>
+    <p>Confidence level: <span style="position: absolute; right: 2rem">{{ confidenceLevel_value|safe }}</span></p>
+    <p>Significance level: <span style="position: absolute; right: 2rem">{{ significanceLevel_value|safe }}</span></p>
+    <p>Maximum accepted error: <span style="position: absolute; right: 2rem">{{ maximumError_value|safe }}</span></p>
+    <form method="get" >
+        <label for="fname">New significance level: </label>
+        <span style="position: absolute; right: 2rem">
+            <select id="slevel" name="slevel" style="font-family: 'Montserrat', sans-serif">
+            <option value="0.995">0.995</option>
+            <option value="0.975">0.975</option>
+            <option value="0.2">0.2</option>
+            <option value="0.1">0.1</option>
+            <option value="0.05">0.05</option>
+            <option value="0.025">0.025</option>
+            <option value="0.02">0.02</option>
+            <option value="0.01">0.01</option>
+            <option value="0.005">0.005</option>
+            <option value="0.002">0.002</option>
+            <option value="0.001">0.001</option>
+            </select>
+        </span><br><br>
+        <label for="fname">New maximum accepted error [0-1]:</label>
+        <span style="position: absolute; right: 2rem">
+            <input type="number" id="clevel" name="clevel" min="0" max="1" step="0.01" value="0.05" style="font-family: 'Montserrat', sans-serif">
+        </span>
+        <br><br>
+        <input type="submit" style="color: whitesmoke; background: #1b6d85; border: none; border-radius: 5px;padding: 10px" value="Reload data">
+    </form>
+    <hr>
+    <p>{{ criticalLevel|safe }}<span style="position: absolute; right: 2rem">{{ criticalLevel_value|safe }}</span></p>
+    <p>{{ Chi2Test|safe }}<span style="position: absolute; right: 2rem">{{ Chi2Test_value|safe }}</span></p>
+    <p>{{ NDF|safe }}<span style="position: absolute; right: 2rem">{{ NDF_value|safe }}</span></p>
+    <p>{{ Chi2NDF|safe }}<span style="position: absolute; right: 2rem">{{ Chi2NDF_value|safe }}</span></p>
+    <p style="color:#1b6d85; text-align: justify"><b>{{ conclusion|safe }}</b></p>
+    <hr>
+    {{ plot|safe }}
+    <hr>
+    <h4>Fitting curve properties<span style="position: absolute; right: 2rem">(years, months, days) |JD time</span></h4>
+    <p>{{ microStartTime|safe }}<span style="position: absolute; right: 2rem">{{ microStartTime_value|safe }}</span></p>
+    <p>{{ microEndTime|safe }}<span style="position: absolute; right: 2rem">{{ microEndTime_value|safe }}</span></p>
+    <p>{{ duration|safe }}<span style="position: absolute; right: 2rem">{{ duration_value|safe }}</span></p>
+    <p>{{ remainingTime|safe }}<span style="position: absolute; right: 2rem">{{ remainingTime_value|safe }}</span></p>
+    <p>{{ maximumMagnitude|safe }}<span style="position: absolute; right: 2rem">{{ maximumMagnitude_value|safe }}</span></p>
+    <p>{{ maximumMagnitudeTime|safe }}<span style="position: absolute; right: 2rem">{{ maximumMagnitudeTime_value|safe }}</span></p>
+    <hr>
+    <h4>Fitted parameters (uncertainty)<span style="position: absolute; right: 2rem">Check</span></h4>
+    <p>{{ t0|safe }}<span style="position: absolute; right: 2rem">{{ t0_check|safe }}</span></p>
+    <p>{{ te|safe }}<span style="position: absolute; right: 2rem">{{ te_check|safe }}</span></p>
+    <p>{{ u0|safe }}<span style="position: absolute; right: 2rem">{{ u0_check|safe }}</span></p>
+    <p>{{ I0|safe }}<span style="position: absolute; right: 2rem">{{ I0_check|safe }}</span></p>
+    <p>{{ fs|safe }}</p>
+    <hr>
+    <p style="font-size: small">{{ executionTime|safe }}</p>
+</div>
+<div style="font-family: 'Montserrat', sans-serif; color:#7F8177">
+    <hr>
+    <p>Created by Kacper Raciborski, University of Warsaw.</p>
+</div>

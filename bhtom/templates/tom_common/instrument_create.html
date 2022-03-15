@@ -1,0 +1,35 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 %}
+{% block title %}Add observatory{% endblock %}
+{% block content %}
+{{ users }}
+
+{% if object %}
+<form action="{% url 'instrument_update' object.id %}" enctype="multipart/form-data" method="POST">
+{% else %}
+  <h4> Add a new Observatory/Instrument to your list.
+  </h4><p>
+      Here you can add a new observatory/instrument to your list in two ways. 
+      <br>
+      You can choose an observatory from the list of already registered ones. This will generate a new hashtag for CPCS with your name.
+      <br>
+      If your observatory is not yet registered you can create a new entry. 
+    </p>
+
+<form action="{% url 'instrument_create' %}" enctype="multipart/form-data" method="POST">
+{% endif %}
+{% csrf_token %}
+{% bootstrap_form form %}
+{% buttons %}
+  {% if object %}
+    <button type="submit" class="btn btn-primary" title="Update">Update</button>
+  {% else %}
+    <button type="submit" class="btn btn-primary" title="Add this Observatory to my list"> Add to my list</button>
+    <p>
+      <hr>
+    <a href="{% url 'observatory_create' %}" title="Create new Observatory (if not on the list)" class="btn btn-primary">Create new Observatory</a>
+  {% endif %}
+
+{% endbuttons %}
+</form>
+{% endblock %}

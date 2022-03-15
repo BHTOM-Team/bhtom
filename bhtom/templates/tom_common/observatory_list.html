@@ -1,0 +1,108 @@
+{% extends 'tom_common/base.html' %}
+{% load comments bootstrap4 tom_common_extras targets_extras observation_extras dataproduct_extras publication_extras static cache %}
+{% block title %}Target {{ object.name }}{% endblock %}
+{% block additional_css %}
+<link rel="stylesheet" href="{% static 'tom_targets/css/main.css' %}">
+{% endblock %}
+
+{% bootstrap_javascript jquery='True' %}
+{% block content %}
+<h4>List of observatories</h4>
+<p>
+List of your registered observatories/instruments you can use for uploading the data for processing.
+You should register an observatory in your account if you want a datapoint to be labeled with your name.
+<br>
+Here you can add a new observatory to your list if you are planning to upload images or instrumental photometry for it.
+You can choose one from the list of already registered observatories, or create a new one.
+Note that different instrument (e.g. CCD) on the same telescope counts as a different observatory.
+<br>
+CPCS Hashtags are your unique login details per observatory, which can be used in
+the <a href="http://gsaweb.ast.cam.ac.uk/followup/">Cambridge Photometric Calibration Server</a>.
+However, you can also upload your data to the CPCS directly from BHTOM instead.
+</p>
+
+<div class="row">
+  <div class="col-md-12">
+    <ul class="nav nav-tabs" id="tabs">
+      <li class="nav-item">
+        <span class="nav-link active" data-target="#user" data-toggle="tab">My Observatories</span>
+      </li>
+      <li class="nav-item">
+        <span class="nav-link" data-target="#all" data-toggle="tab">All</span>
+      </li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane" id="all">
+        <script type="text/javascript" src="{% static 'bhtom/sorttable.js' %}"></script>
+          <table class="table table-striped sortable">
+          <thead>
+            <tr>
+              <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>Prefix</th><th>Matching radius</th><th>Comment</th><th>Only Instrumental photometry file</th>
+              <th>Details</th>
+              {% if request.user.is_superuser %}
+              <th>Update</th><th>Delete</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for observatory in observatory_list %}
+            <tr>
+              <td>{{ observatory.obsName }}</td>
+              <td>{{ observatory.lon }}</td>
+              <td>{{ observatory.lat }}</td>
+              <td>{{ observatory.prefix }}</td>
+              <td>{{ observatory.matchDist }} arcsec</td>
+              <td>{{ observatory.comment }}</td>
+              <td>{{ observatory.cpcsOnly }}</td>
+              <td>
+                <a href="{% url 'observatory_detail' pk=observatory.id %}" title="Observatory details" class="btn  btn-primary">Details</a>
+              </td>
+              {% if request.user.is_superuser %}
+              <td>
+                <a href="{% url 'observatory_update' pk=observatory.id %}" title="Update observatory" class="btn  btn-primary">Edit</a>
+              </td>
+              <td>
+                <a href="{% url 'observatory_delete' pk=observatory.id %}" title="Delete observatory" class="btn  btn-danger">Delete</a>
+              </td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="tab-pane active" id="user">
+           <a href="{% url 'instrument_create' %}" title="Add new observatory" class="btn btn-outline-primary">Add new observatory</a>
+        <table class="table table-striped sortable">
+          <thead>
+            <tr>
+              <th>Observatory Name</th><th>Lon</th><th>Lat</th><th>CPCS Hashtag</th><th>Activation</th><th>Comment</th><th>Details</th>
+              <th style="pointer-events:none">Update</th><th style="pointer-events:none">Delete</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for instrument_id, hashtag, isActive, comment, observatory in observatory_user_list %}
+            <tr>
+              <td>{{ observatory.obsName }}</td>
+              <td>{{ observatory.lon }}</td>
+              <td>{{ observatory.lat }}</td>
+              <td>{{ hashtag }}</td>
+              <td>{% if isActive %} True {%else%} False{% endif %}</td>
+              <td><div title="{{comment}}">{{ comment|truncatechars:15 }}</div></td>
+              <td>
+                <a href="{% url 'observatory_detail' pk=observatory.id %}" title="Observatory details" class="btn  btn-primary">Details</a>
+              </td>
+              <td>
+                <a href="{% url 'instrument_update' pk=instrument_id %}" title="Update User observatory" class="btn  btn-primary">Edit</a>
+              </td>
+              <td>
+                <a href="{% url 'instrument_delete' pk=instrument_id %}" title="Delete User observatory" class="btn  btn-danger">Delete</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+  </div>
+    </div>
+</div>
+{% endblock %}

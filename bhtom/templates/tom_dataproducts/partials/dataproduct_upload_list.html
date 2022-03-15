@@ -1,0 +1,173 @@
+{% load bootstrap4 static targets_extras cache %}
+
+{% bootstrap_javascript jquery='True' %}
+{% block content %}
+{% include 'tom_dataproducts/partials/js9_scripts.html' %}
+
+<ul class="nav nav-tabs" id="tabs">
+    <li class="nav-item">
+        <span class="nav-link active" data-target="#all" data-toggle="tab">All</span>
+    </li>
+    <li class="nav-item">
+        <span class="nav-link" data-target="#user" data-toggle="tab">Your file</span>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane active" id="all">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>Photometry</th>
+                    <th>Type</th>
+                    <th>Observatory</th>
+                    <th>Owner</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                {% for Fit_id, Data_id, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type, feature, Fits_owner, data_stored in tabData %}
+
+                <tr>
+                    {% if type != 'photometry_cpcs' %}
+                        {% if data_stored == True  and user.is_staff %}
+                            {% if type == 'fits_file' %}
+                                <td><div title="{{File}}"><a href="{% url 'fits_download' file_id=Data_id %} ">{{ File|truncatechars:15 }}</a></div></td>
+                            {% else %}
+                                <td><div title="{{File}}"><a href="{% url 'data_download' file_id=Data_id %} ">{{ File|truncatechars:15 }}</a></div></td>
+                            {% endif %}
+                        {% else %}
+                            <td><div title="{{File}}">{{ File|truncatechars:15 }}</div></td>
+                        {% endif %}
+
+                    {% else %}
+                        <td></td>
+                    {% endif %}
+
+                   {% if Photometry != None %}
+                        {% if user.is_staff and Fit_id is not None %}
+                            <td><div title="{{Photometry}}"><a href="{% url 'photometry_download' file_id=Fit_id %}">{{ Photometry|truncatechars:10 }}</a></div></td>
+                        {% else %}
+                            <td><div title="{{Photometry}}">{{ Photometry|truncatechars:15 }}</div></td>
+                        {% endif %}
+                   {% else %}
+                        <td></td>
+                   {% endif %}
+
+                   {% if type == 'fits_file' %}
+                      <td><div title="Fits image">Fits image</div></td>
+                   {% elif type == 'photometry_cpcs' %}
+                      <td><div title="	Instrumental photometry">Instrumental photometry</div></td>
+                   {% else %}
+                       <td><div title="{{type}}">{{ type }}</div></td>
+                   {% endif %}
+
+                   {% if Observatory != None %}
+                        <td><div title="{{Observatory}}">{{ Observatory }}</div></td>
+                   {% else %}
+                       <td></td>
+                   {% endif %}
+
+                   {% if Fits_owner != None %}
+                        <td><div title="{{Fits_owner.first_name}} {{Fits_owner.last_name}}">{{ Fits_owner.first_name}} {{Fits_owner.last_name}}</div></td>
+                   {% else %}
+                       <td></td>
+                   {% endif %}
+
+                    {% if Status != None %}
+                        <td><div title="{{Status}}">{{ Status|truncatechars:22 }}</div></td>
+                    {% else %}
+                        <td></td>
+                    {% endif %}
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+
+     <div class="tab-pane" id="user">
+            <table class="table">
+                  <thead>
+                    <tr>
+                      <th>File</th>
+                      <th>Photometry</th>
+                      <th>Type</th>
+                      <th>Observatory</th>
+                      <th>Status</th>
+                      <th></th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+
+                  {% for Fit_id, Data_id, File, PhotometryUrl, Photometry, Filter, Observatory, Status, MJD, expTime, type, feature, Fits_owner, data_stored in tabData %}
+
+                    {% if user.id == Fits_owner.id %}
+                      <tr>
+                            {% if type != 'photometry_cpcs' %}
+                                {% if data_stored == True %}
+                                    {% if type == 'fits_file' %}
+                                        <td><div title="{{File}}"><a href="{% url 'fits_download' file_id=Data_id %} ">{{ File|truncatechars:15 }}</a></div></td>
+                                    {% else %}
+                                        <td><div title="{{File}}"><a href="{% url 'data_download' file_id=Data_id %} ">{{ File|truncatechars:15 }}</a></div></td>
+                                    {% endif %}
+
+                                {% else %}
+                                     <td><div title="{{File}}">{{ File|truncatechars:15 }}</div></td>
+                                {% endif %}
+
+                          {% else %}
+                              <td></td>
+                          {% endif %}
+
+                            {% if Photometry != None %}
+                                <td><div title="{{Photometry}}"><a href="{% url 'photometry_download' file_id=Fit_id %}">{{ Photometry|truncatechars:10 }}</a></div></td>
+                            {% else %}
+                                <td></td>
+                            {% endif %}
+
+                           {% if type == 'fits_file' %}
+                              <td><div title="Fits image">Fits image</div></td>
+                           {% elif type == 'photometry_cpcs' %}
+                              <td><div title="	Instrumental photometry">Instrumental photometry</div></td>
+                           {% else %}
+                               <td><div title="{{type}}">{{ type }}</div></td>
+                           {% endif %}
+
+                           {% if Observatory != None %}
+                                <td><div title="{{Observatory}}">{{ Observatory }}</div></td>
+                           {% else %}
+                               <td></td>
+                           {% endif %}
+
+                           {% if Status != None %}
+                                <td><div title="{{Status}}">{{ Status|truncatechars:22 }}</div></td>
+                           {% else %}
+                               <td></td>
+                           {% endif %}
+
+                            {% if type == 'fits_file' or type == 'photometry_cpcs' %}
+                               <td>
+                                 <a href="{% url 'bhlist_file_detail' pk=target.id pk_fit=Fit_id%}" title="Show details" class="btn btn-primary">Detail</a>
+                               </td>
+                            {% else %}
+                                <td></td>
+                           {% endif %}
+
+
+                      </tr>
+                    {% endif %}
+                  {% endfor %}
+
+
+                  </tbody>
+            </table>
+
+     </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,52 @@
+{% load tom_common_extras targets_extras %}
+{% if perms.tom_targets.add_target and perms.tom_targets.change_target %}
+<a href="{% url 'bhlist_update' pk=target.id %}" title="Update target" class="btn  btn-primary">Update</a>
+{% endif %}
+{% if perms.tom_targets.delete_target %}
+<a href="{% url 'bhlist_delete' pk=target.id %}" title="Delete target" class="btn  btn-warning">Delete</a>
+{% endif %}
+{% if perms.tom_targets.add_target and perms.tom_targets.change_target %}
+<a href="{% url 'datatools:fetch-target-names' %}?target_id={{ target.id }}" title="Look up other names this target is identified by in catalogs" class="btn  btn-primary">Fetch target names</a>
+{% endif %}
+<dl class="row">
+  {% for target_name in target.names %}
+    {% if forloop.first %}
+      <dt class="col-sm-6">Names</dt>
+    {% else %}
+      <dt class="col-sm-6">&nbsp;</dt>
+    {% endif %}
+    <dd class="col-sm-6">{{ target_name }}</dd>
+  {% endfor %}
+  {% for key, value in target.as_dict.items %}
+  {% if value and key != 'name' %}
+  <dt class="col-sm-6">{% verbose_name target key %}</dt>
+  <dd class="col-sm-6">{{ value }}</dd>
+  {% endif %}
+  {% if key == 'ra' %}
+    <dt class="col-sm-6">&nbsp;</dt>
+    <dd class="col-sm-6">{{ value|deg_to_sexigesimal:"hms" }}</dd>
+  {% endif%}
+  {% if key == 'dec' %}
+    <dt class="col-sm-6">&nbsp;</dt>
+    <dd class="col-sm-6">{{ value|deg_to_sexigesimal:"dms" }}</dd>
+  {% endif%}
+  {% endfor %}
+</dl>
+<dl class="row">
+{% for key, value in extras.items %}
+    <dt class="col-sm-6">{{ key }}</dt>
+    {% if key == 'Sun_separation' %} <!-- Do the same also Galactic coords here but trim to 6 digits -->
+    <dd class="col-sm-6">{{ value|floatformat:1}}</dd>
+    {% else %}
+    <dd class="col-sm-6">{{ value }}</dd>
+    {% endif %}
+{% endfor %}
+</dl>
+<!-- LW.01.2021: Never used those, commening out: 
+  <h4>Tags</h4>
+<dl class="row">
+{% for key, value in target.tags.items %}
+  <dt class="col-sm-6">{{ key }}</dt>
+  <dd class="col-sm-6">{{ value }}</dd>
+{% endfor %}
+</dl> -->
