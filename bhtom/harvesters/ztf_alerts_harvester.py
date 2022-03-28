@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 from typing import Dict, List, Optional, Any
 
 import numpy as np
@@ -8,8 +7,8 @@ import requests
 from astropy.time import Time, TimezoneInfo
 from tom_dataproducts.models import ReducedDatum
 
-### how to pass those variables from settings?
 from bhtom.models import ReducedDatumExtraData, refresh_reduced_data_view
+from bhtom.utils.coordinate_utils import update_sun_separation
 from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointExtraData
 
 
@@ -30,11 +29,11 @@ TWITTER_SECRET = read_secret('TWITTER_SECRET')
 TWITTER_ACCESSTOKEN = read_secret('TWITTER_ACCESSTOKEN')
 TWITTER_ACCESSSECRET = read_secret('TWITTER_ACCESSSECRET')
 
-
 MARS_URL: str = 'https://mars.lco.global/'
 ZTF_OBSERVATORY_NAME: str = 'Palomar'
 logger: logging.Logger = logging.getLogger(__name__)
 filters: Dict[int, str] = {1: 'g_ZTF', 2: 'r_ZTF', 3: 'i_ZTF'}
+
 
 # reads light curve from Gaia Alerts - used in updatereduceddata_gaia
 # also reads CPCS and ZTF data here - FIXME: move some day to separate method?
@@ -42,6 +41,7 @@ filters: Dict[int, str] = {1: 'g_ZTF', 2: 'r_ZTF', 3: 'i_ZTF'}
 # if update_me == false, only the SUN position gets updated, not the LC
 
 def update_ztf_lc(target, requesting_user_id):
+    update_sun_separation(target)
     ##deciding whether to update the light curves or not
     dontupdateme = "None"
     try:
@@ -98,7 +98,7 @@ def update_ztf_lc(target, requesting_user_id):
                     reduced_datum=rd,
                     defaults={'extra_data': ObservationDatapointExtraData(facility_name=ZTF_OBSERVATORY_NAME,
                                                                           owner='ZTF').to_json_str()
-                             }
+                              }
                 )
 
         refresh_reduced_data_view()

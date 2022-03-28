@@ -1,32 +1,29 @@
 import json
 import logging
-import os
-from datetime import datetime
 from decimal import Decimal
+from typing import Optional, Any
+
 import requests
-from astropy import units as u
-from astropy.coordinates import get_sun, SkyCoord
 from astropy.time import Time, TimezoneInfo
 from tom_catalogs.harvester import AbstractHarvester
 from tom_dataproducts.models import ReducedDatum
 from tom_targets.models import Target
 
-from typing import Optional, Any
-
 ### how to pass those variables from settings?
 from bhtom.models import ReducedDatumExtraData, refresh_reduced_data_view
+from bhtom.utils.coordinate_utils import update_sun_separation
 from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointExtraData
 
 try:
     from settings import local_settings as secret
 except ImportError:
     secret = None
-    
+
 
 def read_secret(secret_key: str, default_value: Any = '') -> str:
     return getattr(secret, secret_key, default_value) if secret else default_value
 
-    
+
 TWITTER_APIKEY = read_secret('TWITTER_APIKEY')
 TWITTER_SECRET = read_secret('TWITTER_SECRET')
 TWITTER_ACCESSTOKEN = read_secret('TWITTER_ACCESSTOKEN')
@@ -133,12 +130,8 @@ class GaiaAlertsHarvester(AbstractHarvester):
 
 def update_gaia_lc(target, requesting_user_id):
     from .utils.last_jd import update_last_jd
-    # # updating SUN separation - moved to update_all_lightcurves.py
-    # sun_pos = get_sun(Time(datetime.utcnow()))
-    # obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg)
-    # Sun_sep = sun_pos.separation(obj_pos).deg
-    # target.save(extras={'Sun_separation': Sun_sep})
-    # print("DEBUG: new Sun separation: ", Sun_sep)
+    # # updating SUN separation
+    update_sun_separation(target)
 
     # deciding whether to update the light curves or not
     try:
@@ -199,7 +192,7 @@ def update_gaia_lc(target, requesting_user_id):
                     reduced_datum=rd,
                     defaults={'extra_data': ObservationDatapointExtraData(facility_name="Gaia",
                                                                           owner="Gaia").to_json_str()
-                             }
+                              }
                 )
             except Exception as e:
                 logger.error(f'Error while updating LC for target {target}: {e}')

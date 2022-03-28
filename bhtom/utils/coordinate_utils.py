@@ -1,5 +1,21 @@
-from astropy.coordinates import SkyCoord, Galactic
+from datetime import datetime
+
+from astropy import units as u
+from astropy.coordinates import get_sun, SkyCoord
+from astropy.time import Time
 from tom_targets.models import Target
+
+
+def update_sun_separation(target: Target):
+    """
+    Update the sun separation using astropy
+    @param target: Observation target
+    """
+    sun_pos = get_sun(Time(datetime.utcnow()))
+    obj_pos = SkyCoord(target.ra, target.dec, unit=u.deg)
+    Sun_sep = sun_pos.separation(obj_pos).deg
+    target.save(extras={'Sun_separation': Sun_sep})
+    print("DEBUG: new Sun separation: ", Sun_sep)
 
 
 def fill_galactic_coordinates(target: Target) -> Target:

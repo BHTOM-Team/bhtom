@@ -11,6 +11,7 @@ from tom_dataproducts.models import ReducedDatum
 from tom_targets.models import Target
 
 from bhtom.models import ReducedDatumExtraData, refresh_reduced_data_view
+from bhtom.utils.coordinate_utils import update_sun_separation
 from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointExtraData
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ def fetch_aavso_photometry(target: Target,
                            from_time: Optional[Time] = None,
                            to_time: Time = Time.now(),
                            delimiter: str = "~") -> Tuple[Optional[pd.DataFrame], Optional[int]]:
+    update_sun_separation(target)
     target_name: str = target.name
     target_id: int = target.pk
 
