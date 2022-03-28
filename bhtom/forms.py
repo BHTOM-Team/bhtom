@@ -1,25 +1,19 @@
+import logging
+
+from astropy import units as u
+from astropy.coordinates import Angle
 from django import forms
 from django.conf import settings
-
-from tom_targets.models import Target
-from tom_observations.models import ObservationRecord
-from bhtom.models import Observatory, Instrument, Catalogs, BHTomUser
-from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import UserCreationForm, UsernameField
-
-from astropy.coordinates import Angle
-from astropy import units as u
+from django.contrib.auth.models import User, Group
 from django.forms import ValidationError, inlineformset_factory
-from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
-
+from tom_observations.models import ObservationRecord
 from tom_targets.models import (
     Target, TargetExtra, TargetName, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
     REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 )
 
-from captcha.fields import ReCaptchaField
-
-import logging
+from bhtom.models import Observatory, Instrument, Catalogs, BHTomUser
 
 logger = logging.getLogger(__name__)
 
@@ -160,24 +154,28 @@ class DataProductUploadForm(forms.Form):
         self.fields['observer'].initial = f'{user.first_name} {user.last_name}'
 
 
-
 class ObservatoryCreationForm(forms.ModelForm):
     cpcsOnly = forms.BooleanField(
         label='Only instrumental photometry file',
         required=False
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['gain'].required = True
-        self.fields['readout_noise'].required = True
-        self.fields['binning'].required = True
-        self.fields['saturation_level'].required = True
-        self.fields['pixel_scale'].required = True
-        self.fields['readout_speed'].required = True
-        self.fields['pixel_size'].required = True
-        self.fields['approx_lim_mag'].required = True
-        self.fields['filters'].required = True
+    gain = forms.FloatField(required=True,
+                            widget=forms.NumberInput(attrs={'placeholder': '2'}))
+    readout_noise = forms.FloatField(required=True,
+                                     widget=forms.NumberInput(attrs={'placeholder': '2'}))
+    saturation_level = forms.FloatField(required=True,
+                                        widget=forms.NumberInput(attrs={'placeholder': '63000'}))
+    pixel_scale = forms.FloatField(required=True,
+                                   widget=forms.NumberInput(attrs={'placeholder': '0.8'}))
+    readout_speed = forms.FloatField(required=True,
+                                     widget=forms.NumberInput(attrs={'placeholder': '3'}))
+    pixel_size = forms.FloatField(required=True,
+                                  widget=forms.NumberInput(attrs={'placeholder': '13.5'}))
+    approx_lim_mag = forms.FloatField(required=True,
+                                      widget=forms.NumberInput(attrs={'placeholder': '18.0'}))
+    filters = forms.CharField(required=True,
+                              widget=forms.NumberInput(attrs={'placeholder': 'V,R,I'}))
 
     class Meta:
         model = Observatory
@@ -241,12 +239,14 @@ class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
     groups = forms.ModelMultipleChoiceField(Group.objects.all().exclude(name='Public'),
                                             required=False, widget=forms.CheckboxSelectMultiple
-                                            ,help_text="Select all groups!")
-    latex_name = forms.CharField(required=True, help_text="Your name as you want it to appear correctly in potential publications")
-    latex_affiliation = forms.CharField(required=True, help_text="Your affiliation as you want it to appear correctly in potential publications")
+                                            , help_text="Select all groups!")
+    latex_name = forms.CharField(required=True,
+                                 help_text="Your name as you want it to appear correctly in potential publications")
+    latex_affiliation = forms.CharField(required=True,
+                                        help_text="Your affiliation as you want it to appear correctly in potential publications")
     address = forms.CharField(required=True, help_text="Your address to be displayed in potential publications")
     about_me = forms.CharField(
-        widget=forms.Textarea(attrs={'rows':3}),
+        widget=forms.Textarea(attrs={'rows': 3}),
         label="About me",
         help_text="Tell us who you are and why do you want to join BHTOM?",
         required=True

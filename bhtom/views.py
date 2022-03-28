@@ -1304,6 +1304,7 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
             # super().form_valid(form)
 
             user = self.request.user
+
             obsName = form.cleaned_data['obsName']
             lon = form.cleaned_data['lon']
             lat = form.cleaned_data['lat']
@@ -1318,6 +1319,7 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
                 prefix = obsName
 
             gain = form.cleaned_data['gain']
+
             readout_noise = form.cleaned_data['readout_noise']
             binning = form.cleaned_data['binning']
             saturation_level = form.cleaned_data['saturation_level']
