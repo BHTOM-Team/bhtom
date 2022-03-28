@@ -167,11 +167,23 @@ class ObservatoryCreationForm(forms.ModelForm):
         required=False
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['gain'].required = True
+        self.fields['readout_noise'].required = True
+        self.fields['binning'].required = True
+        self.fields['saturation_level'].required = True
+        self.fields['pixel_scale'].required = True
+        self.fields['readout_speed'].required = True
+        self.fields['pixel_size'].required = True
+        self.fields['approx_lim_mag'].required = True
+        self.fields['filters'].required = True
+
     class Meta:
         model = Observatory
         fields = ('obsName', 'lon', 'lat', 'altitude',
                   'matchDist', 'cpcsOnly', 'fits',
-                  'gain', 'binning', 'saturation_level',
+                  'gain', 'readout_noise', 'binning', 'saturation_level',
                   'pixel_scale', 'readout_speed', 'pixel_size',
                   'approx_lim_mag', 'filters',
                   'comment')

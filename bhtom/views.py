@@ -1317,6 +1317,17 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
             else:
                 prefix = obsName
 
+            gain = form.cleaned_data['gain']
+            readout_noise = form.cleaned_data['readout_noise']
+            binning = form.cleaned_data['binning']
+            saturation_level = form.cleaned_data['saturation_level']
+            pixel_scale = form.cleaned_data['pixel_scale']
+            readout_speed = form.cleaned_data['readout_speed']
+            pixel_size = form.cleaned_data['pixel_size']
+            approx_lim_mag = form.cleaned_data['approx_lim_mag']
+            filters = form.cleaned_data['filters']
+            comment = form.cleaned_data['comment']
+
             observatory = Observatory.objects.create(
                 obsName=obsName,
                 lon=lon,
@@ -1327,7 +1338,17 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
                 cpcsOnly=cpcsOnly,
                 fits=fits,
                 obsInfo=obsInfo,
-                user=user
+                user=user,
+                gain=gain,
+                readout_noise=readout_noise,
+                binning=binning,
+                saturation_level=saturation_level,
+                pixel_scale=pixel_scale,
+                readout_speed=readout_speed,
+                pixel_size=pixel_size,
+                approx_lim_mag=approx_lim_mag,
+                filters=filters,
+                comment=comment
             )
 
             observatory.save()
