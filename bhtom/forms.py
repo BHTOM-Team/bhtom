@@ -267,9 +267,16 @@ class CustomUserCreationForm(UserCreationForm):
             user = kwargs.get('instance')
             db = BHTomUser.objects.get(user=user)
             self.fields['about_me'].initial = db.about_me
+            self.fields['about_me'].label = 'About Me*'
+
             self.fields['latex_name'].initial = db.latex_name
+            self.fields['latex_name'].label = 'Latex Name*'
+
             self.fields['latex_affiliation'].initial = db.latex_affiliation
+            self.fields['latex_affiliation'].label = 'Latex Affiliation*'
+
             self.fields['address'].initial = db.address
+            self.fields['address'].label = 'Address*'
 
         except Exception as e:
             db = None
