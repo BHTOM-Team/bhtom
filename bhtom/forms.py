@@ -164,6 +164,8 @@ class ObservatoryCreationForm(forms.ModelForm):
                             widget=forms.NumberInput(attrs={'placeholder': '2'}))
     readout_noise = forms.FloatField(required=True,
                                      widget=forms.NumberInput(attrs={'placeholder': '2'}))
+    binning = forms.FloatField(required=True,
+                               widget=forms.NumberInput(attrs={'placeholder': '1'}))
     saturation_level = forms.FloatField(required=True,
                                         widget=forms.NumberInput(attrs={'placeholder': '63000'}))
     pixel_scale = forms.FloatField(required=True,
