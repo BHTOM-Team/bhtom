@@ -1,18 +1,15 @@
 import json
 import logging
-import os
 from typing import Optional, Any, Dict
 
-import mechanize
 import numpy as np
 from astropy.time import Time, TimezoneInfo
-from tom_dataproducts.models import ReducedDatum
 from django.conf import settings
+from tom_dataproducts.models import ReducedDatum
 
 from .utils.external_service import query_external_service
 from .utils.last_jd import update_last_jd
 from ..models import ReducedDatumExtraData, refresh_reduced_data_view
-from ..utils.coordinate_utils import update_sun_separation
 from ..utils.observation_data_extra_data_utils import ObservationDatapointExtraData
 
 try:
@@ -49,7 +46,6 @@ logger = logging.getLogger(__name__)
 
 
 def update_cpcs_lc(target):
-    update_sun_separation(target)
     try:
         cpcs_name: Optional[str] = target.targetextra_set.get(key='calib_server_name').value
     except Exception as e:

@@ -11,7 +11,6 @@ from tom_targets.models import Target
 
 ### how to pass those variables from settings?
 from bhtom.models import ReducedDatumExtraData, refresh_reduced_data_view
-from bhtom.utils.coordinate_utils import update_sun_separation
 from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointExtraData
 
 try:
@@ -130,8 +129,6 @@ class GaiaAlertsHarvester(AbstractHarvester):
 
 def update_gaia_lc(target, requesting_user_id):
     from .utils.last_jd import update_last_jd
-    # # updating SUN separation
-    update_sun_separation(target)
 
     # deciding whether to update the light curves or not
     try:

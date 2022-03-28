@@ -8,7 +8,6 @@ from astropy.time import Time, TimezoneInfo
 from tom_dataproducts.models import ReducedDatum
 
 from bhtom.models import ReducedDatumExtraData, refresh_reduced_data_view
-from bhtom.utils.coordinate_utils import update_sun_separation
 from bhtom.utils.observation_data_extra_data_utils import ObservationDatapointExtraData
 
 
@@ -41,8 +40,6 @@ filters: Dict[int, str] = {1: 'g_ZTF', 2: 'r_ZTF', 3: 'i_ZTF'}
 # if update_me == false, only the SUN position gets updated, not the LC
 
 def update_ztf_lc(target, requesting_user_id):
-    update_sun_separation(target)
-    ##deciding whether to update the light curves or not
     dontupdateme = "None"
     try:
         dontupdateme = (target.targetextra_set.get(key='dont_update_me').value)
