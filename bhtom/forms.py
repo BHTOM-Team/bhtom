@@ -1,25 +1,19 @@
+import logging
+
+from astropy import units as u
+from astropy.coordinates import Angle
 from django import forms
 from django.conf import settings
-
-from tom_targets.models import Target
-from tom_observations.models import ObservationRecord
-from bhtom.models import Observatory, Instrument, Catalogs, BHTomUser
-from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import UserCreationForm, UsernameField
-
-from astropy.coordinates import Angle
-from astropy import units as u
+from django.contrib.auth.models import User, Group
 from django.forms import ValidationError, inlineformset_factory
-from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
-
+from tom_observations.models import ObservationRecord
 from tom_targets.models import (
     Target, TargetExtra, TargetName, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
     REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 )
 
-from captcha.fields import ReCaptchaField
-
-import logging
+from bhtom.models import Observatory, Instrument, Catalogs, BHTomUser
 
 logger = logging.getLogger(__name__)
 
@@ -160,18 +154,36 @@ class DataProductUploadForm(forms.Form):
         self.fields['observer'].initial = f'{user.first_name} {user.last_name}'
 
 
-
 class ObservatoryCreationForm(forms.ModelForm):
     cpcsOnly = forms.BooleanField(
         label='Only instrumental photometry file',
         required=False
     )
 
+    gain = forms.FloatField(required=True,
+                            widget=forms.NumberInput(attrs={'placeholder': '2'}))
+    readout_noise = forms.FloatField(required=True,
+                                     widget=forms.NumberInput(attrs={'placeholder': '2'}))
+    binning = forms.FloatField(required=True,
+                               widget=forms.NumberInput(attrs={'placeholder': '1'}))
+    saturation_level = forms.FloatField(required=True,
+                                        widget=forms.NumberInput(attrs={'placeholder': '63000'}))
+    pixel_scale = forms.FloatField(required=True,
+                                   widget=forms.NumberInput(attrs={'placeholder': '0.8'}))
+    readout_speed = forms.FloatField(required=True,
+                                     widget=forms.NumberInput(attrs={'placeholder': '3'}))
+    pixel_size = forms.FloatField(required=True,
+                                  widget=forms.NumberInput(attrs={'placeholder': '13.5'}))
+    approx_lim_mag = forms.FloatField(required=True,
+                                      widget=forms.NumberInput(attrs={'placeholder': '18.0'}))
+    filters = forms.CharField(required=True,
+                              widget=forms.NumberInput(attrs={'placeholder': 'V,R,I'}))
+
     class Meta:
         model = Observatory
         fields = ('obsName', 'lon', 'lat', 'altitude',
                   'matchDist', 'cpcsOnly', 'fits',
-                  'gain', 'binning', 'saturation_level',
+                  'gain', 'readout_noise', 'binning', 'saturation_level',
                   'pixel_scale', 'readout_speed', 'pixel_size',
                   'approx_lim_mag', 'filters',
                   'comment')
@@ -235,7 +247,7 @@ class CustomUserCreationForm(UserCreationForm):
     latex_affiliation = forms.CharField(required=True, help_text="Your affiliation as you want it to appear correctly in potential publications")
     address = forms.CharField(required=True, help_text="Your address to be displayed in potential publications")
     about_me = forms.CharField(
-        widget=forms.Textarea(attrs={'rows':3}),
+        widget=forms.Textarea(attrs={'rows': 3}),
         label="About me",
         help_text="Tell us who you are and why do you want to join BHTOM?",
         required=True
@@ -254,9 +266,16 @@ class CustomUserCreationForm(UserCreationForm):
             user = kwargs.get('instance')
             db = BHTomUser.objects.get(user=user)
             self.fields['about_me'].initial = db.about_me
+            self.fields['about_me'].label = 'About Me*'
+
             self.fields['latex_name'].initial = db.latex_name
+            self.fields['latex_name'].label = 'Latex Name*'
+
             self.fields['latex_affiliation'].initial = db.latex_affiliation
+            self.fields['latex_affiliation'].label = 'Latex Affiliation*'
+
             self.fields['address'].initial = db.address
+            self.fields['address'].label = 'Address*'
 
         except Exception as e:
             db = None

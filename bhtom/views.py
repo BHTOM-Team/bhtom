@@ -116,7 +116,7 @@ def computePriority(dt, priority, cadence):
 
 def deleteFits(dp):
     try:
-        logger.info('try remove fits' + str(dp.date))
+        logger.info('try remove fits' + str(dp.data))
         BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         url_base = BASE + '/data/'
         url_result = os.path.join(url_base, str(dp.data))
@@ -669,15 +669,16 @@ class fits_upload(viewsets.ModelViewSet):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         successful_uploads = []
-        BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        #BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
         for f in data_product_files:
 
             f.name = "{}_{}".format(user.id, f.name)
 
-            if os.path.exists('{0}/data/{1}/none/{2}'.format(BASE, target, f.name)):
-                #messages.error(self.request, read_secret('FILE_EXIST'))
-                return Response(status=status.HTTP_201_CREATED)
+            #if os.path.exists('{0}/data/{1}/none/{2}'.format(BASE, target, f.name)):
+             #   messages.error(self.request, read_secret('FILE_EXIST'))
+             #   logger.error('File exits: %s %s' % (str(f.name), str(target)))
+             #   return Response(status=status.HTTP_201_CREATED)
 
             dp = DataProduct(
                 target=target_id,
@@ -689,7 +690,7 @@ class fits_upload(viewsets.ModelViewSet):
 
             try:
                 run_hook('data_product_post_upload',
-                         dp, target, observatory,
+                         dp, target_id, observatory,
                          observation_filter, MJD, ExpTime,
                          dryRun, matchDist, comment,
                          user, fits_quantity,
@@ -810,8 +811,9 @@ class DataProductUploadView(FormView):
         Runs after ``DataProductUploadForm`` is validated. Saves each ``DataProduct`` and calls ``run_data_processor``
         on each saved file. Redirects to the previous page.
         """
-
+        t0 = time.time()
         if not self.request.user.has_perm('bhtom.add_bhtomfits'):
+            logger.error('no permission to upload file: %s' % (str(target)))
             messages.error(self.request, 'You have no permission to upload file.')
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
@@ -835,22 +837,27 @@ class DataProductUploadView(FormView):
         user = self.request.user
 
         if len(data_product_files) > self.MAX_FILES:
+            logger.error('upload max: %s %s' % (str(f[0].name), str(target)))
             messages.error(self.request, f'You can upload max. {self.MAX_FILES} files at once')
             return redirect(form.cleaned_data.get('referrer', '/'))
 
         if dp_type == 'fits_file' and observatory.cpcsOnly == True:
+            logger.error('observatory without ObsInfo: %s %s' % (str(f[0].name), str(target)))
             messages.error(self.request, 'Used Observatory without ObsInfo')
             return redirect(form.cleaned_data.get('referrer', '/'))
 
         successful_uploads = []
-        BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        logger.info(self.request.META)
+        logger.info('upload len : %s' % (len(data_product_files)))
+        #BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         for f in data_product_files:
-
+            logger.info('len file 1: %s' % len(f))
             f.name = "{}_{}".format(user.id, f.name)
-
-            if os.path.exists('{0}/data/{1}/none/{2}'.format(BASE, target, f.name)):
-                messages.error(self.request, read_secret('FILE_EXIST'))
-                return redirect(form.cleaned_data.get('referrer', '/'))
+            logger.info(f.name)
+            #if os.path.exists('{0}/data/{1}/none/{2}'.format(BASE, target, f.name)):
+             #   messages.error(self.request, read_secret('FILE_EXIST'))
+             #   logger.error('File exits: %s %s' % (str(f.name), str(target)))
+             #   return redirect(form.cleaned_data.get('referrer', '/'))
 
             dp = DataProduct(
                 target=target,
@@ -860,6 +867,7 @@ class DataProductUploadView(FormView):
                 data_product_type=dp_type
             )
             dp.save()
+            logger.info('len file 2: %s' % len(dp.data))
 
             try:
                 run_hook('data_product_post_upload',
@@ -903,7 +911,9 @@ class DataProductUploadView(FormView):
                 self.request,
                 message
             )
-
+        t1 = time.time()
+        total = t1 - t0
+        logger.info('time: ' + str(total))
         return redirect(form.cleaned_data.get('referrer', '/'))
 
     def form_invalid(self, form):
@@ -1065,6 +1075,35 @@ class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
             messages.error(self.request, read_secret('NOT_PERMISSION'))
             return False
         return True
+
+
+class TargetInteractiveDeletingPhotometryView(PermissionRequiredMixin, DetailView):
+    template_name = 'tom_targets/target_interactive_deleting_photometry.html'
+    model = Target
+
+    def handle_no_permission(self):
+
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def has_permission(self):
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
+            return False
+        elif not self.request.user.has_perm('tom_targets.view_target'):
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
+            return False
+        return True
+
+    def get(self, request, *args, **kwargs):
+        context = {'dash_context': {'target_id': {'value': kwargs.get('pk', -1)},
+                                    'user_id': {'value': self.request.user.id}}}
+        return self.render_to_response(context)
 
 
 class TargetMicrolensingView(PermissionRequiredMixin, DetailView):
@@ -1265,6 +1304,7 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
             # super().form_valid(form)
 
             user = self.request.user
+
             obsName = form.cleaned_data['obsName']
             lon = form.cleaned_data['lon']
             lat = form.cleaned_data['lat']
@@ -1278,6 +1318,18 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
             else:
                 prefix = obsName
 
+            gain = form.cleaned_data['gain']
+
+            readout_noise = form.cleaned_data['readout_noise']
+            binning = form.cleaned_data['binning']
+            saturation_level = form.cleaned_data['saturation_level']
+            pixel_scale = form.cleaned_data['pixel_scale']
+            readout_speed = form.cleaned_data['readout_speed']
+            pixel_size = form.cleaned_data['pixel_size']
+            approx_lim_mag = form.cleaned_data['approx_lim_mag']
+            filters = form.cleaned_data['filters']
+            comment = form.cleaned_data['comment']
+
             observatory = Observatory.objects.create(
                 obsName=obsName,
                 lon=lon,
@@ -1288,7 +1340,17 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
                 cpcsOnly=cpcsOnly,
                 fits=fits,
                 obsInfo=obsInfo,
-                user=user
+                user=user,
+                gain=gain,
+                readout_noise=readout_noise,
+                binning=binning,
+                saturation_level=saturation_level,
+                pixel_scale=pixel_scale,
+                readout_speed=readout_speed,
+                pixel_size=pixel_size,
+                approx_lim_mag=approx_lim_mag,
+                filters=filters,
+                comment=comment
             )
 
             observatory.save()

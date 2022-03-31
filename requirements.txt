@@ -2,7 +2,7 @@ antares-client==0.3.1
 aotools==1.0
 appnope==0.1.0
 asdf==2.6.0
-astroplan==0.6
+astroplan==0.7
 astropy==4.0
 astroquery==0.4
 attrs==19.3.0
@@ -13,8 +13,11 @@ bson==0.5.8
 certifi==2019.9.11
 chardet==3.0.4
 Click==7.0
-
+channels==3.0.4
+channels-redis==3.3.1
 cycler==0.10.0
+daphne==3.0.2
+dash==2.0.0
 decorator==4.4.1
 defusedxml==0.6.0
 Django==2.2.8
@@ -26,6 +29,7 @@ django-extensions==2.2.9
 django-filter==2.2.0
 django-gravatar2==1.4.3
 django-guardian==2.2.0
+django-plotly-dash==1.6.6
 django-pgviews==0.5.7
 djangorestframework==3.11.0
 entrypoints==0.3
@@ -69,7 +73,7 @@ parso==0.5.2
 pexpect==4.8.0
 pickleshare==0.7.5
 Pillow==7.1.0
-plotly==4.6.0
+plotly==5.5.0
 prometheus-client==0.7.1
 prompt-toolkit==3.0.2
 ptyprocess==0.6.0

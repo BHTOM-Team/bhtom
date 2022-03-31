@@ -1,13 +1,11 @@
 import json
 import logging
-import os
 from typing import Optional, Any, Dict
 
-import mechanize
 import numpy as np
 from astropy.time import Time, TimezoneInfo
-from tom_dataproducts.models import ReducedDatum
 from django.conf import settings
+from tom_dataproducts.models import ReducedDatum
 
 from .utils.external_service import query_external_service
 from .utils.last_jd import update_last_jd

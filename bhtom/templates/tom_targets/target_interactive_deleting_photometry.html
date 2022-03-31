@@ -4,5 +4,5 @@
 </head>
 {% bootstrap_javascript jquery='True' %}
 {% block body %}
-    {% photometry_for_target target %}
+    {% plotly_app name="PhotometryPlot" initial_arguments=dash_context ratio=1.0 %}
 {% endblock %}

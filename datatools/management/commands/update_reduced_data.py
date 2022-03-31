@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from tom_targets.models import Target
 
+from bhtom.utils.coordinate_utils import update_sun_separation
 from .utils.result_messages import MessageStatus, encode_message
 
 
@@ -19,6 +20,7 @@ class UpdateReducedDataCommand(BaseCommand):
             target_id = options['target_id']
             try:
                 target: Target = Target.objects.get(pk=target_id)
+                update_sun_separation(target)
                 return self.update_function(target, user_id)
             except Exception as e:
                 return encode_message(MessageStatus.ERROR,
