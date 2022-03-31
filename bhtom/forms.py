@@ -227,9 +227,10 @@ class InstrumentCreationForm(forms.Form):
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
-    groups = forms.ModelMultipleChoiceField(Group.objects.all().exclude(name='Public'),
-                                            required=False, widget=forms.CheckboxSelectMultiple
-                                            ,help_text="Select all groups!")
+    # LW: all groups are set in the views for the user, so not asking for the groups here for now
+    # groups = forms.ModelMultipleChoiceField(Group.objects.all().exclude(name='Public'),
+    #                                         required=False, widget=forms.CheckboxSelectMultiple
+    #                                         ,help_text="Select all groups!")
     latex_name = forms.CharField(required=True, help_text="Your name as you want it to appear correctly in potential publications")
     latex_affiliation = forms.CharField(required=True, help_text="Your affiliation as you want it to appear correctly in potential publications")
     address = forms.CharField(required=True, help_text="Your address to be displayed in potential publications")
