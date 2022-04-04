@@ -5,11 +5,11 @@ from astropy.coordinates import Angle
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm, UsernameField
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from django.forms import ValidationError, inlineformset_factory, TextInput, HiddenInput
 from tom_observations.models import ObservationRecord
 from tom_targets.models import (
-    Target, TargetExtra, TargetName, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
+    Target, TargetExtra, TargetName, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
     REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 )
 
@@ -160,6 +160,12 @@ class ObservatoryCreationForm(forms.ModelForm):
         required=False
     )
 
+    fits = forms.FileField(label='Sample fits',
+                           help_text='Provide one sample fits per filter, clearly labelled.',
+                           widget=forms.ClearableFileInput(
+                               attrs={'multiple': True}
+                           ))
+
     gain = forms.FloatField(required=True,
                             widget=forms.NumberInput(attrs={'placeholder': '2'}))
     readout_noise = forms.FloatField(required=True,
@@ -194,6 +200,31 @@ class ObservatoryUpdateForm(forms.ModelForm):
         label='Only instrumental photometry file',
         required=False
     )
+
+    fits = forms.FileField(label='Sample fits',
+                           help_text='Provide one sample fits per filter, clearly labelled.',
+                           widget=forms.ClearableFileInput(
+                               attrs={'multiple': True}
+                           ))
+
+    gain = forms.FloatField(required=True,
+                            widget=forms.NumberInput(attrs={'placeholder': '2'}))
+    readout_noise = forms.FloatField(required=True,
+                                     widget=forms.NumberInput(attrs={'placeholder': '2'}))
+    binning = forms.FloatField(required=True,
+                               widget=forms.NumberInput(attrs={'placeholder': '1'}))
+    saturation_level = forms.FloatField(required=True,
+                                        widget=forms.NumberInput(attrs={'placeholder': '63000'}))
+    pixel_scale = forms.FloatField(required=True,
+                                   widget=forms.NumberInput(attrs={'placeholder': '0.8'}))
+    readout_speed = forms.FloatField(required=True,
+                                     widget=forms.NumberInput(attrs={'placeholder': '3'}))
+    pixel_size = forms.FloatField(required=True,
+                                  widget=forms.NumberInput(attrs={'placeholder': '13.5'}))
+    approx_lim_mag = forms.FloatField(required=True,
+                                      widget=forms.NumberInput(attrs={'placeholder': '18.0'}))
+    filters = forms.CharField(required=True,
+                              widget=forms.NumberInput(attrs={'placeholder': 'V,R,I'}))
 
     class Meta:
         model = Observatory
@@ -391,7 +422,6 @@ class SiderealTargetCreateForm(TargetForm):
         self.fields['cadence'].required = True
         self.fields['cadence'].help_text = 'Cadence as 0-100 days'
 
-
         self.fields['gaia_alert_name'].widget = TextInput(attrs={'maxlength': 100})
         self.fields['calib_server_name'].widget = TextInput(attrs={'maxlength': 100})
         self.fields['ztf_alert_name'].widget = TextInput(attrs={'maxlength': 100})
@@ -409,8 +439,8 @@ class SiderealTargetCreateForm(TargetForm):
 
     class Meta(TargetForm.Meta):
         fields = ('name', 'type', 'ra', 'dec', 'epoch', 'parallax',
-              'pm_ra', 'pm_dec', 'galactic_lng', 'galactic_lat',
-              'distance', 'distance_err')
+                  'pm_ra', 'pm_dec', 'galactic_lng', 'galactic_lat',
+                  'distance', 'distance_err')
 
 
 class NonSiderealTargetCreateForm(TargetForm):
