@@ -6,7 +6,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm, UsernameField
 from django.contrib.auth.models import User, Group
-from django.forms import ValidationError, inlineformset_factory
+from django.forms import ValidationError, inlineformset_factory, TextInput, HiddenInput
 from tom_observations.models import ObservationRecord
 from tom_targets.models import (
     Target, TargetExtra, TargetName, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
@@ -386,8 +386,31 @@ class SiderealTargetCreateForm(TargetForm):
         for field in REQUIRED_SIDEREAL_FIELDS:
             self.fields[field].required = True
 
+        self.fields['priority'].required = True
+        self.fields['priority'].help_text = 'Priority as an integer 0-10 (10 is the highest)'
+        self.fields['cadence'].required = True
+        self.fields['cadence'].help_text = 'Cadence as 0-100 days'
+
+
+        self.fields['gaia_alert_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['calib_server_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['ztf_alert_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['aavso_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['gaiadr2_id'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['TNS_ID'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['classification'].widget = TextInput(attrs={'maxlength': 250})
+
+        self.fields['tweet'].widget = HiddenInput()
+        self.fields['jdlastobs'].widget = HiddenInput()
+        self.fields['maglast'].widget = HiddenInput()
+        self.fields['dicovery_date'].widget = HiddenInput()
+        self.fields['Sun_separation'].widget = HiddenInput()
+        self.fields['dont_update_me'].widget = HiddenInput()
+
     class Meta(TargetForm.Meta):
-        fields = SIDEREAL_FIELDS
+        fields = ('name', 'type', 'ra', 'dec', 'epoch', 'parallax',
+              'pm_ra', 'pm_dec', 'galactic_lng', 'galactic_lat',
+              'distance', 'distance_err')
 
 
 class NonSiderealTargetCreateForm(TargetForm):

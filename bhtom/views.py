@@ -228,7 +228,11 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
     View for creating a Target. Requires authentication.
     """
     model = Target
-    fields = '__all__'
+    fields = ('name', 'type', 'ra', 'dec', 'epoch', 'parallax',
+              'pm_ra', 'pm_dec', 'galactic_lng', 'galactic_lat',
+              'distance', 'distance_err', 'gaia_alert_name',
+              'calib_server_name', 'ztf_alert_name', 'aavso_name',
+              'gaiadr2_id', 'TNS_ID', 'classification', 'priority', 'cadence')
 
     def handle_no_permission(self):
 
@@ -323,24 +327,12 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
         :param form: Form data for target creation
         :type form: subclass of TargetCreateForm
         """
-        super().form_valid(form)
-        extra = TargetExtraFormset(self.request.POST)
-        names = TargetNamesFormset(self.request.POST)
-        if extra.is_valid() and names.is_valid():
-            extra.instance = self.object
-            extra.save()
-            names.instance = self.object
-            names.save()
-            
+        if super().form_valid(form):
             logger.info("Create Target: " + format(self.object) + ", user: " + format(self.request.user))
         else:
-            form.add_error(None, extra.errors)
-            form.add_error(None, extra.non_form_errors())
-            form.add_error(None, names.errors)
-            form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
 
-        create_target_in_cpcs(self.request.user, names.instance)
+        create_target_in_cpcs(self.request.user, self.object)
         return redirect('bhlist_detail', pk=form.instance.id)
 
     def get_form(self, *args, **kwargs):
