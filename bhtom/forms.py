@@ -238,17 +238,15 @@ class InstrumentCreationForm(forms.Form):
 
 
 class CustomUserCreationForm(UserCreationForm):
-    email = forms.EmailField(required=True)
-    # LW: all groups are set in the views for the user, so not asking for the groups here for now
-    # groups = forms.ModelMultipleChoiceField(Group.objects.all().exclude(name='Public'),
-    #                                         required=False, widget=forms.CheckboxSelectMultiple
-    #                                         ,help_text="Select all groups!")
-    latex_name = forms.CharField(required=True, help_text="Your name as you want it to appear correctly in potential publications")
-    latex_affiliation = forms.CharField(required=True, help_text="Your affiliation as you want it to appear correctly in potential publications")
-    address = forms.CharField(required=True, help_text="Your address to be displayed in potential publications")
+    latex_name = forms.CharField(required=True, label='Latex Name*',
+                                 help_text="Your name as you want it to appear correctly in potential publications")
+    latex_affiliation = forms.CharField(required=True, label='Latex Affiliation*',
+                                        help_text="Your affiliation as you want it to appear correctly in potential publications")
+    address = forms.CharField(required=True, label='Address*',
+                              help_text="Your address to be displayed in potential publications")
     about_me = forms.CharField(
         widget=forms.Textarea(attrs={'rows': 3}),
-        label="About me",
+        label="About me*",
         help_text="Tell us who you are and why do you want to join BHTOM?",
         required=True
     )
@@ -265,17 +263,6 @@ class CustomUserCreationForm(UserCreationForm):
         try:
             user = kwargs.get('instance')
             db = BHTomUser.objects.get(user=user)
-            self.fields['about_me'].initial = db.about_me
-            self.fields['about_me'].label = 'About Me*'
-
-            self.fields['latex_name'].initial = db.latex_name
-            self.fields['latex_name'].label = 'Latex Name*'
-
-            self.fields['latex_affiliation'].initial = db.latex_affiliation
-            self.fields['latex_affiliation'].label = 'Latex Affiliation*'
-
-            self.fields['address'].initial = db.address
-            self.fields['address'].label = 'Address*'
 
         except Exception as e:
             db = None
@@ -283,7 +270,7 @@ class CustomUserCreationForm(UserCreationForm):
     class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'latex_name', 'latex_affiliation',
-                  'address', 'password1', 'password2', 'groups', 'about_me')
+                  'address', 'password1', 'password2', 'about_me')
         field_classes = {'username': UsernameField}
 
     def save(self, commit=True):
