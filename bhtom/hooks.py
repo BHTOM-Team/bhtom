@@ -345,8 +345,6 @@ def Observatory_pre_save(sender, instance, **kwargs):
 def create_target_in_cpcs(user, instance):
     logger.info('Create target in cpcs: %s', str(instance.extra_fields['calib_server_name']))
     url_cpcs = settings.CPCS_BASE_URL + 'newevent'
-    hastag = None
-
     try:
         hastag = Instrument.objects.filter(user_id=user.id).exclude(hashtag__isnull=True).first().hashtag
         url = read_secret('url') + 'bhlist/' + str(instance.id) + '/'

@@ -22,9 +22,6 @@
 {% endif %}
 {% csrf_token %}
 {% bootstrap_form form %}
-{% bootstrap_formset names_form %}
-<h3>Tags</h3>
-{% bootstrap_formset extra_form %}
 {% buttons %}
   {% if not object %}
   <button type="submit" formaction="{% url 'bhlist_create' %}"class="btn btn-primary">Submit</button>

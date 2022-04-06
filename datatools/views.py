@@ -14,6 +14,7 @@ from bhtom.models import BHTomUser, Observatory
 from typing import List, Dict, Optional
 
 from sentry_sdk import capture_exception
+import logging
 
 try:
     from settings import local_settings as secret
@@ -21,7 +22,7 @@ except ImportError:
     pass
 
 alert_name_keys: Dict[str, str] = settings.ALERT_NAME_KEYS
-
+logger = logging.getLogger(__name__)
 
 class UpdateReducedDataView(LoginRequiredMixin, RedirectView):
     """

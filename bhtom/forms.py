@@ -1,25 +1,19 @@
+import logging
+
+from astropy import units as u
+from astropy.coordinates import Angle
 from django import forms
 from django.conf import settings
-
-from tom_targets.models import Target
-from tom_observations.models import ObservationRecord
-from bhtom.models import Observatory, Instrument, Catalogs, BHTomUser
-from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import UserCreationForm, UsernameField
-
-from astropy.coordinates import Angle
-from astropy import units as u
-from django.forms import ValidationError, inlineformset_factory
-from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
-
+from django.contrib.auth.models import User
+from django.forms import ValidationError, inlineformset_factory, TextInput, HiddenInput
+from tom_observations.models import ObservationRecord
 from tom_targets.models import (
-    Target, TargetExtra, TargetName, SIDEREAL_FIELDS, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
+    Target, TargetExtra, TargetName, NON_SIDEREAL_FIELDS, REQUIRED_SIDEREAL_FIELDS,
     REQUIRED_NON_SIDEREAL_FIELDS, REQUIRED_NON_SIDEREAL_FIELDS_PER_SCHEME
 )
 
-from captcha.fields import ReCaptchaField
-
-import logging
+from bhtom.models import Observatory, Instrument, Catalogs, BHTomUser
 
 logger = logging.getLogger(__name__)
 
@@ -160,18 +154,42 @@ class DataProductUploadForm(forms.Form):
         self.fields['observer'].initial = f'{user.first_name} {user.last_name}'
 
 
-
 class ObservatoryCreationForm(forms.ModelForm):
     cpcsOnly = forms.BooleanField(
         label='Only instrumental photometry file',
         required=False
     )
 
+    fits = forms.FileField(label='Sample fits',
+                           help_text='Provide one sample fits per filter, clearly labelled.',
+                           widget=forms.ClearableFileInput(
+                               attrs={'multiple': True}
+                           ))
+
+    gain = forms.FloatField(required=True,
+                            widget=forms.NumberInput(attrs={'placeholder': '2'}))
+    readout_noise = forms.FloatField(required=True,
+                                     widget=forms.NumberInput(attrs={'placeholder': '2'}))
+    binning = forms.FloatField(required=True,
+                               widget=forms.NumberInput(attrs={'placeholder': '1'}))
+    saturation_level = forms.FloatField(required=True,
+                                        widget=forms.NumberInput(attrs={'placeholder': '63000'}))
+    pixel_scale = forms.FloatField(required=True,
+                                   widget=forms.NumberInput(attrs={'placeholder': '0.8'}))
+    readout_speed = forms.FloatField(required=True,
+                                     widget=forms.NumberInput(attrs={'placeholder': '3'}))
+    pixel_size = forms.FloatField(required=True,
+                                  widget=forms.NumberInput(attrs={'placeholder': '13.5'}))
+    approx_lim_mag = forms.FloatField(required=True,
+                                      widget=forms.NumberInput(attrs={'placeholder': '18.0'}))
+    filters = forms.CharField(required=True,
+                              widget=forms.NumberInput(attrs={'placeholder': 'V,R,I'}))
+
     class Meta:
         model = Observatory
         fields = ('obsName', 'lon', 'lat', 'altitude',
                   'matchDist', 'cpcsOnly', 'fits',
-                  'gain', 'binning', 'saturation_level',
+                  'gain', 'readout_noise', 'binning', 'saturation_level',
                   'pixel_scale', 'readout_speed', 'pixel_size',
                   'approx_lim_mag', 'filters',
                   'comment')
@@ -182,6 +200,31 @@ class ObservatoryUpdateForm(forms.ModelForm):
         label='Only instrumental photometry file',
         required=False
     )
+
+    fits = forms.FileField(label='Sample fits',
+                           help_text='Provide one sample fits per filter, clearly labelled.',
+                           widget=forms.ClearableFileInput(
+                               attrs={'multiple': True}
+                           ))
+
+    gain = forms.FloatField(required=True,
+                            widget=forms.NumberInput(attrs={'placeholder': '2'}))
+    readout_noise = forms.FloatField(required=True,
+                                     widget=forms.NumberInput(attrs={'placeholder': '2'}))
+    binning = forms.FloatField(required=True,
+                               widget=forms.NumberInput(attrs={'placeholder': '1'}))
+    saturation_level = forms.FloatField(required=True,
+                                        widget=forms.NumberInput(attrs={'placeholder': '63000'}))
+    pixel_scale = forms.FloatField(required=True,
+                                   widget=forms.NumberInput(attrs={'placeholder': '0.8'}))
+    readout_speed = forms.FloatField(required=True,
+                                     widget=forms.NumberInput(attrs={'placeholder': '3'}))
+    pixel_size = forms.FloatField(required=True,
+                                  widget=forms.NumberInput(attrs={'placeholder': '13.5'}))
+    approx_lim_mag = forms.FloatField(required=True,
+                                      widget=forms.NumberInput(attrs={'placeholder': '18.0'}))
+    filters = forms.CharField(required=True,
+                              widget=forms.NumberInput(attrs={'placeholder': 'V,R,I'}))
 
     class Meta:
         model = Observatory
@@ -226,16 +269,15 @@ class InstrumentCreationForm(forms.Form):
 
 
 class CustomUserCreationForm(UserCreationForm):
-    email = forms.EmailField(required=True)
-    groups = forms.ModelMultipleChoiceField(Group.objects.all().exclude(name='Public'),
-                                            required=False, widget=forms.CheckboxSelectMultiple
-                                            ,help_text="Select all groups!")
-    latex_name = forms.CharField(required=True, help_text="Your name as you want it to appear correctly in potential publications")
-    latex_affiliation = forms.CharField(required=True, help_text="Your affiliation as you want it to appear correctly in potential publications")
-    address = forms.CharField(required=True, help_text="Your address to be displayed in potential publications")
+    latex_name = forms.CharField(required=True, label='Latex Name*',
+                                 help_text="Your name as you want it to appear correctly in potential publications")
+    latex_affiliation = forms.CharField(required=True, label='Latex Affiliation*',
+                                        help_text="Your affiliation as you want it to appear correctly in potential publications")
+    address = forms.CharField(required=True, label='Address*',
+                              help_text="Your address to be displayed in potential publications")
     about_me = forms.CharField(
-        widget=forms.Textarea(attrs={'rows':3}),
-        label="About me",
+        widget=forms.Textarea(attrs={'rows': 3}),
+        label="About me*",
         help_text="Tell us who you are and why do you want to join BHTOM?",
         required=True
     )
@@ -252,10 +294,6 @@ class CustomUserCreationForm(UserCreationForm):
         try:
             user = kwargs.get('instance')
             db = BHTomUser.objects.get(user=user)
-            self.fields['about_me'].initial = db.about_me
-            self.fields['latex_name'].initial = db.latex_name
-            self.fields['latex_affiliation'].initial = db.latex_affiliation
-            self.fields['address'].initial = db.address
 
         except Exception as e:
             db = None
@@ -263,7 +301,7 @@ class CustomUserCreationForm(UserCreationForm):
     class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'latex_name', 'latex_affiliation',
-                  'address', 'password1', 'password2', 'groups', 'about_me')
+                  'address', 'password1', 'password2', 'about_me')
         field_classes = {'username': UsernameField}
 
     def save(self, commit=True):
@@ -379,8 +417,30 @@ class SiderealTargetCreateForm(TargetForm):
         for field in REQUIRED_SIDEREAL_FIELDS:
             self.fields[field].required = True
 
+        self.fields['priority'].required = True
+        self.fields['priority'].help_text = 'Priority as an integer 0-10 (10 is the highest)'
+        self.fields['cadence'].required = True
+        self.fields['cadence'].help_text = 'Cadence as 0-100 days'
+
+        self.fields['gaia_alert_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['calib_server_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['ztf_alert_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['aavso_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['gaiadr2_id'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['TNS_ID'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['classification'].widget = TextInput(attrs={'maxlength': 250})
+
+        self.fields['tweet'].widget = HiddenInput()
+        self.fields['jdlastobs'].widget = HiddenInput()
+        self.fields['maglast'].widget = HiddenInput()
+        self.fields['dicovery_date'].widget = HiddenInput()
+        self.fields['Sun_separation'].widget = HiddenInput()
+        self.fields['dont_update_me'].widget = HiddenInput()
+
     class Meta(TargetForm.Meta):
-        fields = SIDEREAL_FIELDS
+        fields = ('name', 'type', 'ra', 'dec', 'epoch', 'parallax',
+                  'pm_ra', 'pm_dec', 'galactic_lng', 'galactic_lat',
+                  'distance', 'distance_err')
 
 
 class NonSiderealTargetCreateForm(TargetForm):

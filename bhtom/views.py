@@ -228,7 +228,11 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
     View for creating a Target. Requires authentication.
     """
     model = Target
-    fields = '__all__'
+    fields = ('name', 'type', 'ra', 'dec', 'epoch', 'parallax',
+              'pm_ra', 'pm_dec', 'galactic_lng', 'galactic_lat',
+              'distance', 'distance_err', 'gaia_alert_name',
+              'calib_server_name', 'ztf_alert_name', 'aavso_name',
+              'gaiadr2_id', 'TNS_ID', 'classification', 'priority', 'cadence')
 
     def handle_no_permission(self):
 
@@ -323,24 +327,12 @@ class TargetCreateView(PermissionRequiredMixin, CreateView):
         :param form: Form data for target creation
         :type form: subclass of TargetCreateForm
         """
-        super().form_valid(form)
-        extra = TargetExtraFormset(self.request.POST)
-        names = TargetNamesFormset(self.request.POST)
-        if extra.is_valid() and names.is_valid():
-            extra.instance = self.object
-            extra.save()
-            names.instance = self.object
-            names.save()
-            
+        if super().form_valid(form):
             logger.info("Create Target: " + format(self.object) + ", user: " + format(self.request.user))
         else:
-            form.add_error(None, extra.errors)
-            form.add_error(None, extra.non_form_errors())
-            form.add_error(None, names.errors)
-            form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
 
-        create_target_in_cpcs(self.request.user, names.instance)
+        create_target_in_cpcs(self.request.user, self.object)
         return redirect('bhlist_detail', pk=form.instance.id)
 
     def get_form(self, *args, **kwargs):
@@ -669,18 +661,21 @@ class fits_upload(viewsets.ModelViewSet):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         successful_uploads = []
+
        # BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         logger.info('number of files : %s' % (str(len(data_product_files))))
 
         for f in data_product_files:
 
             f.name = "{}_{}".format(user.id, f.name)
+
             logger.info(f.name)
             logger.info('len file presave: %s' % str(len(f)))
           #  if os.path.exists('{0}/data/{1}/none/{2}'.format(BASE, target, f.name)):
            #     messages.error(self.request, read_secret('FILE_EXIST'))
            #     logger.error('File exits: %s %s' % (str(f.name), str(target)))
            #     return Response(status=status.HTTP_201_CREATED)
+
 
             dp = DataProduct(
                 target=target_id,
@@ -692,7 +687,7 @@ class fits_upload(viewsets.ModelViewSet):
             logger.info('len file after save: %s' % str(len(dp.data)))
             try:
                 run_hook('data_product_post_upload',
-                         dp, target, observatory,
+                         dp, target_id, observatory,
                          observation_filter, MJD, ExpTime,
                          dryRun, matchDist, comment,
                          user, fits_quantity,
@@ -853,6 +848,7 @@ class DataProductUploadView(FormView):
 
         successful_uploads = []
         logger.info(self.request.META)
+
         logger.info('number of files : %s' % (str(len(data_product_files))))
         #BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         for f in data_product_files:
@@ -864,6 +860,7 @@ class DataProductUploadView(FormView):
            #     logger.error('File exits: %s %s' % (str(f.name), str(target)))
           #      return redirect(form.cleaned_data.get('referrer', '/'))
 
+
             dp = DataProduct(
                 target=target,
                 observation_record=observation_record,
@@ -872,7 +869,9 @@ class DataProductUploadView(FormView):
                 data_product_type=dp_type
             )
             dp.save()
+
             logger.info('len file after save: %s' % str(len(dp.data)))
+
 
             try:
                 run_hook('data_product_post_upload',
@@ -1082,6 +1081,35 @@ class TargetInteractivePhotometryView(PermissionRequiredMixin, DetailView):
         return True
 
 
+class TargetInteractiveDeletingPhotometryView(PermissionRequiredMixin, DetailView):
+    template_name = 'tom_targets/target_interactive_deleting_photometry.html'
+    model = Target
+
+    def handle_no_permission(self):
+
+        if self.request.META.get('HTTP_REFERER') is None:
+            return HttpResponseRedirect('/')
+        else:
+            return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
+
+    def has_permission(self):
+        if not self.request.user.is_authenticated:
+            messages.error(self.request, read_secret('NOT_AUTHENTICATED'))
+            return False
+        elif not BHTomUser.objects.get(user=self.request.user).is_activate:
+            messages.error(self.request, read_secret('NOT_ACTIVATE'))
+            return False
+        elif not self.request.user.has_perm('tom_targets.view_target'):
+            messages.error(self.request, read_secret('NOT_PERMISSION'))
+            return False
+        return True
+
+    def get(self, request, *args, **kwargs):
+        context = {'dash_context': {'target_id': {'value': kwargs.get('pk', -1)},
+                                    'user_id': {'value': self.request.user.id}}}
+        return self.render_to_response(context)
+
+
 class TargetMicrolensingView(PermissionRequiredMixin, DetailView):
     template_name = 'tom_targets/target_microlensing.html'
     model = Target
@@ -1280,6 +1308,7 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
             # super().form_valid(form)
 
             user = self.request.user
+
             obsName = form.cleaned_data['obsName']
             lon = form.cleaned_data['lon']
             lat = form.cleaned_data['lat']
@@ -1293,6 +1322,18 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
             else:
                 prefix = obsName
 
+            gain = form.cleaned_data['gain']
+
+            readout_noise = form.cleaned_data['readout_noise']
+            binning = form.cleaned_data['binning']
+            saturation_level = form.cleaned_data['saturation_level']
+            pixel_scale = form.cleaned_data['pixel_scale']
+            readout_speed = form.cleaned_data['readout_speed']
+            pixel_size = form.cleaned_data['pixel_size']
+            approx_lim_mag = form.cleaned_data['approx_lim_mag']
+            filters = form.cleaned_data['filters']
+            comment = form.cleaned_data['comment']
+
             observatory = Observatory.objects.create(
                 obsName=obsName,
                 lon=lon,
@@ -1303,7 +1344,17 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
                 cpcsOnly=cpcsOnly,
                 fits=fits,
                 obsInfo=obsInfo,
-                user=user
+                user=user,
+                gain=gain,
+                readout_noise=readout_noise,
+                binning=binning,
+                saturation_level=saturation_level,
+                pixel_scale=pixel_scale,
+                readout_speed=readout_speed,
+                pixel_size=pixel_size,
+                approx_lim_mag=approx_lim_mag,
+                filters=filters,
+                comment=comment
             )
 
             observatory.save()
@@ -1436,7 +1487,14 @@ class RegisterUser(CreateView):
     def form_valid(self, form):
 
         super().form_valid(form)
+        #all groups set for the user.
         group, _ = Group.objects.get_or_create(name='Public')
+        group, _ = Group.objects.get_or_create(name='Show Targets')
+        group, _ = Group.objects.get_or_create(name='Upload File')
+        group, _ = Group.objects.get_or_create(name='Download Fits/Photometry')
+        group, _ = Group.objects.get_or_create(name='Add Target')
+        group, _ = Group.objects.get_or_create(name='Add Observatory')
+        
         group.user_set.add(self.object)
         group.save()
         email_params = "'{0}', '{1}', '{2}', '{3}'".format(self.object.username, self.object.first_name,
