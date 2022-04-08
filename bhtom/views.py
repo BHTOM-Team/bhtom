@@ -1533,7 +1533,10 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         form.fields['password1'].required = False
         form.fields['password2'].required = False
         if not self.request.user.is_superuser:
-            form.fields.pop('groups')
+            try:
+                form.fields.pop('groups')
+            except KeyError:
+                logger.error(f'Tried to pop groups for user with id {self.request.user.id}')
         return form
 
     def dispatch(self, *args, **kwargs):
