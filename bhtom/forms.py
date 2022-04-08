@@ -369,6 +369,7 @@ class TargetForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.extra_fields = {}
         for extra_field in settings.EXTRA_FIELDS:
             # Add extra fields to the form
@@ -419,8 +420,10 @@ class SiderealTargetCreateForm(TargetForm):
 
         self.fields['priority'].required = True
         self.fields['priority'].help_text = 'Priority as an integer 0-10 (10 is the highest)'
+        self.fields['priority'].label = 'Priority*'
         self.fields['cadence'].required = True
         self.fields['cadence'].help_text = 'Cadence as 0-100 days'
+        self.fields['cadence'].label = 'Cadence*'
 
         self.fields['gaia_alert_name'].widget = TextInput(attrs={'maxlength': 100})
         self.fields['calib_server_name'].widget = TextInput(attrs={'maxlength': 100})
@@ -446,8 +449,31 @@ class SiderealTargetCreateForm(TargetForm):
 class NonSiderealTargetCreateForm(TargetForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         for field in REQUIRED_NON_SIDEREAL_FIELDS:
             self.fields[field].required = True
+
+        self.fields['priority'].required = True
+        self.fields['priority'].help_text = 'Priority as an integer 0-10 (10 is the highest)'
+        self.fields['priority'].label = 'Priority*'
+        self.fields['cadence'].required = True
+        self.fields['cadence'].help_text = 'Cadence as 0-100 days'
+        self.fields['cadence'].label = 'Cadence*'
+
+        self.fields['gaia_alert_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['calib_server_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['ztf_alert_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['aavso_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['gaiadr2_id'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['TNS_ID'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['classification'].widget = TextInput(attrs={'maxlength': 250})
+
+        self.fields['tweet'].widget = HiddenInput()
+        self.fields['jdlastobs'].widget = HiddenInput()
+        self.fields['maglast'].widget = HiddenInput()
+        self.fields['dicovery_date'].widget = HiddenInput()
+        self.fields['Sun_separation'].widget = HiddenInput()
+        self.fields['dont_update_me'].widget = HiddenInput()
 
     def clean(self):
         """
