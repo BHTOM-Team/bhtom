@@ -398,18 +398,10 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
         :param form: Form data for target update
         :type form: subclass of TargetCreateForm
         """
-        extra = TargetExtraFormset(self.request.POST, instance=self.object)
-        names = TargetNamesFormset(self.request.POST, instance=self.object)
-        if extra.is_valid() and names.is_valid():
-            extra.save()
-            names.save()
+        if super().form_valid(form):
+            logger.info("Update Target: " + format(self.object) + ", user: " + format(self.request.user))
         else:
-            form.add_error(None, extra.errors)
-            form.add_error(None, extra.non_form_errors())
-            form.add_error(None, names.errors)
-            form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
-        super().form_valid(form)
         return redirect('bhlist_detail', pk=form.instance.id)
 
     def get_queryset(self, *args, **kwargs):
@@ -1487,13 +1479,13 @@ class RegisterUser(CreateView):
     def form_valid(self, form):
 
         super().form_valid(form)
-        #all groups set for the user.
         group, _ = Group.objects.get_or_create(name='Public')
-        group, _ = Group.objects.get_or_create(name='Show Targets')
-        group, _ = Group.objects.get_or_create(name='Upload File')
-        group, _ = Group.objects.get_or_create(name='Download Fits/Photometry')
-        group, _ = Group.objects.get_or_create(name='Add Target')
-        group, _ = Group.objects.get_or_create(name='Add Observatory')
+        #this does not work!
+        # group, _ = Group.objects.get_or_create(name='Show Targets')
+        # group, _ = Group.objects.get_or_create(name='Upload File')
+        # group, _ = Group.objects.get_or_create(name='Download Fits/Photometry')
+        # group, _ = Group.objects.get_or_create(name='Add Target')
+        # group, _ = Group.objects.get_or_create(name='Add Observatory')
         
         group.user_set.add(self.object)
         group.save()
@@ -1533,7 +1525,10 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
         form.fields['password1'].required = False
         form.fields['password2'].required = False
         if not self.request.user.is_superuser:
-            form.fields.pop('groups')
+            try:
+                form.fields.pop('groups')
+            except KeyError:
+                logger.error(f'Tried to pop groups for user with id {self.request.user.id}')
         return form
 
     def dispatch(self, *args, **kwargs):
