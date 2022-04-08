@@ -1477,18 +1477,22 @@ class RegisterUser(CreateView):
     form_class = CustomUserCreationForm
 
     def form_valid(self, form):
+        
+        def add_user_to_group(group_name):
+            group, _ = Group.objects.get_or_create(name=group_name)
+            group.user_set.add(self.object)
+            group.save()
 
         super().form_valid(form)
-        group, _ = Group.objects.get_or_create(name='Public')
-        #this does not work!
-        # group, _ = Group.objects.get_or_create(name='Show Targets')
-        # group, _ = Group.objects.get_or_create(name='Upload File')
-        # group, _ = Group.objects.get_or_create(name='Download Fits/Photometry')
-        # group, _ = Group.objects.get_or_create(name='Add Target')
-        # group, _ = Group.objects.get_or_create(name='Add Observatory')
         
-        group.user_set.add(self.object)
-        group.save()
+        add_user_to_group('Public')
+
+        add_user_to_group('Show Targets')
+        add_user_to_group('Upload File')
+        add_user_to_group('Download Fits/Photometry')
+        add_user_to_group('Add Target')
+        add_user_to_group('Add Observatory')
+
         email_params = "'{0}', '{1}', '{2}', '{3}'".format(self.object.username, self.object.first_name,
                                                            self.object.last_name, self.object.email)
 
