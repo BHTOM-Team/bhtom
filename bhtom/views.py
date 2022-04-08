@@ -1487,13 +1487,13 @@ class RegisterUser(CreateView):
     def form_valid(self, form):
 
         super().form_valid(form)
-        #all groups set for the user.
         group, _ = Group.objects.get_or_create(name='Public')
-        group, _ = Group.objects.get_or_create(name='Show Targets')
-        group, _ = Group.objects.get_or_create(name='Upload File')
-        group, _ = Group.objects.get_or_create(name='Download Fits/Photometry')
-        group, _ = Group.objects.get_or_create(name='Add Target')
-        group, _ = Group.objects.get_or_create(name='Add Observatory')
+        #this does not work!
+        # group, _ = Group.objects.get_or_create(name='Show Targets')
+        # group, _ = Group.objects.get_or_create(name='Upload File')
+        # group, _ = Group.objects.get_or_create(name='Download Fits/Photometry')
+        # group, _ = Group.objects.get_or_create(name='Add Target')
+        # group, _ = Group.objects.get_or_create(name='Add Observatory')
         
         group.user_set.add(self.object)
         group.save()
