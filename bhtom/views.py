@@ -398,18 +398,10 @@ class TargetUpdateView(PermissionRequiredMixin, UpdateView):
         :param form: Form data for target update
         :type form: subclass of TargetCreateForm
         """
-        extra = TargetExtraFormset(self.request.POST, instance=self.object)
-        names = TargetNamesFormset(self.request.POST, instance=self.object)
-        if extra.is_valid() and names.is_valid():
-            extra.save()
-            names.save()
+        if super().form_valid(form):
+            logger.info("Update Target: " + format(self.object) + ", user: " + format(self.request.user))
         else:
-            form.add_error(None, extra.errors)
-            form.add_error(None, extra.non_form_errors())
-            form.add_error(None, names.errors)
-            form.add_error(None, names.non_form_errors())
             return super().form_invalid(form)
-        super().form_valid(form)
         return redirect('bhlist_detail', pk=form.instance.id)
 
     def get_queryset(self, *args, **kwargs):
