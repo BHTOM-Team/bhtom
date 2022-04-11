@@ -1331,6 +1331,11 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
             filters = form.cleaned_data['filters']
             comment = form.cleaned_data['comment']
 
+            if readout_speed is None:
+                readout_speed = 9999.
+            if pixel_size is None:
+                pixel_size = 13.5
+
             observatory = Observatory.objects.create(
                 obsName=obsName,
                 lon=lon,

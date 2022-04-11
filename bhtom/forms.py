@@ -167,23 +167,41 @@ class ObservatoryCreationForm(forms.ModelForm):
                            ))
 
     gain = forms.FloatField(required=True,
-                            widget=forms.NumberInput(attrs={'placeholder': '2'}))
+                            initial=None,
+                            label='Gain* [electrons/ADU]',
+                            widget=forms.NumberInput(attrs={'placeholder': '2.0'}))
     readout_noise = forms.FloatField(required=True,
+                                     initial=None,
+                                     label='Readout noise* [electrons]',
                                      widget=forms.NumberInput(attrs={'placeholder': '2'}))
     binning = forms.FloatField(required=True,
+                               initial=None,
+                               label='Binning*',
                                widget=forms.NumberInput(attrs={'placeholder': '1'}))
     saturation_level = forms.FloatField(required=True,
+                                        initial=None,
+                                        label='Saturation level* [ADU]',
                                         widget=forms.NumberInput(attrs={'placeholder': '63000'}))
     pixel_scale = forms.FloatField(required=True,
+                                   initial='',
+                                   label='Pixel scale* [arcsec/pixel]',
                                    widget=forms.NumberInput(attrs={'placeholder': '0.8'}))
-    readout_speed = forms.FloatField(required=True,
+    readout_speed = forms.FloatField(required=False,
+                                     initial=None,
+                                     label='Readout speed [ms/pixel] (if not known, pass 9999)',
                                      widget=forms.NumberInput(attrs={'placeholder': '3'}))
-    pixel_size = forms.FloatField(required=True,
+    pixel_size = forms.FloatField(required=False,
+                                  initial=None,
+                                  label='Pixel size [um]',
                                   widget=forms.NumberInput(attrs={'placeholder': '13.5'}))
     approx_lim_mag = forms.FloatField(required=True,
+                                      initial=None,
+                                      label='Approx. limit magnitude in V band* [mag]',
                                       widget=forms.NumberInput(attrs={'placeholder': '18.0'}))
     filters = forms.CharField(required=True,
-                              widget=forms.NumberInput(attrs={'placeholder': 'V,R,I'}))
+                              initial=None,
+                              label='Filters*',
+                              widget=forms.TextInput(attrs={'placeholder': 'V,R,I'}))
 
     class Meta:
         model = Observatory
@@ -208,23 +226,38 @@ class ObservatoryUpdateForm(forms.ModelForm):
                            ))
 
     gain = forms.FloatField(required=True,
-                            widget=forms.NumberInput(attrs={'placeholder': '2'}))
+                            initial=None,
+                            label='Gain* [electrons/ADU]',
+                            widget=forms.NumberInput(attrs={'placeholder': '2.0'}))
     readout_noise = forms.FloatField(required=True,
+                                     initial=None,
+                                     label='Readout noise* [electrons]',
                                      widget=forms.NumberInput(attrs={'placeholder': '2'}))
     binning = forms.FloatField(required=True,
+                               initial=None,
+                               label='Binning*',
                                widget=forms.NumberInput(attrs={'placeholder': '1'}))
     saturation_level = forms.FloatField(required=True,
+                                        initial=None,
+                                        label='Saturation level* [ADU]',
                                         widget=forms.NumberInput(attrs={'placeholder': '63000'}))
     pixel_scale = forms.FloatField(required=True,
+                                   initial='',
+                                   label='Pixel scale* [arcsec/pixel]',
                                    widget=forms.NumberInput(attrs={'placeholder': '0.8'}))
-    readout_speed = forms.FloatField(required=True,
+    readout_speed = forms.FloatField(required=False,
+                                     label='Readout speed [ms/pixel] (if not known, pass 9999)',
                                      widget=forms.NumberInput(attrs={'placeholder': '3'}))
-    pixel_size = forms.FloatField(required=True,
+    pixel_size = forms.FloatField(required=False,
+                                  label='Pixel size [um]',
                                   widget=forms.NumberInput(attrs={'placeholder': '13.5'}))
     approx_lim_mag = forms.FloatField(required=True,
+                                      label='Approx. limit magnitude in V band* [mag]',
                                       widget=forms.NumberInput(attrs={'placeholder': '18.0'}))
     filters = forms.CharField(required=True,
-                              widget=forms.NumberInput(attrs={'placeholder': 'V,R,I'}))
+                              initial=None,
+                              label='Filters*',
+                              widget=forms.TextInput(attrs={'placeholder': 'V,R,I'}))
 
     class Meta:
         model = Observatory

@@ -41,7 +41,7 @@ class Observatory(models.Model):
                                                             verbose_name='Saturation Level [ADU]', default=63000)
     pixel_scale: models.FloatField = models.FloatField(null=False, blank=False,
                                                        verbose_name='Pixel Scale [arcseconds/pixel]', default=0.8)
-    readout_speed: models.FloatField = models.FloatField(verbose_name='Readout Speed [microseconds/pixel]', default=3.0)
+    readout_speed: models.FloatField = models.FloatField(verbose_name='Readout Speed [microseconds/pixel]', default=9999.0)
     pixel_size: models.FloatField = models.FloatField(verbose_name='Pixel size [micrometers]', default=13.5)
     approx_lim_mag: models.FloatField = models.FloatField(verbose_name="Approximate limit magnitude [mag]", default=18.0)
     filters: models.CharField = models.CharField(max_length=100, blank=True,
