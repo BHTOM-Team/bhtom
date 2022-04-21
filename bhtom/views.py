@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from astropy.time import Time
 from datetime import datetime, timedelta
 from io import StringIO
@@ -8,12 +10,15 @@ import numpy as np
 import logging
 import requests
 import base64
+from urllib.parse import urlencode
 
 import time
-import hashlib
 
 from abc import ABC, abstractmethod
 
+from jsonschema.exceptions import ValidationError
+from tom_catalogs.forms import CatalogQueryForm
+from tom_catalogs.harvester import MissingDataException
 from tom_targets.views import TargetCreateView
 from tom_targets.templatetags.targets_extras import target_extra_field
 from tom_targets.models import Target, TargetList
@@ -1326,6 +1331,11 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
             filters = form.cleaned_data['filters']
             comment = form.cleaned_data['comment']
 
+            if readout_speed is None:
+                readout_speed = 9999.
+            if pixel_size is None:
+                pixel_size = 13.5
+
             observatory = Observatory.objects.create(
                 obsName=obsName,
                 lon=lon,
@@ -1477,18 +1487,22 @@ class RegisterUser(CreateView):
     form_class = CustomUserCreationForm
 
     def form_valid(self, form):
+        
+        def add_user_to_group(group_name):
+            group, _ = Group.objects.get_or_create(name=group_name)
+            group.user_set.add(self.object)
+            group.save()
 
         super().form_valid(form)
-        group, _ = Group.objects.get_or_create(name='Public')
-        #this does not work!
-        # group, _ = Group.objects.get_or_create(name='Show Targets')
-        # group, _ = Group.objects.get_or_create(name='Upload File')
-        # group, _ = Group.objects.get_or_create(name='Download Fits/Photometry')
-        # group, _ = Group.objects.get_or_create(name='Add Target')
-        # group, _ = Group.objects.get_or_create(name='Add Observatory')
         
-        group.user_set.add(self.object)
-        group.save()
+        add_user_to_group('Public')
+
+        add_user_to_group('Show Targets')
+        add_user_to_group('Upload File')
+        add_user_to_group('Download Fits/Photometry')
+        add_user_to_group('Add Target')
+        add_user_to_group('Add Observatory')
+
         email_params = "'{0}', '{1}', '{2}', '{3}'".format(self.object.username, self.object.first_name,
                                                            self.object.last_name, self.object.email)
 
@@ -1861,3 +1875,35 @@ class TargetAddRemoveGroupingView(LoginRequiredMixin, View):
                 targets_ids = request.POST.getlist('selected-target')
                 remove_selected_from_grouping(targets_ids, grouping_object, request)
         return redirect(reverse('bhlist'))
+
+
+class BHtomCatalogQueryView(FormView):
+    """
+    View for querying a specific catalog.
+    """
+
+    form_class = CatalogQueryForm
+    template_name = 'tom_catalogs/query_form.html'
+
+    def form_valid(self, form):
+        """
+        Ensures that the form parameters are valid and runs the catalog query.
+
+        :param form: CatalogQueryForm with required parameter`s
+        :type form: CatalogQueryForm
+        """
+        try:
+            self.target = form.get_target()
+        except MissingDataException:
+            form.add_error('term', ValidationError('Object not found'))
+            return self.form_invalid(form)
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        """
+        Redirects to the ``TargetCreateView``. Appends the target parameters to the URL as query parameters in order to
+        autofill the ``TargetCreateForm``, including any additional names returned from the query.
+        """
+        target_params = self.target.as_dict()
+        target_params['names'] = ','.join(getattr(self.target, 'extra_names', []))
+        return reverse('bhlist_create') + '?' + urlencode(target_params)

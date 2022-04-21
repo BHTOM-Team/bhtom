@@ -167,23 +167,41 @@ class ObservatoryCreationForm(forms.ModelForm):
                            ))
 
     gain = forms.FloatField(required=True,
-                            widget=forms.NumberInput(attrs={'placeholder': '2'}))
+                            initial=None,
+                            label='Gain* [electrons/ADU]',
+                            widget=forms.NumberInput(attrs={'placeholder': '2.0'}))
     readout_noise = forms.FloatField(required=True,
+                                     initial=None,
+                                     label='Readout noise* [electrons]',
                                      widget=forms.NumberInput(attrs={'placeholder': '2'}))
     binning = forms.FloatField(required=True,
+                               initial=None,
+                               label='Binning*',
                                widget=forms.NumberInput(attrs={'placeholder': '1'}))
     saturation_level = forms.FloatField(required=True,
+                                        initial=None,
+                                        label='Saturation level* [ADU]',
                                         widget=forms.NumberInput(attrs={'placeholder': '63000'}))
     pixel_scale = forms.FloatField(required=True,
+                                   initial='',
+                                   label='Pixel scale* [arcsec/pixel]',
                                    widget=forms.NumberInput(attrs={'placeholder': '0.8'}))
-    readout_speed = forms.FloatField(required=True,
+    readout_speed = forms.FloatField(required=False,
+                                     initial=None,
+                                     label='Readout speed [ms/pixel] (if not known, pass 9999)',
                                      widget=forms.NumberInput(attrs={'placeholder': '3'}))
-    pixel_size = forms.FloatField(required=True,
+    pixel_size = forms.FloatField(required=False,
+                                  initial=None,
+                                  label='Pixel size [um]',
                                   widget=forms.NumberInput(attrs={'placeholder': '13.5'}))
     approx_lim_mag = forms.FloatField(required=True,
+                                      initial=None,
+                                      label='Approx. limit magnitude in V band* [mag]',
                                       widget=forms.NumberInput(attrs={'placeholder': '18.0'}))
     filters = forms.CharField(required=True,
-                              widget=forms.NumberInput(attrs={'placeholder': 'V,R,I'}))
+                              initial=None,
+                              label='Filters*',
+                              widget=forms.TextInput(attrs={'placeholder': 'V,R,I'}))
 
     class Meta:
         model = Observatory
@@ -208,23 +226,38 @@ class ObservatoryUpdateForm(forms.ModelForm):
                            ))
 
     gain = forms.FloatField(required=True,
-                            widget=forms.NumberInput(attrs={'placeholder': '2'}))
+                            initial=None,
+                            label='Gain* [electrons/ADU]',
+                            widget=forms.NumberInput(attrs={'placeholder': '2.0'}))
     readout_noise = forms.FloatField(required=True,
+                                     initial=None,
+                                     label='Readout noise* [electrons]',
                                      widget=forms.NumberInput(attrs={'placeholder': '2'}))
     binning = forms.FloatField(required=True,
+                               initial=None,
+                               label='Binning*',
                                widget=forms.NumberInput(attrs={'placeholder': '1'}))
     saturation_level = forms.FloatField(required=True,
+                                        initial=None,
+                                        label='Saturation level* [ADU]',
                                         widget=forms.NumberInput(attrs={'placeholder': '63000'}))
     pixel_scale = forms.FloatField(required=True,
+                                   initial='',
+                                   label='Pixel scale* [arcsec/pixel]',
                                    widget=forms.NumberInput(attrs={'placeholder': '0.8'}))
-    readout_speed = forms.FloatField(required=True,
+    readout_speed = forms.FloatField(required=False,
+                                     label='Readout speed [ms/pixel] (if not known, pass 9999)',
                                      widget=forms.NumberInput(attrs={'placeholder': '3'}))
-    pixel_size = forms.FloatField(required=True,
+    pixel_size = forms.FloatField(required=False,
+                                  label='Pixel size [um]',
                                   widget=forms.NumberInput(attrs={'placeholder': '13.5'}))
     approx_lim_mag = forms.FloatField(required=True,
+                                      label='Approx. limit magnitude in V band* [mag]',
                                       widget=forms.NumberInput(attrs={'placeholder': '18.0'}))
     filters = forms.CharField(required=True,
-                              widget=forms.NumberInput(attrs={'placeholder': 'V,R,I'}))
+                              initial=None,
+                              label='Filters*',
+                              widget=forms.TextInput(attrs={'placeholder': 'V,R,I'}))
 
     class Meta:
         model = Observatory
@@ -369,6 +402,7 @@ class TargetForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.extra_fields = {}
         for extra_field in settings.EXTRA_FIELDS:
             # Add extra fields to the form
@@ -419,8 +453,10 @@ class SiderealTargetCreateForm(TargetForm):
 
         self.fields['priority'].required = True
         self.fields['priority'].help_text = 'Priority as an integer 0-10 (10 is the highest)'
+        self.fields['priority'].label = 'Priority*'
         self.fields['cadence'].required = True
         self.fields['cadence'].help_text = 'Cadence as 0-100 days'
+        self.fields['cadence'].label = 'Cadence*'
 
         self.fields['gaia_alert_name'].widget = TextInput(attrs={'maxlength': 100})
         self.fields['calib_server_name'].widget = TextInput(attrs={'maxlength': 100})
@@ -446,8 +482,31 @@ class SiderealTargetCreateForm(TargetForm):
 class NonSiderealTargetCreateForm(TargetForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         for field in REQUIRED_NON_SIDEREAL_FIELDS:
             self.fields[field].required = True
+
+        self.fields['priority'].required = True
+        self.fields['priority'].help_text = 'Priority as an integer 0-10 (10 is the highest)'
+        self.fields['priority'].label = 'Priority*'
+        self.fields['cadence'].required = True
+        self.fields['cadence'].help_text = 'Cadence as 0-100 days'
+        self.fields['cadence'].label = 'Cadence*'
+
+        self.fields['gaia_alert_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['calib_server_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['ztf_alert_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['aavso_name'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['gaiadr2_id'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['TNS_ID'].widget = TextInput(attrs={'maxlength': 100})
+        self.fields['classification'].widget = TextInput(attrs={'maxlength': 250})
+
+        self.fields['tweet'].widget = HiddenInput()
+        self.fields['jdlastobs'].widget = HiddenInput()
+        self.fields['maglast'].widget = HiddenInput()
+        self.fields['dicovery_date'].widget = HiddenInput()
+        self.fields['Sun_separation'].widget = HiddenInput()
+        self.fields['dont_update_me'].widget = HiddenInput()
 
     def clean(self):
         """
