@@ -9,8 +9,12 @@ from astropy.time import Time, TimezoneInfo
 from tom_dataproducts.data_processor import DataProcessor
 from tom_dataproducts.exceptions import InvalidFileFormatException
 from tom_targets.models import Target
+import logging
 
 from datatools.utils.hjd_to_jd import hjd_to_jd
+
+
+logger = logging.getLogger(__name__)
 
 
 class ASASSNPhotometryProcessor(DataProcessor):
@@ -28,7 +32,9 @@ class ASASSNPhotometryProcessor(DataProcessor):
 
         mimetype = mimetypes.guess_type(data_product.data.path)[0]
         if mimetype in self.PLAINTEXT_MIMETYPES:
+            logger.debug('[ASAS-SN PHOTOMETRY] Starting to process ASAS-SN data...')
             photometry = self._process_photometry_from_plaintext(data_product)
+            logger.debug('[ASAS-SN PHOTOMETRY] Photometry processed!')
             return [(datum.pop('timestamp'), json.dumps(datum)) for datum in photometry]
         else:
             raise InvalidFileFormatException('Unsupported file type')
@@ -54,6 +60,7 @@ class ASASSNPhotometryProcessor(DataProcessor):
 
         data = ascii.read(data_product.data.path)
         if len(data) < 1:
+            logger.error('[ASAS-SN PHOTOMETRY] Empty table!')
             raise InvalidFileFormatException('Empty table or invalid file type')
 
         if 'hjd' in data.columns:
@@ -68,6 +75,7 @@ class ASASSNPhotometryProcessor(DataProcessor):
         elif 'Filter' in data.columns:
             filter_index: str = 'Filter'
         else:
+            logger.error('[ASAS-SN PHOTOMETRY] No Filter in data!')
             raise InvalidFileFormatException('No filter or Filter in data columns')
 
         if 'mag err' in data.columns:
@@ -105,6 +113,7 @@ class ASASSNPhotometryProcessor(DataProcessor):
                     value['error'] = self._filter_non_numbers(str(datum[mag_err_index]))
                 photometry.append(value)
             except Exception as e:
+                logger.error(f'[ASAS-SN PHOTOMETRY] Error {e} while processing datum')
                 raise InvalidFileFormatException(f'Error while processing data: {e}')
 
         return photometry
