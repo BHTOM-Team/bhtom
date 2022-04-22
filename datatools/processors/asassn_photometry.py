@@ -95,7 +95,7 @@ class ASASSNPhotometryProcessor(DataProcessor):
         for datum in data:
             try:
                 hjd: Time = datum[hjd_index]
-                jd: Time = Time(hjd_to_jd(hjd, ra, dec)[0], format='jd')
+                jd: Time = Time(hjd_to_jd(hjd, ra, dec), format='jd')
 
                 utc = TimezoneInfo(utc_offset=0 * units.hour)
                 jd.format = 'datetime'

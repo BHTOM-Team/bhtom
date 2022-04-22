@@ -34,7 +34,7 @@ def hjd_to_jd(hjd: float,
             return abs(hjd_guess - hjd)
 
         optim_mjd = least_squares(hjd_guess_diff, np.array([hjd]))
-        return optim_mjd.x
+        return optim_mjd.x[0]
     except Exception as e:
         logger.error(f'[HJD TO JD CONVERSION] Error while converting HJD {hjd}: {e}')
         return time.Time(hjd, format='jd', scale='utc', location='greenwich').jd
