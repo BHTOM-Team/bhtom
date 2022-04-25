@@ -34,6 +34,22 @@ base_url = 'http://gsaweb.ast.cam.ac.uk/alerts'
 logger = logging.getLogger(__name__)
 
 
+def gaia_error(mag):
+    a1 = 0.2
+    b1 = -5.2
+    a2 = 0.26
+    b2 = -6.26
+
+    if mag <= 13.5:
+       err_corr=a1*13.5+b1
+    elif mag > 13.5 and mag <= 17.:
+      err_corr=a1*mag+b1
+    elif mag > 17.:
+      err_corr=a2*mag+b2
+
+    return 10.**err_corr
+
+
 # queries alerts.csv and searches for the name
 # then also loads the light curve
 def get(term):
@@ -173,7 +189,7 @@ def update_gaia_lc(target, requesting_user_id):
                 value = {
                     'magnitude': datum_mag,
                     'filter': 'G_Gaia',
-                    'error': 0,  # for now
+                    'error': gaia_error(datum_mag),  # for now
                     'jd': datum_jd.jd
                 }
 
