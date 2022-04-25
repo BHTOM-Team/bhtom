@@ -193,7 +193,7 @@ def update_gaia_lc(target, requesting_user_id):
                     'jd': datum_jd.jd
                 }
 
-                rd, created = ReducedDatum.objects.get_or_create(
+                rd, created = ReducedDatum.objects.update_or_create(
                     timestamp=datum_jd.to_datetime(timezone=TimezoneInfo()),
                     value=json.dumps(value),
                     source_name='GaiaAlerts',
