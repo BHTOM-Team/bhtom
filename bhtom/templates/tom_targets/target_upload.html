@@ -18,6 +18,8 @@
         You can add a new instrument <a href="{% url 'observatory_create' %}">here.</a>
         <br>
         <b>You can upload up to 10 files at once.</b>
+        <br>
+        <p>You can also use a python script for external fits upload: <a href="{% static 'tom_common/send_fits_to_bhtom.py' %}">data upload script</a></p>
     </p>
 
     <form method="POST" action="{% url 'data_upload' %}" enctype="multipart/form-data">
