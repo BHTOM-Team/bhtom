@@ -68,8 +68,8 @@ class DataProductUploadForm(forms.Form):
     )
 
     data_product_type = forms.ChoiceField(
-        choices=[v for k, v in settings.DATA_PRODUCT_TYPES.items() if (k is not 'photometry_cpcs' and k is not 'fits_file')],
-        initial='photometry',
+        choices=[v for k, v in settings.DATA_PRODUCT_TYPES.items()],
+        initial='photometry_cpcs',
         widget=forms.RadioSelect(attrs={'onclick': "dataProductSelect();"}),
         required=True
     )
