@@ -43,7 +43,7 @@ setup(
         'astropy==4.0',
         'astroplan==0.7',
         'plotly==4.6.0',
-        'pillow==7.1.0',
+        'pillow==9.3.0',
         'fits2image==0.4.3',
         'specutils==1.0',
         'dataclasses; python_version < "3.7"',
