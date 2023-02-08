@@ -44,7 +44,6 @@ Add filtrs to your local database from cpcs.
 e
 ```
 insert into bhtom_catalogs values(1,'SDSS',ARRAY['u','g','r','i','z','B','V','R','I']);
-insert into bhtom_catalogs values(2,'USNO',ARRAY['B1pg','B2pg','R1pg','R2pg','Ipg']);
 insert into bhtom_catalogs values(3,'2MASS',ARRAY['J','H','K']);
 insert into bhtom_catalogs values(4,'APASS',ARRAY['B','V','g','r','i']);
 insert into bhtom_catalogs values(5,'OGLE3',ARRAY['V','I']);
