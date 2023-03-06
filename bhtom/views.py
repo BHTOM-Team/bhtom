@@ -16,10 +16,12 @@ import time
 
 from abc import ABC, abstractmethod
 
+from django.utils.text import slugify
 from jsonschema.exceptions import ValidationError
 from tom_catalogs.forms import CatalogQueryForm
 from tom_catalogs.harvester import MissingDataException
-from tom_targets.views import TargetCreateView
+from tom_targets.utils import export_targets
+from tom_targets.views import TargetCreateView, TargetListView
 from tom_targets.templatetags.targets_extras import target_extra_field
 from tom_targets.models import Target, TargetList
 from bhtom.forms import (SiderealTargetCreateForm, NonSiderealTargetCreateForm, TargetExtraFormset, TargetNamesFormset)
@@ -43,7 +45,7 @@ from bhtom.forms import InstrumentCreationForm, CustomUserCreationForm, Instrume
 from bhtom.group import add_all_to_grouping, add_selected_to_grouping, remove_all_from_grouping, \
     remove_selected_from_grouping
 
-from django.http import HttpResponseServerError, Http404, FileResponse, HttpResponseForbidden
+from django.http import HttpResponseServerError, Http404, FileResponse, HttpResponseForbidden, StreamingHttpResponse
 from django.views.generic.edit import FormView
 from django.views.generic import View
 from django.conf import settings
@@ -589,6 +591,30 @@ class TargetFileDetailView(PermissionRequiredMixin, ListView):
 
         return context
 
+class TargetExportView(TargetListView):
+    """
+    View that handles the export of targets to a CSV. Only exports selected targets.
+    """
+
+    filterset_class = TargetFilter
+
+    def render_to_response(self, context, **response_kwargs):
+        """
+        Returns a response containing the exported CSV of selected targets.
+
+        :param context: Context object for this view
+        :type context: dict
+
+        :returns: response class with CSV
+        :rtype: StreamingHttpResponse
+        """
+        qs = context['filter'].qs.values()
+        file_buffer = export_targets(qs)
+        file_buffer.seek(0)  # goto the beginning of the buffer
+        response = StreamingHttpResponse(file_buffer, content_type="text/csv")
+        filename = "targets-{}.csv".format(slugify(datetime.utcnow()))
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+        return response
 
 class IsAuthenticatedOrReadOnlyOrCreation(IsAuthenticatedOrReadOnly):
     """Allows Read only operations and Creation of new data (no modify or delete)"""
