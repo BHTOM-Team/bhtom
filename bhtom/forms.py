@@ -1,5 +1,6 @@
 import logging
 
+import unicodedata
 from astropy import units as u
 from astropy.coordinates import Angle
 from django import forms
@@ -421,12 +422,19 @@ class TargetForm(forms.ModelForm):
         if commit:
             for field in settings.EXTRA_FIELDS:
                 if self.cleaned_data.get(field['name']) is not None:
-                    TargetExtra.objects.update_or_create(
-                        target=instance,
-                        key=field['name'],
-                        defaults={'value': self.cleaned_data[field['name']]}
-                    )
-
+                    if field.get("type") == 'string':
+                        TargetExtra.objects.update_or_create(
+                            target=instance,
+                            key=field['name'],
+                            defaults={'value': unicodedata.normalize('NFD', self.cleaned_data[field['name']]).encode('ascii', 'ignore').decode()}
+                        )
+                    else:
+                        TargetExtra.objects.update_or_create(
+                            target=instance,
+                            key=field['name'],
+                            defaults={
+                                'value': self.cleaned_data[field['name']]}
+                        )
         return instance
 
     class Meta:
