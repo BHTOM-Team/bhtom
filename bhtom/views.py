@@ -616,7 +616,6 @@ class TargetExportView(TargetListView):
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
         return response
 
-
 class IsAuthenticatedOrReadOnlyOrCreation(IsAuthenticatedOrReadOnly):
     """Allows Read only operations and Creation of new data (no modify or delete)"""
 
