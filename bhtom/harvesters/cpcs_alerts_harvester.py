@@ -1,6 +1,7 @@
 import json
 import logging
 from typing import Optional, Any, Dict
+import urllib.parse
 
 import numpy as np
 from astropy.time import Time, TimezoneInfo
@@ -47,7 +48,7 @@ logger = logging.getLogger(__name__)
 
 def update_cpcs_lc(target):
     try:
-        cpcs_name: Optional[str] = target.targetextra_set.get(key='calib_server_name').value
+        cpcs_name: Optional[str] = urllib.parse.quote(target.targetextra_set.get(key='calib_server_name').value)
     except Exception as e:
         cpcs_name: Optional[str] = None
         logger.error(f'Error while accessing calib_server_name for {target}: {e}')

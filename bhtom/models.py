@@ -120,7 +120,8 @@ class BHTomFits(models.Model):
     comment = models.TextField(null=True, blank=True)
 
     class Meta:
-        verbose_name_plural = "BHTomFits"
+        verbose_name = 'BHTomFile'
+        verbose_name_plural = "BHTomFiles"
 
 
 class Catalogs(models.Model):
