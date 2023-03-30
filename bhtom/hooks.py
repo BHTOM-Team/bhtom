@@ -194,9 +194,12 @@ def send_to_cpcs(result, fits, eventID):
                             + ', npoints: ' + str(fits.npoints) + ', scatter: ' + str(fits.scatter))
             else:
 
-                error_message = 'Cpcs error: %s' % response.content.decode()
+                if len(response.content.decode()) > 100:
+                    fits.status_message = 'Cpcs error'
+                else:
+                    fits.status_message = 'Cpcs error: %s' % response.content.decode()
+
                 fits.status = 'E'
-                fits.status_message = error_message
                 fits.save()
 
     except Exception as e:
