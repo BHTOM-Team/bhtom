@@ -155,6 +155,7 @@ def save_data_to_temporary_file(data: List[List[Any]],
 
 
     with open(tmp.name, 'a') as f:
+        f.write("#By downloading the data you agree to use this acknowledgment:\n")
         f.write("#The data was obtained via BHTOM (https://bhtom.space), which has received funding from the European\n")
         f.write("#Union's Horizon 2020 research and innovation program under grant agreement No. 101004719 (OPTICON-RadioNet Pilot).\n")
         f.write("#For more information about acknowledgement and data policy please visit https://about.bhtom.space\n")
