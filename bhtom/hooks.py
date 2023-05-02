@@ -54,6 +54,7 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
         except Exception as e:
             logger.error('data_product_post_upload_fits_file error: ' + str(e))
 
+
     if dp.data_product_type == 'fits_file' and observatory != None:
 
         with open(url, 'rb') as file:
@@ -197,6 +198,7 @@ def send_to_cpcs(result, fits, eventID):
                     fits.status_message = 'Cpcs error'
                 else:
                     fits.status_message = 'Cpcs error: %s' % response.content.decode()
+
                 fits.status = 'E'
                 fits.save()
 
@@ -299,7 +301,6 @@ def BHTomFits_pre_save(sender, instance, **kwargs):
     except Exception as e:
         logger.info("Error with remove fits, dataproduct_id: " + format(fits.dataproduct_id))
         logger.info(e)
-
 
 @receiver(pre_save, sender=BHTomUser)
 def BHTomUser_pre_save(sender, instance, **kwargs):

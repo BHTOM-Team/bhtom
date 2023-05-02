@@ -10,6 +10,17 @@
 {% endblock %}
 {% bootstrap_javascript jquery='True' %}
 {% block content %}
+
+<div id="photometry-data-info" class="alert alert-info" role="alert" style="display: none; margin: 5px">
+  By downloading the data you agree to use this acknowledgment: The data was obtained via BHTOM ( <a href='https://bhtom.space'>https://bhtom.space</a>), which has received funding from the
+  European Union's Horizon 2020 research and innovation program under grant agreement No.
+  101004719 (OPTICON-RadioNet Pilot). For more information about acknowledgement and data
+  policy please visit <a href='https://about.bhtom.space'>https://about.bhtom.space</a>
+  <button id="close-alert" type="button" class="close" aria-label="Close" onclick="closeAlert()" style="margin-top: -10px">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
 <div class="row">
   <div class="col-md-4">
     <div id="target-info">
@@ -214,7 +225,8 @@
       window.open('{% url "bhlist_i_d_photometry" target.id %}', 'newwindow', 'width=900,height=800');
     }
     function download_photometry() {
-      window.open('{% url "bhlist_download_photometry_data" target.id %}')
+      window.open('{% url "bhlist_download_photometry_data" target.id %}');
+      document.getElementById("photometry-data-info").style.display=null;
     }
     function download_photometry_stats() {
       window.open('{% url "bhlist_download_photometry_stats" target.id %}')
@@ -227,6 +239,9 @@
     }
     function open_microlensing_model() {
     window.open('{% url "bhlist_i_microlensing" target.id %}', 'newwindow', 'width=700,height=900');
+    }
+    function closeAlert(){
+        document.getElementById("photometry-data-info").style.display="none";
     }
 </script>
 {% endblock %}

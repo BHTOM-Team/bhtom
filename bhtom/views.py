@@ -1057,13 +1057,15 @@ class TargetDownloadDataView(ABC, PermissionRequiredMixin, View):
             logger.error(f'Error while generating photometry CSV file for target with id={target_id}: {e}')
         finally:
             if tmp:
-                os.remove(tmp.name)
+                try:
+                    os.remove(tmp.name)
+                except Exception as e:
+                    logger.error(f'Error delete temp file: {e}')
 
 
 class TargetDownloadPhotometryDataView(TargetDownloadDataView):
     def generate_data_method(self, target_id):
         return save_photometry_data_for_target_to_csv_file(target_id)
-
 
 class TargetDownloadPhotometryStatsView(TargetDownloadDataView):
     def generate_data_method(self, target_id):
