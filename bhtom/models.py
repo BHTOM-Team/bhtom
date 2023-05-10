@@ -182,5 +182,21 @@ class ViewReducedDatum(pg.MaterializedView):
     observation_record_facility = models.TextField(null=True, blank=True)
 
 
+class BHTomCpcsTaskAsynch(models.Model):
+
+    STATUS = [
+        ('1', 'TODO'),
+        ('2', 'IN_PROGRESS'),
+        ('4', 'SUCCESS'),
+        ('6', 'FAILED')
+    ]
+    bhtomFits = models.ForeignKey(BHTomFits, on_delete=models.CASCADE)
+    url = models.CharField(max_length=255, null=False)
+    status = models.CharField(max_length=20, choices=STATUS, default='TODO')
+    target = models.CharField(max_length=64, null=False)
+    data_send = models.DateField()
+    data_created = models.DateField(null=False, editable=False)
+    number_tries = models.IntegerField(null=False)
+
 def refresh_reduced_data_view():
     ViewReducedDatum.refresh(concurrently=True)

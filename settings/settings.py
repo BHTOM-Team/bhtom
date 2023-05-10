@@ -126,6 +126,7 @@ INSTALLED_APPS = [
     'tom_publications',
     'captcha',
     'django_plotly_dash.apps.DjangoPlotlyDashConfig',
+    'background_task',
 ]
 
 CRON_CLASSES = [
@@ -469,3 +470,5 @@ sentry_sdk.init(
     traces_sample_rate=1.0,
     send_default_pii=True
 )
+
+BACKGROUND_TASK_QUEUE = 'cpcs_file_queue'
