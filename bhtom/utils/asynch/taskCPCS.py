@@ -70,6 +70,7 @@ def add_task_to_cpcs_queue(instanceID):
                 else:
 
                     logger.info('Response status from cpcs: error, number of tries: ' + str(instance.number_tries))
+                    logger.error(str(response.content.decode()))
 
                     if len(response.content.decode()) > 100:
                         if instance.number_tries > 1:
