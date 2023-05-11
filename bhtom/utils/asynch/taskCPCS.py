@@ -31,7 +31,6 @@ def add_task_to_cpcs_queue(instanceID):
 
         try:
             logger.info('Start processing file: ' + str(instanceID))
-            logger.info('Start processing file: ' + str(instrument))
             with open(format(instance.url), 'rb') as file:
 
                 response = requests.post(url_cpcs,
@@ -75,7 +74,6 @@ def add_task_to_cpcs_queue(instanceID):
                     if len(response.content.decode()) > 100:
                         if instance.number_tries > 1:
                             instance.status = 'FAILED'
-                            instance.number_tries += 1
                             instance.save()
                             fits.status_message = 'Cpcs error'
                             fits.status = 'E'
