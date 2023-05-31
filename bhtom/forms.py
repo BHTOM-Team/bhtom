@@ -43,8 +43,6 @@ class FilterChoiceField(forms.ModelChoiceField):
 
 class DataProductUploadForm(forms.Form):
     MATCHING_RADIUS = [
-        ('0', 'Default for the Observatory'),
-        ('0.5', '0.5 arcsec'),
         ('1', '1 arcsec'),
         ('2', '2 arcsec'),
         ('4', '4 arcsec'),
@@ -91,7 +89,7 @@ class DataProductUploadForm(forms.Form):
         choices=MATCHING_RADIUS,
         widget=forms.Select(),
         label='Matching radius',
-        initial='0',
+        initial='0.5',
         required=False
     )
 
@@ -124,6 +122,10 @@ class DataProductUploadForm(forms.Form):
             curname, filters = curval
             for i, f in enumerate(filters):
                 filter[curname + '/' + f] = curname + '/' + f
+            filter['%s/any' % (curname)] = '%s/any' % (curname)
+
+        for f in ['U', 'B', 'V', 'R', 'I', 'u', 'g', 'r', 'i', 'z']:
+            filter['any/%s' % f] = 'any/%s' % f
 
         super(DataProductUploadForm, self).__init__(*args, **kwargs)
 
