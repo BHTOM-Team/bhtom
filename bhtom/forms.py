@@ -43,6 +43,7 @@ class FilterChoiceField(forms.ModelChoiceField):
 
 class DataProductUploadForm(forms.Form):
     MATCHING_RADIUS = [
+        ('0.5', '0.5 arcsec'),
         ('1', '1 arcsec'),
         ('2', '2 arcsec'),
         ('4', '4 arcsec'),
