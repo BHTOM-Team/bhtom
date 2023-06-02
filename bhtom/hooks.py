@@ -192,16 +192,24 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
             if response.status_code == 200:
                 instance.hashtag = response.content.decode('utf-8').split(': ')[1]
                 logger.info('Create_cpcs_user' + str(obsName))
-                send_mail('Wygenerowano hastag',
+
+                try:
+                    send_mail('Wygenerowano hastag',
                           read_secret('EMAILTEXT_CREATE_HASTAG') + str(observatory.obsName) + ', ' + str(
                               instance.user_id),
                           settings.EMAIL_HOST_USER, read_secret('RECIPIENTEMAIL'), fail_silently=False)
+                except Exception as e:
+                    logger.error(str(e))
             else:
                 logger.error('Error from hastag' + str(obsName))
-                send_mail('Blad przy generowaniu hastagu',
+
+                try:
+                    send_mail('Blad przy generowaniu hastagu',
                           read_secret('EMAILTEXT_ERROR_CREATE_HASTAG') + str(observatory.obsName) + ', ' + str(
                               instance.user_id),
                           settings.EMAIL_HOST_USER, read_secret('RECIPIENTEMAIL'), fail_silently=False)
+                except Exception as e:
+                    logger.error(str(e))
 
                 instance.isActive = False
                 raise Exception(response.content.decode('utf-8')) from None
@@ -281,9 +289,12 @@ def BHTomUser_pre_save(sender, instance, **kwargs):
                 user_email = None
 
             if user_email is not None:
-                send_mail(read_secret('EMAILTET_ACTIVATEUSER_TITLE'), read_secret('EMAILTET_ACTIVATEUSER'),
+                try:
+                    send_mail(read_secret('EMAILTET_ACTIVATEUSER_TITLE'), read_secret('EMAILTET_ACTIVATEUSER'),
                           settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)
-                logger.info('Ativate user, Send mail: ' + str(user_email.email))
+                    logger.info('Ativate user, Send mail: ' + str(user_email.email))
+                except Exception as e:
+                    logging.error(str(e))
 
 
 @receiver(pre_save, sender=Observatory)
@@ -302,10 +313,13 @@ def Observatory_pre_save(sender, instance, **kwargs):
                 user_email = None
 
             if user_email is not None:
-                send_mail(read_secret('EMAILTEXT_ACTIVATEOBSERVATORY_TITLE'),
+                try:
+                    send_mail(read_secret('EMAILTEXT_ACTIVATEOBSERVATORY_TITLE'),
                           read_secret('EMAILTEXT_ACTIVATEOBSERVATORY'),
                           settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)
-                logger.info('Ativate observatory' + instance.obsName + ', Send mail: ' + user_email.email)
+                    logger.info('Ativate observatory' + instance.obsName + ', Send mail: ' + user_email.email)
+                except Exception as e:
+                    logger.error(str(e))
 
 
 def create_target_in_cpcs(user, instance):
