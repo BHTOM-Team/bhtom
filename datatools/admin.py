@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import F
 from tom_dataproducts.models import ReducedDatum
 
 from bhtom.models import BHTomFits, Instrument, Observatory, BHTomUser, BHTomCpcsTaskAsynch
@@ -91,7 +92,12 @@ class ReducedDatum_display(admin.ModelAdmin):
 
 
 class BHTomCpcsTaskAsynch_displayField(admin.ModelAdmin):
-    list_display = ('id', 'get_url', 'get_status', 'target', 'data_send', 'data_created', 'number_tries', 'get_error')
+    list_display = ('id', 'get_url', 'get_status', 'target', 'data_send', 'data_created', 'get_number_tries', 'get_error')
+
+    def get_number_tries(self, obj):
+        return obj.number_tries
+
+    get_number_tries.short_description = 'number of tries'
 
     def get_url(self, obj):
         return obj.url
@@ -105,12 +111,19 @@ class BHTomCpcsTaskAsynch_displayField(admin.ModelAdmin):
 
     def send_to_cpcs(self, request, queryset):
         queryset.update(status='TODO')
+        queryset.update(number_tries=F('number_tries')+1)
+
         for obj in queryset:
+            instance = BHTomFits.objects.get(file_id=obj.bhtomFits_id)
+            instance.status_message = 'Sent to Calibration'
+            instance.save()
             add_task_to_cpcs_queue(str(obj.id))
 
     def get_error(self, obj):
         data_id = obj.bhtomFits_id
         return BHTomFits.objects.get(file_id=data_id).status_message
+
+    get_error.short_description = 'cpcs status'
 
     actions = [send_to_cpcs]
 
