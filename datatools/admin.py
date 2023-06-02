@@ -91,7 +91,7 @@ class ReducedDatum_display(admin.ModelAdmin):
 
 
 class BHTomCpcsTaskAsynch_displayField(admin.ModelAdmin):
-    list_display = ('id', 'get_url', 'get_status', 'target', 'data_send', 'data_created', 'number_tries')
+    list_display = ('id', 'get_url', 'get_status', 'target', 'data_send', 'data_created', 'number_tries', 'get_error')
 
     def get_url(self, obj):
         return obj.url
@@ -107,6 +107,10 @@ class BHTomCpcsTaskAsynch_displayField(admin.ModelAdmin):
         queryset.update(status='TODO')
         for obj in queryset:
             add_task_to_cpcs_queue(str(obj.id))
+
+    def get_error(self, obj):
+        data_id = obj.bhtomFits_id
+        return BHTomFits.objects.get(file_id=data_id).status_message
 
     actions = [send_to_cpcs]
 
