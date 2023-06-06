@@ -128,7 +128,6 @@ class DataProductUploadForm(forms.Form):
         for f in ['U', 'B', 'V', 'R', 'I', 'u', 'g', 'r', 'i', 'z']:
             filter['any/%s' % f] = 'any/%s' % f
 
-
         super(DataProductUploadForm, self).__init__(*args, **kwargs)
 
         instrument = Instrument.objects.filter(user_id=user)
