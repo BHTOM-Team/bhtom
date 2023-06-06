@@ -48,9 +48,9 @@ insert into bhtom_catalogs values(3,'2MASS',ARRAY['J','H','K']);
 insert into bhtom_catalogs values(4,'APASS',ARRAY['B','V','g','r','i']);
 insert into bhtom_catalogs values(5,'OGLE3',ARRAY['V','I']);
 insert into bhtom_catalogs values(6,'PS1',ARRAY['g','r','i']);
-insert into bhtom_catalogs values (7,'VSTATLAS',ARRAY['u','g','r','i','z']);
+#insert into bhtom_catalogs values(7,'VSTATLAS',ARRAY['u','g','r','i','z']);
 insert into bhtom_catalogs values(8,'DECAPS', ARRAY['g', 'r', 'i', 'z']);
-
+insert into bhtom_catalogs values(9,'GaiaSP', ARRAY['u', 'g', 'r', 'i', 'z']);
 ```
 
 

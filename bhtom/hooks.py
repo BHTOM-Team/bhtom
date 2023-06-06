@@ -17,7 +17,9 @@ from django.utils import timezone
 from tom_dataproducts.models import DataProduct
 from tom_targets.models import Target
 
-from .models import BHTomFits, Instrument, Observatory, BHTomData, BHTomUser, refresh_reduced_data_view
+from .models import BHTomFits, Instrument, Observatory, BHTomData, BHTomUser, refresh_reduced_data_view, \
+    BHTomCpcsTaskAsynch
+from .utils.asynch.taskCPCS import add_task_to_cpcs_queue
 from .utils.coordinate_utils import fill_galactic_coordinates
 from .utils.observation_data_extra_data_utils import ObservationDatapointExtraData, \
     get_comments_extra_info_for_spectroscopy_file, get_comments_extra_info_for_photometry_file, FACILITY_NAME_KEY, \
@@ -151,62 +153,23 @@ def data_product_post_upload(dp, target, observatory, observation_filter, MJD, e
 
 
 def send_to_cpcs(result, fits, eventID):
-    url_cpcs = settings.CPCS_BASE_URL + 'upload'
-    logger.info('Send file to cpcs: ' + str(fits.file_id))
+    logger.info('Save file in CPCS asych : ' + str(fits.file_id))
 
-    try:
-        if eventID == None or eventID == '':
-            fits.status = 'E'
-            fits.status_message = 'CPCS target name missing or not yet on CPCS'
-            fits.save()
-            logger.info('CPCS target name missing or not yet on CPCS')
-        else:
-            with open(format(result), 'rb') as file:
-
-                response = requests.post(url_cpcs, {'MJD': fits.mjd, 'EventID': eventID, 'expTime': fits.expTime,
-                                                    'matchDist': fits.matchDist, 'dryRun': int(fits.allow_upload),
-                                                    'forceFilter': fits.filter,
-                                                    'fits_id': fits.file_id,
-                                                    'hashtag': Instrument.objects.get(id=fits.instrument_id.id).hashtag,
-                                                    'outputFormat': 'json'}, files={'sexCat': file})
-
-            if response.status_code == 201 or response.status_code == 200:
-
-                json_data = json.loads(response.text)
-                fits.status = 'F'
-                fits.status_message = 'Finished'
-                fits.cpcs_plot = json_data['image_link']
-                fits.mag = json_data['mag']
-                fits.mag_err = json_data['mag_err']
-                fits.ra = json_data['ra']
-                fits.dec = json_data['dec']
-                fits.zeropoint = json_data['zeropoint']
-                fits.outlier_fraction = json_data['outlier_fraction']
-                fits.scatter = json_data['scatter']
-                fits.npoints = json_data['npoints']
-                fits.followupId = json_data['followup_id']
-                fits.cpsc_filter = json_data['filter']
-                fits.survey = json_data['survey']
-                fits.save()
-
-                logger.info('mag: ' + str(fits.mag) + ', mag_err: ' + str(fits.mag_err) + ' ra: ' + str(fits.ra)
-                            + ', dec:' + str(fits.dec) + ', zeropoint: ' + str(fits.zeropoint)
-                            + ', npoints: ' + str(fits.npoints) + ', scatter: ' + str(fits.scatter))
-            else:
-
-                if len(response.content.decode()) > 100:
-                    fits.status_message = 'Cpcs error'
-                else:
-                    fits.status_message = 'Cpcs error: %s' % response.content.decode()
-
-                fits.status = 'E'
-                fits.save()
-
-    except Exception as e:
-        logger.error('send_to_cpcs error: ' + str(e))
+    if eventID == None or eventID == '':
         fits.status = 'E'
-        fits.status_message = 'Error: %s' % str(e)
+        fits.status_message = 'CPCS target name missing or not yet on CPCS'
         fits.save()
+        logger.info('CPCS target name missing or not yet on CPCS')
+    else:
+        try:
+            instance = BHTomCpcsTaskAsynch.objects.create(bhtomFits=fits, url=result, target=eventID,
+                                                      data_send=datetime.now(), data_created=datetime.now(),
+                                                      number_tries=1)
+            add_task_to_cpcs_queue(instance.id)
+        except Exception as e:
+            logger.error('Save file %s error:  %s', str(fits.file_id), str(e))
+
+
 
 
 @receiver(pre_save, sender=Instrument)
@@ -229,16 +192,24 @@ def create_cpcs_user_profile(sender, instance, **kwargs):
             if response.status_code == 200:
                 instance.hashtag = response.content.decode('utf-8').split(': ')[1]
                 logger.info('Create_cpcs_user' + str(obsName))
-                send_mail('Wygenerowano hastag',
+
+                try:
+                    send_mail('Wygenerowano hastag',
                           read_secret('EMAILTEXT_CREATE_HASTAG') + str(observatory.obsName) + ', ' + str(
                               instance.user_id),
                           settings.EMAIL_HOST_USER, read_secret('RECIPIENTEMAIL'), fail_silently=False)
+                except Exception as e:
+                    logger.error(str(e))
             else:
                 logger.error('Error from hastag' + str(obsName))
-                send_mail('Blad przy generowaniu hastagu',
+
+                try:
+                    send_mail('Blad przy generowaniu hastagu',
                           read_secret('EMAILTEXT_ERROR_CREATE_HASTAG') + str(observatory.obsName) + ', ' + str(
                               instance.user_id),
                           settings.EMAIL_HOST_USER, read_secret('RECIPIENTEMAIL'), fail_silently=False)
+                except Exception as e:
+                    logger.error(str(e))
 
                 instance.isActive = False
                 raise Exception(response.content.decode('utf-8')) from None
@@ -318,9 +289,12 @@ def BHTomUser_pre_save(sender, instance, **kwargs):
                 user_email = None
 
             if user_email is not None:
-                send_mail(read_secret('EMAILTET_ACTIVATEUSER_TITLE'), read_secret('EMAILTET_ACTIVATEUSER'),
+                try:
+                    send_mail(read_secret('EMAILTET_ACTIVATEUSER_TITLE'), read_secret('EMAILTET_ACTIVATEUSER'),
                           settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)
-                logger.info('Ativate user, Send mail: ' + str(user_email.email))
+                    logger.info('Ativate user, Send mail: ' + str(user_email.email))
+                except Exception as e:
+                    logging.error(str(e))
 
 
 @receiver(pre_save, sender=Observatory)
@@ -339,10 +313,13 @@ def Observatory_pre_save(sender, instance, **kwargs):
                 user_email = None
 
             if user_email is not None:
-                send_mail(read_secret('EMAILTEXT_ACTIVATEOBSERVATORY_TITLE'),
+                try:
+                    send_mail(read_secret('EMAILTEXT_ACTIVATEOBSERVATORY_TITLE'),
                           read_secret('EMAILTEXT_ACTIVATEOBSERVATORY'),
                           settings.EMAIL_HOST_USER, [user_email.email], fail_silently=False)
-                logger.info('Ativate observatory' + instance.obsName + ', Send mail: ' + user_email.email)
+                    logger.info('Ativate observatory' + instance.obsName + ', Send mail: ' + user_email.email)
+                except Exception as e:
+                    logger.error(str(e))
 
 
 def create_target_in_cpcs(user, instance):

@@ -1220,10 +1220,13 @@ class CreateInstrument(PermissionRequiredMixin, FormView):
             )
             # instrument.save()
 
-            logger.info('Send mail, %s, %s' % (observatoryID.obsName, str(user)))
-            send_mail('Stworzono nowy instrument',
+            try:
+                logger.info('Send mail, %s, %s' % (observatoryID.obsName, str(user)))
+                send_mail('Stworzono nowy instrument',
                       read_secret('EMAILTEXT_CREATE_INSTRUMENT') + str(user) + ', ' + observatoryID.obsName,
                       settings.EMAIL_HOST_USER, read_secret('RECIPIENTEMAIL'), fail_silently=False)
+            except Exception as e:
+                logger.error(str(e))
 
         except Exception as e:
             capture_exception(e)
@@ -1388,10 +1391,13 @@ class CreateObservatory(PermissionRequiredMixin, FormView):
             )
 
             observatory.save()
-            logger.info('Send mail, create new obserwatory:  %s' % str(obsName))
-            send_mail('Stworzono nowe obserwatorium', read_secret('EMAILTEXT_CREATE_OBSERVATORY') + str(obsName),
+            try:
+                logger.info('Send mail, create new obserwatory:  %s' % str(obsName))
+                send_mail('Stworzono nowe obserwatorium', read_secret('EMAILTEXT_CREATE_OBSERVATORY') + str(obsName),
                       settings.EMAIL_HOST_USER,
                       read_secret('RECIPIENTEMAIL'), fail_silently=False)
+            except Exception as e:
+                logger.error(str(e))
         except Exception as e:
             logger.error('CreateObservatory error: ' + str(e))
             messages.error(self.request, 'Error with creating the instrument %s' % obsName)

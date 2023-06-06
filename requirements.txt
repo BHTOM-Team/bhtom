@@ -116,3 +116,4 @@ webencodings==0.5.1
 whitenoise==4.1.4
 zipp==0.6.0
 django-recaptcha==2.0.6
+django-background-tasks==1.2.5
