@@ -836,7 +836,7 @@ class DataProductUploadView(FormView):
         """
         t0 = time.time()
         if not self.request.user.has_perm('bhtom.add_bhtomfits'):
-            logger.error('no permission to upload file: %s' % (str(target)))
+            logger.error('no permission to upload file')
             messages.error(self.request, 'You have no permission to upload file.')
             return HttpResponseRedirect(self.request.META.get('HTTP_REFERER'))
 
